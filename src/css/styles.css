@@ -1,0 +1,25 @@
+html, body {
+
+}
+
+body {
+
+}
+
+#map {
+
+}
+
+#previewTitle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.q-field__label {
+  font-size: 25px;
+  font-weight: bolder;
+}
+.q-field__messages {
+  font-size: 16px;
+}
