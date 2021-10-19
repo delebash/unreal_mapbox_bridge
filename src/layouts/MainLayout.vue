@@ -4,7 +4,7 @@
     </q-header>
 
     <q-drawer dense show-if-above v-model="drawerLeft" side="left" @hide='resizeMap' class="no-margin no-padding">
-      <div class="row  q-pt-sm q-pb-sm full-height">
+      <div class="row  q-pa-xs full-height">
         <q-card class="col q-pl-xs">
           <!-- drawer content -->
           <side-nav></side-nav>
@@ -33,8 +33,8 @@
             />
           </q-tabs>
           <q-separator/>
-          <q-tab-panels keep-alive v-model="selectedTab" animated>
-            <q-tab-panel name="map" class="row q-pl-xs q-pt-xs q-pb-xs q-pr-none q-mr-none"
+          <q-tab-panels class="q-pa-none q-ma-none" keep-alive v-model="selectedTab" animated>
+            <q-tab-panel name="map" class="row q-pl-xs q-pt-xs q-pb-none q-ma-none"
                          style="width: 100%; height: calc(100vh - 65px)">
               <mapbox-map-viewer class="col" ref="mapBoxViewer"></mapbox-map-viewer>
             </q-tab-panel>

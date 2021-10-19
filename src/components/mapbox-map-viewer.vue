@@ -9,12 +9,6 @@
   z-index: 1;
 }
 
-#menu {
-  position: absolute;
-  background: #efefef;
-  padding: 10px;
-  font-family: 'Open Sans', sans-serif;
-}
 </style>
 <template>
 
