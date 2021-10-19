@@ -1,4 +1,4 @@
-import { Quasar, Notify } from "quasar";
+import { Quasar, Notify, Dialog } from "quasar";
 import './css/app.scss'
 
 import createRouter from './router'
@@ -17,7 +17,8 @@ export function initQuasar(app) {
       // dark: true
     },
     plugins: {
-      Notify
+      Notify,
+      Dialog
     }
   });
   app.use(router)

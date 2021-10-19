@@ -7,10 +7,8 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@imagemagick/magick-wasm": "^0.0.8",
-    "@longlost/wasm-imagemagick": "^2.2.1",
     "@mapbox/mapbox-gl-geocoder": "^4.7.4",
-    "@quasar/app": "^3.1.4",
+    "@quasar/app": "^3.1.5",
     "@quasar/extras": "^1.11.2",
     "core-js": "^3.18.3",
     "idb-keyval": "^6.0.3",
@@ -18,15 +16,14 @@
     "mapbox-gl": "^2.5.1",
     "mapbox-gl-style-switcher": "^1.0.10",
     "mitt": "^3.0.0",
-    "npm-check-updates": "^11.8.5",
     "quasar": "^2.1.5",
-    "vue": "^3.0.5",
-    "wasm-imagemagick": "^1.2.8"
+    "vue": "^3.0.5"
   },
   "devDependencies": {
+    "npm-check-updates": "^11.8.5",
     "@vitejs/plugin-vue": "^1.9.3",
     "@vue/compiler-sfc": "^3.2.20",
     "sass": "^1.43.2",
-    "vite": "^2.6.9"
+    "vite": "^2.6.10"
   }
 }

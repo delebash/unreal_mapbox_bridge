@@ -29,23 +29,6 @@
     </q-toolbar>
   </div>
 </template>
-<!--      color="lime-11"-->
-<!--      bg-color="green"-->
-<!--      label-color="orange-->
-<!--      color="lime-11" bg-color="green" filled-->
-<!--      <q-select-->
-<!--        dark-->
-<!--        borderless-->
-<!--        color="lime-11"-->
-<!--        label="Selected Layer"-->
-<!--        transition-show="scale"-->
-<!--        transition-hide="scale"-->
-<!--        style="width: 118px"-->
-<!--        v-model="layer_type"-->
-<!--        :options="options"-->
-<!--        @update:model-value="changeStyle"-->
-<!--      />-->
-
 
 <script>
 import {ref} from "vue";
