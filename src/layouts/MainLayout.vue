@@ -38,7 +38,7 @@
                          style="width: 100%; height: calc(100vh - 65px)">
               <mapbox-map-viewer class="col" ref="mapBoxViewer"></mapbox-map-viewer>
             </q-tab-panel>
-            <q-tab-panel name="settings">
+            <q-tab-panel lass="row q-pl-xs q-pt-xs q-pb-none q-ma-none" name="settings">
               See: <a href="https://docs.mapbox.com/help/glossary/access-token/" target="_blank">Mapbox access token
               docs</a>
               <q-input dense v-model="access_token" label="Mapbox Access Token *" filled
@@ -48,9 +48,9 @@
                        :rules="[ val => val && val.length > 0 || 'Please type something']">
                 <template v-slot:append>
                   <q-icon dense
-                      :name="isPwd ? 'visibility_off' : 'visibility'"
-                      class="cursor-pointer"
-                      @click="isPwd = !isPwd"
+                          :name="isPwd ? 'visibility_off' : 'visibility'"
+                          class="cursor-pointer"
+                          @click="isPwd = !isPwd"
                   />
                 </template>
               </q-input>
@@ -60,17 +60,20 @@
                        hint="You can use the default style or you can create your own custom style in Mapbox Studio."
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
-
-              <q-input class="q-pb-lg" v-model="dir_name" label="Enter download directory path *"
-                       filled
-                       lazy-rules
-                       :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'"
-                       hint="Download folder path">
-
-                <q-btn dense align="right" @click="fileDownloadDirectory()" color="secondary"
+              <div class="q-pa-none row items-start">
+                <div class="col q-pa-none">
+                  <q-input dense class="q-pb-none" v-model="dirName" label="Enter download directory path *"
+                           filled
+                           lazy-rules
+                           :rules="[ val => val && val.length > 0 || 'Please type something']"
+                           :type="isPwd ? '' : 'text'"
+                  >
+                  </q-input>
+                </div>
+                <q-btn class="q-pb-none" dense @click="openDirectory()" color="secondary"
                        label="Select download folder"></q-btn>
-              </q-input>
-              <q-btn dense @click="saveUserSettings()" color="secondary"
+              </div>
+              <q-btn class="q-pt-none" dense @click="saveUserSettings()" color="secondary"
                      label="Save settings"></q-btn>
             </q-tab-panel>
           </q-tab-panels>
@@ -85,13 +88,13 @@
 import {ref} from 'vue'
 import MapboxMapViewer from '../components/mapbox-map-viewer.vue'
 import SideNav from '../components/side-nav.vue'
-import {createStore, get, set} from 'idb-keyval'
 import {Notify} from 'quasar'
 import mapboxgl from "mapbox-gl";
 import {useQuasar} from 'quasar'
 import Help from '../components/help.vue'
 
-const db = createStore('unreal_mapbox', 'user_settings');
+import idbKeyval from '../utilities/fileUtils/idb-keyval-iife';
+import fileUtils from '../utilities/fileUtils/fs-helpers';
 
 export default {
   setup() {
@@ -116,8 +119,8 @@ export default {
       },
       data_path: '',
       selectedTab: ref('map'),
-      dir_handle: ref(''),
-      dir_name: ref(''),
+      dirHandle: ref(''),
+      dirName: ref(''),
       style_url: ref(''),
       access_token: ref(''),
       isPwd: ref(true),
@@ -125,10 +128,9 @@ export default {
     }
   },
   mounted: async function () {
-    await set('mapbox_api_url', 'https://api.mapbox.com/v4', db)
-    await set('mapbox_raster_png_dem', "mapbox://mapbox.terrain-rgb", db)
-    await set('terrain_threed_dem', "mapbox://mapbox.mapbox-terrain-dem-v1", db)
-    this.access_token = await get('access_token', db)
+    idbKeyval.set('mapbox_api_url', 'https://api.mapbox.com/v4')
+    idbKeyval.set('mapbox_raster_png_dem', "mapbox://mapbox.terrain-rgb")
+    idbKeyval.set('terrain_threed_dem', "mapbox://mapbox.mapbox-terrain-dem-v1")
 
     //Load user data
     await this.loadUserData();
@@ -151,7 +153,7 @@ export default {
       })
     },
     isRequiredSettings() {
-      if (this.access_token && this.style_url && this.dir_handle) {
+      if (this.access_token && this.style_url && this.dirHandle) {
         return true
       } else {
         this.redirectToSettings()
@@ -168,31 +170,52 @@ export default {
         position: 'top'
       })
     },
-    async fileDownloadDirectory() {
-      let dir_handle = await window.showDirectoryPicker();
-      await set('dir_handle', dir_handle, db)
-      this.dir_handle = dir_handle
-      this.dir_name = dir_handle.name
-    },
+    async openDirectory() {
+      let dirHandle
+      // If a fileHandle is provided, verify we have permission to read/write it,
+      // otherwise, show the file open prompt and allow the user to select the file.
+      // if (!this.dirHandle) {
+      //   console.log('this dir')
+      //   if (await fileUtils.verifyPermission(this.dirHandle, true) === false) {
+      //     console.error(`User did not grant permission to '${this.dirHandle.name}'`);
+      //     return;
+      //   }
+      // } else {
 
+      //Permission are always asked for dirHandle not the same as fileHandle
+      try {
+        dirHandle = await fileUtils.getDirHandle();
+      } catch (ex) {
+        if (ex.name === 'AbortError') {
+          return;
+        }
+        const msg = 'An error occured trying to open the file.';
+        console.error(msg, ex);
+      }
+
+      if (!dirHandle) {
+        return;
+      }
+      idbKeyval.set('dirHandle', dirHandle);
+      this.dirName = dirHandle.name
+    },
     saveUserSettings() {
-      set('access_token', this.access_token, db)
-      set('style_url', this.style_url, db)
-      set('dir_handle', this.dir_handle, db)
-      set('dir_name', this.dir_name, db)
+      idbKeyval.set('access_token', this.access_token);
+      idbKeyval.set('style_url', this.style_url);
       if (this.isRequiredSettings() === true) {
         this.loadMap()
       }
     },
     async loadUserData() {
-      mapboxgl.accessToken = await get('access_token', db)
+      mapboxgl.accessToken = await idbKeyval.get('access_token')
       this.access_token = mapboxgl.accessToken || ''
-      this.style_url = await get('style_url', db) || ''
+      this.style_url = await idbKeyval.get('style_url') || ''
       if (this.style_url === '') {
         this.style_url = 'mapbox://styles/mapbox/streets-v11'
       }
-      this.dir_handle = await get('dir_handle', db) || ''
-      this.dir_name = await get('dir_name', db) || ''
+      let dirHandle = await idbKeyval.get('dirHandle') || ''
+      this.dirHandle = dirHandle
+      this.dirName = dirHandle.name
     }
   },
   components: {

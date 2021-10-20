@@ -1,6 +1,3 @@
-<!--map.on('load', function () {-->
-<!--map.resize();-->
-<!--});-->
 <style>
 #map {
 }
@@ -11,14 +8,13 @@
 
 </style>
 <template>
-
   <div id="map">
     <q-toolbar id="mb-tbar" class="bg-black text-white q-pa-none q-ma-none">
       <q-toggle
-        dark
-        v-model="threedview"
-        label="3D view"
-        @update:model-value="change3D"
+          dark
+          v-model="threedview"
+          label="3D view"
+          @update:model-value="change3D"
       />
     </q-toolbar>
   </div>
@@ -26,25 +22,23 @@
 
 <script>
 import {ref} from "vue";
-import {createStore, get, set} from 'idb-keyval'
+import idbKeyval from '../utilities/fileUtils/idb-keyval-iife';
+import fileUtils from '../utilities/fileUtils/fs-helpers'
+import mapUtils from '../utilities/mapUtils'
+import emitter from "../utilities/emitter";
 
 import mapboxgl from 'mapbox-gl'
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'
 // import { MapboxStyleSwitcherControl } from "mapbox-gl-style-switcher";
 // import "mapbox-gl-style-switcher/styles.css";
 // import mbxGeocoding from '@mapbox/mapbox-gl-geocoder'
-import fileUtils from '../utilities/fileUtils'
-import mapUtils from '../utilities/mapUtils'
-import emitter from "../utilities/emitter";
 
-const db = createStore('unreal_mapbox', 'user_settings');
 
 export default {
   name: 'mapbox-map-viewer',
   setup() {
     return {
-      dir_handle: ref(''),
-      dir_name: ref(''),
+      dirHandle: ref(''),
       style_url: ref(''),
       access_token: ref(''),
       mapbox_raster_png_dem: ref(''),
@@ -59,14 +53,13 @@ export default {
   },
   methods: {
     async loadMapboxMap() {
-      mapboxgl.accessToken = await get('access_token', db)
+      mapboxgl.accessToken = await idbKeyval.get('access_token')
       this.access_token = mapboxgl.accessToken
 
-      this.dir_handle = await get('dir_handle', db)
-      this.dir_name = await get('dir_name', db)
-      this.style_url = await get('style_url', db)
-      this.mapbox_raster_png_dem = await get('mapbox_raster_png_dem', db)
-      this.terrain_threed_dem = await get('terrain_threed_dem', db)
+      this.dirHandle = await idbKeyval.get('dirHandle')
+      this.style_url = await idbKeyval.get('style_url')
+      this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
+      this.terrain_threed_dem = await idbKeyval.get('terrain_threed_dem')
 
       let that = this
 
@@ -85,7 +78,7 @@ export default {
         // Match anything which looks like
         // decimal degrees coordinate pair.
         const matches = query.match(
-          /^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i
+            /^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i
         );
         if (!matches) {
           return null;
@@ -186,28 +179,28 @@ export default {
         });
 
         map.addLayer(
-          {
-            'id': '10m-bathymetry-81bsvj',
-            'type': 'fill',
-            'source': '10m-bathymetry-81bsvj',
-            'source-layer': '10m-bathymetry-81bsvj',
-            'layout': {},
-            'paint': {
-              'fill-outline-color': 'hsla(337, 82%, 62%, 0)',
-              // cubic bezier is a four point curve for smooth and precise styling
-              // adjust the points to change the rate and intensity of interpolation
-              'fill-color': [
-                'interpolate',
-                ['cubic-bezier', 0, 0.5, 1, 0.5],
-                ['get', 'DEPTH'],
-                200,
-                '#78bced',
-                9000,
-                '#15659f'
-              ]
-            }
-          },
-          'land-structure-polygon'
+            {
+              'id': '10m-bathymetry-81bsvj',
+              'type': 'fill',
+              'source': '10m-bathymetry-81bsvj',
+              'source-layer': '10m-bathymetry-81bsvj',
+              'layout': {},
+              'paint': {
+                'fill-outline-color': 'hsla(337, 82%, 62%, 0)',
+                // cubic bezier is a four point curve for smooth and precise styling
+                // adjust the points to change the rate and intensity of interpolation
+                'fill-color': [
+                  'interpolate',
+                  ['cubic-bezier', 0, 0.5, 1, 0.5],
+                  ['get', 'DEPTH'],
+                  200,
+                  '#78bced',
+                  9000,
+                  '#15659f'
+                ]
+              }
+            },
+            'land-structure-polygon'
         );
 
       });
@@ -216,36 +209,43 @@ export default {
       });
 
       map.on('click', async function (e) {
+
+        let dirHandle = await idbKeyval.get('dirHandle')
+
+        //Verify user has permission to rea/write from selected directory
+        if (await fileUtils.verifyPermission(dirHandle, true) === false) {
+          console.error(`User did not grant permission to '${dirHandle.name}'`);
+          return;
+        }
+
         let lng = e.lngLat.lng
         let lat = e.lngLat.lat
 
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
-        await set('tile_info', tile_info, db)
+        idbKeyval.set('tile_info', tile_info)
 
         map.getSource('bounding_box_source').setData(tile_info.bb);
         map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
 
-        let mapbox_api_url = await get('mapbox_api_url', db)
+        let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
         let mapbox_rgb_image_url = mapbox_api_url + `/mapbox.terrain-rgb/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
 
-
-        let dir_handle = await get('dir_handle', db)
-        let rgb_image = await fileUtils.getMapboxTerrainRgb(dir_handle, tile_info, mapbox_rgb_image_url)
+        let rgb_image = await fileUtils.getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url)
         let rgb_buff = rgb_image.toBuffer()
-        await set('rgb_image_buffer', rgb_buff, db)
+        await idbKeyval.set('rgb_image_buffer', rgb_buff)
 
-        await fileUtils.writeFileToDisk(dir_handle, tile_info.rgbFileName, rgb_buff)
+        await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
 
         let previewImageInfo = await fileUtils.createHeightMapImage(rgb_image, 32, "GREY")
-        let bFileExists = await fileUtils.fileExists(dir_handle, tile_info.thirtytwoFile.name)
+        let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtytwoFile.name)
         //Note file does not have to be written to disk in order to update preview image
         if (bFileExists === false) {
           let buff = await previewImageInfo.image.toBuffer()
-          await fileUtils.writeFileToDisk(dir_handle, tile_info.thirtytwoFile.name, buff)
+          // await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtytwoFile.name, buff)
         }
 
         emitter.emit('updatePreviewImage', {
-          dir_handle: dir_handle,
+          dir_handle: dirHandle,
           tile_info: tile_info,
           preview_image: previewImageInfo.image,
           stats: previewImageInfo.stats
@@ -292,15 +292,15 @@ export default {
 
     async geoCodeReverse(options) {
       await MapboxGeocoder
-        .reverseGeocode({
-          query: [options.lng, options.lat]
-        })
-        .send()
-        .then(function (response) {
-          if (response && response.body && response.body.features) {
-            options.address = response.body.features[0].place_name
-          }
-        });
+          .reverseGeocode({
+            query: [options.lng, options.lat]
+          })
+          .send()
+          .then(function (response) {
+            if (response && response.body && response.body.features) {
+              options.address = response.body.features[0].place_name
+            }
+          });
     }
   }
 }

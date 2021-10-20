@@ -54,25 +54,39 @@
   <div class="row justify-center q-pt-lg">
     <q-btn @click="createSixteenHeightMap" dense color="primary" no-caps label="Download 16bit HeightMap"/>
   </div>
+  <q-dialog v-model="alert">
+    <q-card>
+      <q-card-section>
+        <div class="text-h6">Alert</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        Please select a tile to download first.
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="OK" color="primary" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
 
 import {ref} from 'vue'
-import {createStore, get} from 'idb-keyval'
-import fileUtils from '../utilities/fileUtils'
+
+import fileUtils from '../utilities/fileUtils/fs-helpers'
+import emitter from "../utilities/emitter";
+import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
+
 // import * as Magick from 'https://knicknic.github.io/wasm-imagemagick/magickApi.js'
 // import * as Vips from 'https://cdn.jsdelivr.net/npm/wasm-vips@0.0.1/lib/node/vips.min.js'
-
-import emitter from "../utilities/emitter";
-import {Image} from 'image-js'
-
-const db = createStore('unreal_mapbox', 'user_settings');
 
 export default {
   name: 'SideNav',
   setup() {
     return {
+      alert: ref(false),
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
         {
@@ -95,7 +109,7 @@ export default {
       url: ref('thirtytwo-9-82-180.png'),
       tile_info: ref(''),
       stats: ref(''),
-      dir_handle: ref(''),
+      dirHandle: ref(''),
       preview_imag: ref(''),
       rgb_image: ref(''),
       maxElevation: ref(''),
@@ -136,7 +150,7 @@ export default {
       this.tile_info = data.tile_info
       this.stats = data.stats
       this.preview_image = data.preview_image
-      this.dir_handle = data.dir_handle
+      this.dirHandle = data.dirHandle
 
       let blob = await this.preview_image.toBlob()
       const objectURL = URL.createObjectURL(blob)
@@ -152,13 +166,28 @@ export default {
     },
 
     async createSixteenHeightMap() {
-      let rgbImgBuff = await get('rgb_image_buffer', db)
-      let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
-      let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
-      let img = sixteen_image_info.image
-      let buff = await img.toBuffer()
+      if (this.tile_info) {
+        let dirHandle = await idbKeyval.get('dirHandle')
+        //Verify user has permission to rea/write from selected directory
+        if (await fileUtils.verifyPermission(dirHandle, true) === false) {
+          console.error(`User did not grant permission to '${dirHandle.name}'`);
+          return;
+        }
+        let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
+        if (bExists) {
+          let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
+          let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
+          let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
+          let img = sixteen_image_info.image
+          let buff = await img.toBuffer()
 
-      await fileUtils.writeFileToDisk(this.dir_handle, this.tile_info.sixteenFile.name, buff)
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, buff)
+        } else {
+          this.alert = true
+        }
+      } else {
+        this.alert = true
+      }
 
 
       // let image = await Jimp.read(buff.buffer)
