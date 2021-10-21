@@ -1,6 +1,6 @@
-# Unreal Mapbox Bridge (unreal_mapbox_bridge)
+# Unreal Mapbox Bridge 
 
-Use real world heightmap data from Mapbox and convert to Unreal heightmap
+#### Use real world heightmap data from Mapbox and automatically convert it to an Unreal heightmap image
 
 See it live [here](https://terrain.justgeektechs.com/)
 
