@@ -67,7 +67,7 @@ Example: **GIMP**
 3) Type in the width and height (should be the same as in height: 2017 width: 2017)
 4) Set the Interpolation to NoHalo and click Scale
 5) Choose File > Export as and name your converted file.
-6) On the popup dialog box namedExport image as PNG leave all defaults and click Export.
+6) On the popup dialog box named "Export image as PNG" leave all defaults and click Export.
 
 
 Import the heightmap into Unreal per normal procedure.  You will need to adjust the Z-scale try 400 to start and go up or down as needed.
