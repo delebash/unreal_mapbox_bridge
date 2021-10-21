@@ -153,7 +153,7 @@ export default {
       })
     },
     isRequiredSettings() {
-      if (this.access_token && this.style_url && this.dirHandle) {
+      if (this.access_token && this.style_url && this.dirName) {
         return true
       } else {
         this.redirectToSettings()

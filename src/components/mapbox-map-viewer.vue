@@ -132,7 +132,6 @@ export default {
       map.addControl(new mapboxgl.FullscreenControl({}))
 
       map.on('load', function () {
-        console.log(map)
 
         map.showTileBoundaries = true;
 
@@ -228,8 +227,6 @@ export default {
 
         map.getSource('bounding_box_source').setData(tile_info.bb);
         map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
-        console.log('click')
-        console.log(map)
         let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
         let mapbox_rgb_image_url = mapbox_api_url + `/mapbox.terrain-rgb/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
 
