@@ -53,6 +53,7 @@ See Unreal Recommended Landscape Sizes [here](https://docs.unrealengine.com/4.27
 Programs you can use to resample your image to the landscape size you are using.
 
 [GIMP](https://www.gimp.org/https://www.gimp.org/), [Affinity Photo](https://affinity.serif.com/en-us/photo/), [Photoshop](https://www.adobe.com/products/photoshop/landpa.html).
+[Terra Sculptor](http://www.demenzunmedia.com/home/terresculptor/) -- is an awesome free program for creating and manipulating heightmap images.  It even has preset landscape sizes for Unreal.  To enable UDK go to Settings > Dimensions and check UDK Landscape.
 
 The principle is the same for all. 
 
