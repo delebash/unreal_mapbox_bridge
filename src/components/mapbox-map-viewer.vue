@@ -132,7 +132,7 @@ export default {
       map.addControl(new mapboxgl.FullscreenControl({}))
 
       map.on('load', function () {
-    console.log(map)
+        console.log(map)
 
         map.showTileBoundaries = true;
 
@@ -233,12 +233,13 @@ export default {
         let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
         let mapbox_rgb_image_url = mapbox_api_url + `/mapbox.terrain-rgb/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
 
+        //Get terrain rgb from selected tile
         let rgb_image = await fileUtils.getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url)
         let rgb_buff = rgb_image.toBuffer()
         await idbKeyval.set('rgb_image_buffer', rgb_buff)
-
         await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
 
+        //Create preview imamge
         let previewImageInfo = await fileUtils.createHeightMapImage(rgb_image, 32, "GREY")
         let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtytwoFile.name)
         //Note file does not have to be written to disk in order to update preview image

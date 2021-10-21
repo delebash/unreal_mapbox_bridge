@@ -164,7 +164,9 @@ export default {
 
       this.updateStats()
     },
+    async resampleImage(arrayBuff) {
 
+    },
     async createSixteenHeightMap() {
       if (this.tile_info) {
         let dirHandle = await idbKeyval.get('dirHandle')
@@ -179,9 +181,12 @@ export default {
           let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
           let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
-          let buff = await img.toBuffer()
+          let arrayBuff = await img.toBuffer()
 
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, buff)
+          //Try to resample
+          //let imgBuff = this.resampleImage(arrayBuff)
+
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, arrayBuff)
         } else {
           this.alert = true
         }
@@ -189,19 +194,6 @@ export default {
         this.alert = true
       }
 
-
-      // let image = await Jimp.read(buff.buffer)
-      // console.log(image)
-      //  image.filterType(0);
-      //  image.normalize()
-      // image.deflateLevel(0); // set the deflate level for the saved PNG
-      //   image.deflateStrategy(2); // set the deflate for the saved PNG (0-3)
-      //    console.log(image)
-      //    image.filterType(Jimp.PNG_FILTER_NONE)
-      //    // console.log(Jimp.AUTO)
-      //    image.resize(2017, 2017, Jimp.RESIZE_BICUBIC);;
-      // image.gaussian(15);
-      // let buf = await image.getBufferAsync(Jimp.MIME_PNG)
 
       //      const files = [{ 'name': 'srcFile.jpg', 'content': rgbImgBuff }];
       // const command = ["convert", "srcFile.jpg", "-density", "512", "out.jpg"];
