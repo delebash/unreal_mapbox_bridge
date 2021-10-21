@@ -44,7 +44,7 @@ You will see a preview of what the heightmap will look like as well as some stat
 
 Click the download button to download the selected tile 16 bit heightmap file.
 
-Select Terrain size is currently now working.  The image will download as 512x512.
+Select Terrain size is currently not working.  The image will download as 512x512.
 
 The Scale number is also not correct. I would suggest an initial scale of 400 when you import into Unreal.
 
