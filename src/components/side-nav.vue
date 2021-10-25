@@ -78,8 +78,7 @@ import {ref} from 'vue'
 import fileUtils from '../utilities/fileUtils/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
-
-const vips = await Vips();
+let vips
 
 export default {
   name: 'SideNav',
@@ -125,6 +124,7 @@ export default {
     }
   },
   async mounted() {
+    vips = await Vips();
     emitter.on('updatePreviewImage', (data) => {
       this.updatePreviewImage(data)
     })
