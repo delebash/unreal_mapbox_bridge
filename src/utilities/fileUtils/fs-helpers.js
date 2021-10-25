@@ -131,11 +131,11 @@ async function fileExists(dirHandle, fileName) {
     //Check if file exists
     try {
         await dirHandle.getFileHandle(fileName)
-        console.log(fileName + '  file already exists -- using cached file')
+        // console.log(fileName + '  file already exists -- using cached file')
         return true
     } catch (e) {
         if (e.name === "NotFoundError") {
-            console.log(fileName + '  File not found try to download')
+            // console.log(fileName + '  File not found try to download')
             return false
         }
         if (e.name === "NotAllowedError") {
