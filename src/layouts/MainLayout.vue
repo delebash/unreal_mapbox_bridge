@@ -92,10 +92,11 @@ import {Notify} from 'quasar'
 import mapboxgl from "mapbox-gl";
 import {useQuasar} from 'quasar'
 import Help from '../components/help.vue'
+// import ReloadPWA from "../components/ReloadPWA.vue";
 
 import idbKeyval from '../utilities/fileUtils/idb-keyval-iife';
 import fileUtils from '../utilities/fileUtils/fs-helpers';
-
+let installPrompt
 export default {
   setup() {
     const $q = useQuasar()
@@ -124,8 +125,20 @@ export default {
       style_url: ref(''),
       access_token: ref(''),
       isPwd: ref(true),
-      drawerLeft: ref(false)
+      drawerLeft: ref(false),
+      deferredPrompt: null,
+      installBtn: 'none',
+      installer: undefined
     }
+  },
+  created() {
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      // this.deferredPrompt = e;
+      installPrompt = e
+    })
   },
   mounted: async function () {
     idbKeyval.set('mapbox_api_url', 'https://api.mapbox.com/v4')
@@ -140,6 +153,9 @@ export default {
     }
   },
   methods: {
+    installer(){
+      installPrompt.prompt
+    },
     resizeMap() {
       this.$refs.mapBoxViewer.resizeMap()
     },

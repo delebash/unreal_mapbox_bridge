@@ -41,10 +41,10 @@
         </template>
       </q-field>
       <q-select dense class="q-pt-md"
-                label="Terrain Size"
+                label="Landscape Size"
                 transition-show="scale"
                 transition-hide="scale"
-                hint="Terrain size broken default 512x512"
+                hint="Unreal Recommended Sizes"
                 outlined
                 v-model="unrealLandscape"
                 :options="landscapeSize"
@@ -79,8 +79,7 @@ import fileUtils from '../utilities/fileUtils/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
 
-// import * as Magick from 'https://knicknic.github.io/wasm-imagemagick/magickApi.js'
-// import * as Vips from 'https://cdn.jsdelivr.net/npm/wasm-vips@0.0.1/lib/node/vips.min.js'
+const vips = await Vips();
 
 export default {
   name: 'SideNav',
@@ -89,6 +88,10 @@ export default {
       alert: ref(false),
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
+        {
+          label: '8129x8129',
+          value: 8129
+        },
         {
           label: '4033x4033',
           value: 4033
@@ -182,11 +185,12 @@ export default {
           let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
           let arrayBuff = await img.toBuffer()
-
-          //Try to resample
-          //let imgBuff = this.resampleImage(arrayBuff)
-
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, arrayBuff)
+          let image = vips.Image.newFromBuffer(arrayBuff);
+          image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
+          // image = image.sharpen({sigma: 2})
+          const outBuffer = image.writeToBuffer('.PNG')
+          const arr = new Uint8Array(outBuffer);
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, arr)
         } else {
           this.alert = true
         }

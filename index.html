@@ -1,17 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
-         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Vite App</title>
-      <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" crossorigin="anonymous">
-      <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet" crossorigin="anonymous">
-      <link href="https://cdn.jsdelivr.net/npm/quasar@2.1.5/dist/quasar.prod.css" rel="stylesheet" crossorigin="anonymous">
-      <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet" crossorigin="anonymous">
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.4.1/mapbox-gl.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css"
+          rel="stylesheet" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/quasar@2.1.5/dist/quasar.prod.css" rel="stylesheet"
+          crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons" rel="stylesheet"
+          crossorigin="anonymous">
+</head>
+<body>
+<!--  <script type="module" src="https://cdn.jsdelivr.net/npm/wasm-vips@0.0.1/lib/node/vips.min.js">-->
+<!--      console.log('test')-->
+<!--      globalThis.vips = await Vips();-->
+<!--      console.log(globalThis.vips)-->
+<!--  </script>-->
+<script src="vips.js"></script>
+<div id="app"></div>
+<script type="module" src="/src/main.js">
+
+</script>
+</body>
 </html>
