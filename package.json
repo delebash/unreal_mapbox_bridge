@@ -2,9 +2,8 @@
   "name": "vite-example",
   "version": "0.0.0",
   "scripts": {
-    "start": "npm run run-build && npm run serve",
+    "start": "npm run build && npm run serve",
     "build": "vite build",
-    "run-build": "cross-env BASE_URL=/ SOURCE_MAP=true vite build",
     "serve": "node server.js"
   },
   "dependencies": {
@@ -22,7 +21,6 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.9.4",
     "@vue/compiler-sfc": "^3.2.20",
-    "cross-env": "^7.0.3",
     "npm-check-updates": "^11.8.5",
     "sass": "^1.43.4",
     "vite": "^2.6.13",
