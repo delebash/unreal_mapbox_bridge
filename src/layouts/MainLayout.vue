@@ -2,7 +2,7 @@
   <q-layout view="lHr lpr lfr">
     <q-header dense elevated class="bg-primary text-white" height-hint="98">
     </q-header>
-
+    <ReloadPrompt />
     <q-drawer dense show-if-above v-model="drawerLeft" side="left" @hide='resizeMap' class="no-margin no-padding">
       <div class="row  q-pa-xs full-height">
         <q-card class="col q-pl-xs">
@@ -80,6 +80,7 @@
         </q-card>
       </q-page>
     </q-page-container>
+
   </q-layout>
 </template>
 
@@ -92,11 +93,11 @@ import {Notify} from 'quasar'
 import mapboxgl from "mapbox-gl";
 import {useQuasar} from 'quasar'
 import Help from '../components/help.vue'
-// import ReloadPWA from "../components/ReloadPWA.vue";
-
 import idbKeyval from '../utilities/fileUtils/idb-keyval-iife';
 import fileUtils from '../utilities/fileUtils/fs-helpers';
-let installPrompt
+
+import ReloadPrompt from '../components/ReloadPrompt.vue'
+
 export default {
   setup() {
     const $q = useQuasar()
@@ -131,15 +132,7 @@ export default {
       installer: undefined
     }
   },
-  created() {
 
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      // Stash the event so it can be triggered later.
-      // this.deferredPrompt = e;
-      installPrompt = e
-    })
-  },
   mounted: async function () {
     idbKeyval.set('mapbox_api_url', 'https://api.mapbox.com/v4')
     idbKeyval.set('mapbox_raster_png_dem', "mapbox://mapbox.terrain-rgb")
@@ -153,9 +146,6 @@ export default {
     }
   },
   methods: {
-    installer(){
-      installPrompt.prompt
-    },
     resizeMap() {
       this.$refs.mapBoxViewer.resizeMap()
     },
@@ -237,7 +227,8 @@ export default {
   components: {
     MapboxMapViewer,
     SideNav,
-    Help
+    Help,
+    ReloadPrompt
   }
 }
 </script>

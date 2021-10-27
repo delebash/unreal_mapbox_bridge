@@ -1,0 +1,2 @@
+https-localhost is use to run serve as https for pwa testing.  When first run it will install
+a self signed cert and redirect to https
