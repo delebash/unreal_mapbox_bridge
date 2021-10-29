@@ -21,10 +21,7 @@ export default defineConfig({
                 description: 'Use real world terrain data to create heightmaps for unreal engine',
                 theme_color: '#ffffff',
                 workbox: {
-                    cleanupOutdatedCaches: false,
-                    sourcemap: true,
-
-                },
+                      },
                 icons: [
                     {
                         src: 'pwa-192x192.png', // <== don't add slash, for testing
