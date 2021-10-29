@@ -52,6 +52,8 @@ The Scale number is also not correct. I would suggest an initial scale of 400 wh
 
 See Unreal Recommended Landscape Sizes [here](https://docs.unrealengine.com/4.27/en-US/BuildingWorlds/Landscape/TechnicalGuide/)
 
+Resizing/Resampling an image for Unreal Landscapes has been added to the software.  Just select your Landscape size before you download your heightmap.  As an alternative to resizing in the application you can use other software to resize to custom sizes.
+
 Programs you can use to resample your image to the landscape size you are using.
 
 [GIMP](https://www.gimp.org/https://www.gimp.org/), [Affinity Photo](https://affinity.serif.com/en-us/photo/), [Photoshop](https://www.adobe.com/products/photoshop/landpa.html).
