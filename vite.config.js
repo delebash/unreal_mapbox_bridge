@@ -5,6 +5,7 @@ import {VitePWA} from 'vite-plugin-pwa'
 export default defineConfig({
     plugins: [
         VitePWA({
+            base: '/',
             registerType: 'autoUpdate',
             includeAssets: ['favicon.png',
                 'favicon.ico',
@@ -30,7 +31,7 @@ export default defineConfig({
                         type: 'image/png',
                     },
                     {
-                        src: '/pwa-512x512.png', // <== don't remove slash, for testing
+                        src: 'pwa-512x512.png', // <== don't remove slash, for testing
                         sizes: '512x512',
                         type: 'image/png',
                     },
