@@ -135,7 +135,6 @@ export default {
 
   mounted: async function () {
     let installed = await idbKeyval.get('pwa-installed')
-    console.log('installed')
     if (installed) {
       this.showPwaBtn = false
     }
@@ -158,6 +157,7 @@ export default {
       this.showPwaBtn = false
     },
     async installPWA() {
+      console.log(window.installEvent)
       window.installEvent.prompt()
       window.installEvent = null
     },

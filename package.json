@@ -2,15 +2,18 @@
   "name": "vite-example",
   "version": "0.0.0",
   "scripts": {
-    "start": "npm run build && npm run serve",
+    "start": "vite",
+    "ssl": "npm run build && npm run copyssl && npm run serve",
     "build": "vite build",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "copyssl": "node copyssl.js"
   },
   "dependencies": {
     "@mapbox/mapbox-gl-geocoder": "^4.7.4",
     "@quasar/app": "^3.1.7",
     "@quasar/extras": "^1.11.3",
     "core-js": "^3.19.0",
+    "fs-extra": "^10.0.0",
     "idb-keyval": "^6.0.3",
     "image-js": "^0.33.0",
     "localforage": "^1.10.0",
@@ -22,9 +25,12 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^1.9.4",
     "@vue/compiler-sfc": "^3.2.20",
+    "cp-file": "^9.1.0",
+    "mkcert": "^1.4.0",
     "npm-check-updates": "^11.8.5",
     "sass": "^1.43.4",
     "vite": "^2.6.13",
+    "vite-plugin-mkcert": "^1.5.2",
     "vite-plugin-pwa": "^0.11.3"
   }
 }

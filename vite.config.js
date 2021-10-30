@@ -1,9 +1,25 @@
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import {VitePWA} from 'vite-plugin-pwa'
+import mkcert from'vite-plugin-mkcert'
 
 export default defineConfig({
+    server: {
+        // https: true  //hotmodule reload does not work if https is enabled
+    },
     plugins: [
+        vue(),
+      mkcert({}),
+        {
+            name: "configure-response-headers",
+            configureServer: (server) => {
+                server.middlewares.use((_req, res, next) => {
+                    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+                    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+                    next();
+                });
+            },
+        },
         VitePWA({
             base: '/',
             registerType: 'autoUpdate',
@@ -43,8 +59,7 @@ export default defineConfig({
                     },
                 ],
             }
-        }),
-        vue()
+        })
     ],
     define: {
         'process.env': {}
