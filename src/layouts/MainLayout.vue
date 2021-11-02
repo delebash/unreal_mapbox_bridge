@@ -75,6 +75,8 @@
                 <q-btn class="q-pb-none" dense @click="openDirectory()" color="secondary"
                        label="Select download folder"></q-btn>
               </div>
+              <!--              <q-checkbox v-model="createFolder" label="Creat a folder for each tile information downloaded" />-->
+              <br>
               <q-btn class="q-pt-none" dense @click="saveUserSettings()" color="secondary"
                      label="Save settings"></q-btn>
             </q-tab-panel>
@@ -129,7 +131,8 @@ export default {
       access_token: ref(''),
       showPwaBtn: true,
       isPwd: ref(true),
-      drawerLeft: ref(false)
+      drawerLeft: ref(false),
+      createFolder: ref(false)
     }
   },
 
@@ -194,17 +197,6 @@ export default {
     },
     async openDirectory() {
       let dirHandle
-      // If a fileHandle is provided, verify we have permission to read/write it,
-      // otherwise, show the file open prompt and allow the user to select the file.
-      // if (!this.dirHandle) {
-      //   console.log('this dir')
-      //   if (await fileUtils.verifyPermission(this.dirHandle, true) === false) {
-      //     console.error(`User did not grant permission to '${this.dirHandle.name}'`);
-      //     return;
-      //   }
-      // } else {
-
-      //Permission are always asked for dirHandle not the same as fileHandle
       try {
         dirHandle = await fileUtils.getDirHandle();
       } catch (ex) {
@@ -224,6 +216,8 @@ export default {
     saveUserSettings() {
       idbKeyval.set('access_token', this.access_token);
       idbKeyval.set('style_url', this.style_url);
+      idbKeyval.set('create_folder', this.createFolder);
+
       if (this.isRequiredSettings() === true) {
         this.loadMap()
       }
@@ -236,6 +230,7 @@ export default {
         this.style_url = 'mapbox://styles/mapbox/streets-v11'
       }
       let dirHandle = await idbKeyval.get('dirHandle') || ''
+      this.createFolder = await idbKeyval.get('create_folder') || ''
       this.dirHandle = dirHandle
       this.dirName = dirHandle.name
     }

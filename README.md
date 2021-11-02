@@ -72,7 +72,7 @@ Example: **GIMP**
 6) On the popup dialog box named "Export image as PNG" leave all defaults and click Export.
 
 
-Import the heightmap into Unreal per normal procedure.  You will need to adjust the Z-scale try 400 to start and go up or down as needed.
+Import the heightmap into Unreal per normal procedure.  You will need to adjust the Z-scale to the Z-scale shown on the app.
 
 Example imported landscape standing on top of Mt. Rainier
 

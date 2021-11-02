@@ -1,3 +1,5 @@
+import mapboxgl from "mapbox-gl";
+
 function lng2tile(lng, zoom) {
     return (Math.floor((lng + 180) / 360 * Math.pow(2, zoom)));
 }
@@ -21,16 +23,30 @@ function getTileInfo(lng, lat, map) {
     tileInfo.y = lat2tile(lat, zoom)
     tileInfo.long = lng
     tileInfo.lat = lat
-    tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y + '.png'
     tileInfo.tileWidthInMeters = widthInMeters
     tileInfo.metersPerPixel = metersPerPixel
     tileInfo.bb = getTileGeoJsonBB(tileInfo)
-    tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y + '.png'
-    tileInfo.rgbFileName = 'terrain-rgb' + "-" + tileInfo.mapbox_tile_name
-    tileInfo.thirtytwoFile = {name: 'thirtytwo' + "-" + tileInfo.mapbox_tile_name, bitDepth: 32}
-    tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name, bitDepth: 16}
+    tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
+    tileInfo.rgbFileName = 'terrain-rgb' + "-" + tileInfo.mapbox_tile_name + '.png'
+    tileInfo.thirtytwoFile = {name: 'thirtytwo' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 32}
+    tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 16}
 
     return tileInfo
+}
+
+function getFeaturesFromBB(map, bbox) {
+    if (bbox) {
+        let sw = [bbox.geometry.coordinates[0][4]]
+        let ne = [bbox.geometry.coordinates[0][2]]
+        const swLonglat = new mapboxgl.LngLat(sw[0][0], sw[0][1]);
+        const neLonglat = new mapboxgl.LngLat(ne[0][0], ne[0][1]);
+        const swPt = map.project(swLonglat)
+        const nePt = map.project(neLonglat)
+        const features = map.queryRenderedFeatures(
+            [swPt, nePt]
+        )
+        return features
+    }
 }
 
 function tile2lat(y, zoom) {
@@ -60,4 +76,4 @@ function getTileGeoJsonBB(tile_info) {
     return geoJson;
 }
 
-export default {tile2lat, tile2lng, lat2tile, getTileInfo}
+export default {tile2lat, tile2lng, lat2tile, getTileInfo, getFeaturesFromBB}

@@ -1,5 +1,3 @@
-
-
 import {Image} from "image-js";
 
 /**
@@ -132,6 +130,7 @@ function getHeightFromRgb(r, g, b) {
 
 async function getHeightArrayStats(image) {
     let decodedHeightArray = []
+
     let stats = {}
     stats.minElevation = Number.MAX_VALUE;
     stats.maxElevation = Number.MIN_VALUE;
@@ -152,7 +151,8 @@ async function getHeightArrayStats(image) {
 
         decodedHeightArray.push(height)
     }
-
+    // stats.unrealZscale = ((stats.maxElevation/512) * 100)
+    // console.log(stats.unrealZscale)
     return {decodedHeightArray, stats}
 }
 

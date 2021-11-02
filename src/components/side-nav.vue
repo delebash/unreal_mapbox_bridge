@@ -35,7 +35,7 @@
           </div>
         </template>
       </q-field>
-      <q-field dense label="Z Height" hint="Input into Unreal Landscape Z scale" stack-label>
+      <q-field dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale" stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ zscale }}</div>
         </template>
@@ -78,6 +78,7 @@ import {ref} from 'vue'
 import fileUtils from '../utilities/fileUtils/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
+import mapUtils from '../utilities/mapUtils'
 let vips
 
 export default {
@@ -120,7 +121,8 @@ export default {
       elevation_range: ref(''),
       tileWidthInMeters: ref(''),
       metersPerPixel: ref(''),
-      zscale: ref('')
+      zscale: ref(''),
+      map: null
     }
   },
   async mounted() {
@@ -151,6 +153,7 @@ export default {
     },
     async updatePreviewImage(data) {
       this.tile_info = data.tile_info
+      this.map = data.map
       this.stats = data.stats
       this.preview_image = data.preview_image
       this.dirHandle = data.dirHandle
@@ -164,11 +167,9 @@ export default {
       this.tileWidthInMeters = this.tile_info.tileWidthInMeters
       this.metersPerPixel = this.tile_info.metersPerPixel
       this.zscale = this.getUnrealZScale(this.maxElevation).toFixed(3)
+      //  this.zscale = this.stats.unrealZscale.toFixed(3)
 
       this.updateStats()
-    },
-    async resampleImage(arrayBuff) {
-
     },
     async createSixteenHeightMap() {
       if (this.tile_info) {
@@ -191,6 +192,8 @@ export default {
           const outBuffer = image.writeToBuffer('.PNG')
           const arr = new Uint8Array(outBuffer);
           await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, arr)
+          let features = JSON.stringify(mapUtils.getFeaturesFromBB(this.map, this.tile_info.bb))
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.mapbox_tile_name + '.json', features)
         } else {
           this.alert = true
         }

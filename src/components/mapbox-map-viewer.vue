@@ -6,6 +6,10 @@
   z-index: 1;
 }
 
+.mapboxgl-popup {
+  max-width: 400px;
+  font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+}
 </style>
 <template>
   <div id="map">
@@ -67,7 +71,7 @@ export default {
         container: 'map',
         trackResize: true,
         style: that.style_url,
-        center: [-121.760473, 46.852830], //Mt Rainier
+        center: [-155.4694, 19.8230], //Mauna Kea
         zoom: 9,
         doubleClickZoom: false
       });
@@ -227,6 +231,13 @@ export default {
 
         map.getSource('bounding_box_source').setData(tile_info.bb);
         map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
+
+        //Long/Lat popup
+        new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
+            .addTo(map);
+
         let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
         let mapbox_rgb_image_url = mapbox_api_url + `/mapbox.terrain-rgb/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
 
@@ -242,17 +253,19 @@ export default {
         //Note file does not have to be written to disk in order to update preview image
         if (bFileExists === false) {
           let buff = await previewImageInfo.image.toBuffer()
-          // await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtytwoFile.name, buff)
+          await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtytwoFile.name, buff)
         }
 
         emitter.emit('updatePreviewImage', {
           dir_handle: dirHandle,
           tile_info: tile_info,
           preview_image: previewImageInfo.image,
-          stats: previewImageInfo.stats
+          stats: previewImageInfo.stats,
+          map: map
         })
       })
     },
+
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
