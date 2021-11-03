@@ -2,7 +2,7 @@
 
 #### Use real world heightmap data from Mapbox and automatically convert it to an Unreal heightmap image
 
-See it live [here](https://terrain.justgeektechs.com/)
+# Check out the demo running live [here](https://terrain.justgeektechs.com/)
 
 ## Install the dependencies
 ```bash
