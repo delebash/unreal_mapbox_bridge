@@ -4,6 +4,8 @@
 
 # Check out the demo running live [here](https://terrain.justgeektechs.com/)
 
+For what is coming next check the **<a href="https://trello.com/b/7jXYlo13/unreal-mapbox-bridge" target="_blank">RoadMap</a>**
+
 ## Install the dependencies
 ```bash
 npm install
