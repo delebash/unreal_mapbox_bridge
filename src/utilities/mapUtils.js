@@ -29,7 +29,7 @@ function getTileInfo(lng, lat, map) {
     tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
     tileInfo.rgbFileName = 'terrain-rgb' + "-" + tileInfo.mapbox_tile_name + '.png'
     tileInfo.thirtytwoFile = {name: 'thirtytwo' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 32}
-    tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 16}
+    tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name, bitDepth: 16}
 
     return tileInfo
 }

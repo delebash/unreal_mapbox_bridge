@@ -79,6 +79,8 @@ import fileUtils from '../utilities/fileUtils/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
 import mapUtils from '../utilities/mapUtils'
+import Jimp from 'jimp/browser/lib/jimp';
+
 let vips
 
 export default {
@@ -103,6 +105,10 @@ export default {
         {
           label: '1009x1009',
           value: 1009
+        },
+        {
+          label: '512x512-Downloaded-Size',
+          value: 512
         },
         {
           label: '505x505',
@@ -175,58 +181,46 @@ export default {
       if (this.tile_info) {
         let dirHandle = await idbKeyval.get('dirHandle')
         //Verify user has permission to rea/write from selected directory
-        if (await fileUtils.verifyPermission(dirHandle, true) === false) {
+        if (fileUtils.verifyPermission(dirHandle, true) === false) {
           console.error(`User did not grant permission to '${dirHandle.name}'`);
           return;
         }
         let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
         if (bExists) {
           let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
+          // console.log(rgbImgBuff)
           let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
+
           let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
+          this.tile_info.resolution = this.unrealLandscape.value
+      //  img = img.level()
+          //    img = img
+          //       .grey({algorithm : 'average',keepAlpha :false, mergeAlpha:true})
+          let arr
           let arrayBuff = await img.toBuffer()
-          let image = vips.Image.newFromBuffer(arrayBuff);
-          image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
-          // image = image.sharpen({sigma: 2})
-          const outBuffer = image.writeToBuffer('.PNG')
-          const arr = new Uint8Array(outBuffer);
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name, arr)
+          // console.log(arrayBuff)
+          if(this.unrealLandscape.value  !== 512) {
+            let image = vips.Image.newFromBuffer(arrayBuff);
+
+            image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
+            const outBuffer = image.writeToBuffer('.PNG')
+            // console.log(outBuffer)
+            arr = new Uint8Array(outBuffer);
+          }else{
+            arr = arrayBuff
+          }
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arr)
           let features = JSON.stringify(mapUtils.getFeaturesFromBB(this.map, this.tile_info.bb))
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.mapbox_tile_name + '.json', features)
+          let tile_info = JSON.stringify(this.tile_info)
+          await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', features)
+          await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
         } else {
           this.alert = true
         }
       } else {
         this.alert = true
       }
-
-
-      //      const files = [{ 'name': 'srcFile.jpg', 'content': rgbImgBuff }];
-      // const command = ["convert", "srcFile.jpg", "-density", "512", "out.jpg"];
-      //
-      // let processedFiles = await Magick.Call(files, command);
-      //
-      // let firstOutputImage = processedFiles[0]
-      // let buffer = firstOutputImage.buffer
-
-
-      // let fetchedSourceImage = await fetch("terrain-rgb-9-82-180.png");
-      // let arrayBuffer = await fetchedSourceImage.arrayBuffer();
-      // let sourceBytes = new Uint8Array(arrayBuffer);
-      // calling image magick with one source image, and command to rotate & resize image
-      // const files = [{ 'name': 'srcFile.jpg', 'content': rgbImgBuff }];
-      // const command = ["convert", "srcFile.jpg", "-density", "512", "out.jpg"];
-
-      // let processedFiles = await Magick.Call(files, command);
-      // console.log(processedFiles)
-      // response can be multiple files (example split)
-      // here we know we just have one
-      // let firstOutputImage = processedFiles[0]
-      // let buffer = firstOutputImage.buffer
-      // console.log(buffer)
-      //    strippedImage.src = URL.createObjectURL(firstOutputImage['blob'])
-      // console.log("created image " + firstOutputImage['name'])
     }
   }
 }

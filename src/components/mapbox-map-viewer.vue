@@ -71,7 +71,7 @@ export default {
         container: 'map',
         trackResize: true,
         style: that.style_url,
-        center: [-155.4694, 19.8230], //Mauna Kea
+        center: [-121.7598, 46.8760], //Mt. Rainier
         zoom: 9,
         doubleClickZoom: false
       });

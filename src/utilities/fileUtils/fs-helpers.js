@@ -124,9 +124,15 @@ async function fileExists(dirHandle, fileName) {
     }
 }
 
-function getHeightFromRgb(r, g, b) {
-    return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
+function getHeightFromRgb(r, g, b,type) {
+    if (type === 1) { //Calculate correct stats
+        return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
+    }
+    if (type === 2) {  //Adjust height value for unreal sea level Z=0
+        return 22662 + ((r * 256 * 256 + g * 256 + b) * 0.1);
+    }
 }
+
 
 async function getHeightArrayStats(image) {
     let decodedHeightArray = []
@@ -141,12 +147,15 @@ async function getHeightArrayStats(image) {
         let r = pixel[0]
         let g = pixel[1]
         let b = pixel[2]
-        let height = getHeightFromRgb(r, g, b)
-        if (height > stats.maxElevation) {
-            stats.maxElevation = height;
+
+        let heightStats = getHeightFromRgb(r, g, b,1)
+        let height = getHeightFromRgb(r, g, b,2)
+        // height = height * 10
+        if (heightStats > stats.maxElevation) {
+            stats.maxElevation = heightStats;
         }
-        if (height < stats.minElevation) {
-            stats.minElevation = height;
+        if (heightStats < stats.minElevation) {
+            stats.minElevation = heightStats;
         }
 
         decodedHeightArray.push(height)
