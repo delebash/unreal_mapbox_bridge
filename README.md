@@ -48,7 +48,7 @@ Click the download button to download the selected tile 16 bit heightmap file.
 
 Select Terrain size is currently not working.  The image will download as 512x512.
 
-The Scale number is correct but may look to large in Unreal. You might want to use a different scale number when you import into Unreal.
+The Scale number is correct but may look large in Unreal. You might want to use a different scale number when you import into Unreal.
 
 **Convert image to Unreal Landscape Size**
 
