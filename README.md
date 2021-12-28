@@ -40,7 +40,7 @@ Click and hold to drag around the map
 
 Type in a name or coordinates in the search box
 
-Click on the tile sqaure you want to select. It will turn blue when selected.
+Click on the tile square you want to select. It will turn blue when selected.
 
 You will see a preview of what the heightmap will look like as well as some statistics.
 
@@ -48,7 +48,7 @@ Click the download button to download the selected tile 16 bit heightmap file.
 
 Select Terrain size is currently not working.  The image will download as 512x512.
 
-The Scale number is also not correct. I would suggest an initial scale of 400 when you import into Unreal.
+The Scale number is correct but may look to large in Unreal. You might want to use a different scale number when you import into Unreal.
 
 **Convert image to Unreal Landscape Size**
 
