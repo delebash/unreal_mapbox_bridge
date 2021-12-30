@@ -30,7 +30,7 @@
     "mkcert": "^1.4.0",
     "npm-check-updates": "^12.0.5",
     "sass": "^1.45.1",
-    "vite": "^2.7.7",
+    "vite": "^2.7.9",
     "vite-plugin-mkcert": "^1.5.2",
     "vite-plugin-pwa": "^0.11.12"
   }
