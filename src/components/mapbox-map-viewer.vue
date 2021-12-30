@@ -14,6 +14,17 @@
 <template>
   <div id="map">
     <q-toolbar id="mb-tbar" class="bg-black text-white q-pa-none q-ma-none">
+      <q-option-group
+          class="q-pl-sm"
+          v-model="style"
+          :options="style_options"
+          color="primary"
+          inline
+          dense
+          dark
+          @update:model-value="changeStyle"
+      />
+
       <q-toggle
           dark
           v-model="threedview"
@@ -49,14 +60,27 @@ export default {
       terrain_threed_dem: ref(''),
       map: ref(''),
       bb: ref(null),
-      threedview: ref(false)
+      threedview: ref(false),
+      style: ref('streets-v11'),
+      style_options: [
+        {
+          label: 'Default',
+          value: 'streets-v11'
+        },
+        {
+          label: 'Satellite',
+          value: 'satellite-streets-v11'
+        }
+      ]
     }
   },
   mounted() {
 
   },
   methods: {
+
     async loadMapboxMap() {
+      // mapboxgl.baseApiUrl = 'https://api.mapbox.com';
       mapboxgl.accessToken = await idbKeyval.get('access_token')
       this.access_token = mapboxgl.accessToken
 
@@ -73,7 +97,10 @@ export default {
         style: that.style_url,
         center: [-121.7598, 46.8760], //Mt. Rainier
         zoom: 9,
-        doubleClickZoom: false
+        doubleClickZoom: true,
+        antialias: true,
+        boxZoom: true,
+        failIfMajorPerformanceCaveat: true
       });
 
       this.map = map
@@ -135,9 +162,58 @@ export default {
 
       map.addControl(new mapboxgl.FullscreenControl({}))
 
+// Add zoom and rotation controls to the map.
+      map.addControl(new mapboxgl.NavigationControl());
+
+      //Game Navigation Controls
+      // pixels the map pans when the up or down arrow is clicked
+      const deltaDistance = 100;
+
+// degrees the map rotates when the left or right arrow is clicked
+      const deltaDegrees = 25;
+
+      function easing(t) {
+        return t * (2 - t);
+      }
+
       map.on('load', function () {
 
-        map.showTileBoundaries = true;
+        // map.showTileBoundaries = true;
+
+
+        //Game Controls
+        map.getCanvas().focus();
+
+        map.getCanvas().addEventListener(
+            'keydown',
+            (e) => {
+              e.preventDefault();
+              if (e.which === 87) {
+// w
+                map.panBy([0, -deltaDistance], {
+                  easing: easing
+                });
+              } else if (e.which === 83) {
+// s
+                map.panBy([0, deltaDistance], {
+                  easing: easing
+                });
+              } else if (e.which === 65) {
+// a
+                map.easeTo({
+                  bearing: map.getBearing() - deltaDegrees,
+                  easing: easing
+                });
+              } else if (e.which === 68) {
+// d
+                map.easeTo({
+                  bearing: map.getBearing() + deltaDegrees,
+                  easing: easing
+                });
+              }
+            },
+            true
+        );
 
         map.addSource('mapbox_raster_png_dem', {
           "type": "raster-dem",
@@ -175,6 +251,64 @@ export default {
           paint: {
             'fill-color': '#008888',
             'fill-opacity': 0
+          }
+        });
+
+
+        map.addSource('bathymetry', {
+          type: 'vector',
+          url: 'mapbox://mapbox-public.bathymetry'
+        });
+
+        // map.addLayer({
+        //   'id': 'water-depth',
+        //   'type': 'line',
+        //   'source': 'bathymetry',
+        //   'source-layer': 'water-depth',
+        //   'layout': {
+        //     'line-join': 'round',
+        //     'line-cap': 'round'
+        //   },
+        //   'paint': {
+        //     'line-color': '#69b4ff',
+        //     'line-width': 1
+        //   }
+        // });
+
+        map.addLayer({
+          'id': 'undersea-features-lines',
+          'type': 'line',
+          'source': 'bathymetry',
+          'source-layer': 'undersea-features-lines',
+          'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          'paint': {
+            'line-color': '#ff69b4',
+            'line-width': 2
+          }
+        });
+        //
+        map.addLayer({
+          'id': 'undersea-features-points',
+          'type': 'circle',
+          'source': 'bathymetry',
+          'source-layer': 'undersea-features-points',
+          'paint': {
+            'circle-radius': 4,
+            'circle-color': '#01fe01'
+          }
+        });
+        map.addLayer({
+          'id': 'undersea-features-points-label',
+          'type': 'symbol',
+          'source': 'bathymetry',
+          'source-layer': 'undersea-features-points',
+          'layout': {
+            'text-field': '{name}',
+            'text-anchor': 'top-left',
+            'text-size': 12
           }
         });
 
@@ -232,11 +366,12 @@ export default {
         map.getSource('bounding_box_source').setData(tile_info.bb);
         map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
 
+
         //Long/Lat popup
-        new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
-            .addTo(map);
+        // new mapboxgl.Popup()
+        //     .setLngLat(e.lngLat)
+        //     .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
+        //     .addTo(map);
 
         let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
         let mapbox_rgb_image_url = mapbox_api_url + `/mapbox.terrain-rgb/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
@@ -264,23 +399,48 @@ export default {
           map: map
         })
       })
+
+      map.on('mousemove', (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+        const features = map.queryRenderedFeatures(e.point);
+        let depth
+        let obj = {}
+        for (const feat of features) {
+          if (Object.keys(feat.type).length > 0) {
+            if (Object.keys(feat.properties).length > 0) {
+              let properties = feat.properties
+              let layer = feat.layer
+              if (properties.DEPTH) {
+                obj.depth  = properties.DEPTH
+                console.log(obj)
+              } else {
+              }
+             obj.type = feat.type
+
+             obj.id = layer.id
+            }
+          }
+
+        }
+      })
     },
 
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
     },
+    async changeStyle() {
+      if (this.map.getSource("mapbox-threeD")) {
+        this.map.setTerrain(null)
+        this.map.removeSource("mapbox-threeD");
+        this.threedview = false
+      }
+      this.map.setStyle('mapbox://styles/mapbox/' + this.style);
+    },
     change3D() {
 
       if (this.threedview === true) {
-        //Add satellite imagery used for 3D
-        this.map.addSource('mapbox-satellite', {
-          'type': 'raster',
-          'url': 'mapbox://mapbox.satellite',
-          'tileSize': 512
-        });
-
-        //   //Add terrain-dem used for 3D
+        // //   //Add terrain-dem used for 3D
         this.map.addSource('mapbox-threeD', {
           'type': 'raster-dem',
           'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
@@ -288,17 +448,8 @@ export default {
           'maxzoom': 14
         });
 
-        this.map.addLayer({
-          id: 'satellite',
-          source: 'mapbox-satellite',
-          type: "raster",
-          // layout: {"visibility":"none"}
-        });
-
         this.map.setTerrain({'source': 'mapbox-threeD', 'exaggeration': 1.5});
       } else {
-        this.map.removeLayer('satellite')
-        this.map.removeSource('mapbox-satellite')
         this.map.setTerrain(null)
         this.map.removeSource('mapbox-threeD')
       }
