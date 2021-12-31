@@ -17,9 +17,7 @@
     "idb-keyval": "^6.0.3",
     "image-js": "^0.33.1",
     "jimp": "^0.16.1",
-    "localforage": "^1.10.0",
     "mapbox-gl": "^2.6.1",
-    "mapbox-gl-style-switcher": "^1.0.10",
     "mitt": "^3.0.0",
     "quasar": "^2.4.2"
   },

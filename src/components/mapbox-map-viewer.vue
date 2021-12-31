@@ -44,9 +44,6 @@ import emitter from "../utilities/emitter";
 
 import mapboxgl from 'mapbox-gl'
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'
-// import { MapboxStyleSwitcherControl } from "mapbox-gl-style-switcher";
-// import "mapbox-gl-style-switcher/styles.css";
-// import mbxGeocoding from '@mapbox/mapbox-gl-geocoder'
 
 
 export default {
