@@ -1,7 +1,8 @@
 const express = require('express');
 const app = express();
 const port = 3000;
-
+const https = require("https");
+const fs = require('fs')
 
 app.use(express.static(('dist'),
     {
@@ -15,5 +16,9 @@ app.use(express.static(('dist'),
     }
 ))
 
-app.listen(port, () => console.log(`http://localhost:${port}`));
+https.createServer({
+    key: fs.readFileSync('sslcerts/dev.key'),
+    cert: fs.readFileSync('sslcerts/dev.pem')
+}, app)
+    .listen(port, () => console.log(`https://localhost:${port}`));
 

@@ -5,6 +5,7 @@
     "start": "vite",
     "ssl": "npm run build && npm run copyssl && npm run serve",
     "build": "vite build",
+    "servessl": "node serverssl.js",
     "serve": "node server.js",
     "copyssl": "node copyssl.js"
   },
