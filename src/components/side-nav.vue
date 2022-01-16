@@ -11,14 +11,14 @@
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ minmax }}</div>
         </template>
       </q-field>
-      <q-field dense label="Elevation Range" stack-label>
-        <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
-              elevation_range
-            }}
-          </div>
-        </template>
-      </q-field>
+<!--      <q-field dense label="Elevation Range" stack-label>-->
+<!--        <template v-slot:control>-->
+<!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
+<!--              elevation_range-->
+<!--            }}-->
+<!--          </div>-->
+<!--        </template>-->
+<!--      </q-field>-->
       <q-field dense label="Tile width in meters" stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
@@ -27,14 +27,14 @@
           </div>
         </template>
       </q-field>
-      <q-field dense label="Pixel width in meters" stack-label>
-        <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
-              metersPerPixel
-            }}
-          </div>
-        </template>
-      </q-field>
+<!--      <q-field dense label="Pixel width in meters" stack-label>-->
+<!--        <template v-slot:control>-->
+<!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
+<!--              metersPerPixel-->
+<!--            }}-->
+<!--          </div>-->
+<!--        </template>-->
+<!--      </q-field>-->
       <q-field dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale" stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ zscale }}</div>
