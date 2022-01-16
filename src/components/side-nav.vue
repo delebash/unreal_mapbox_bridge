@@ -128,13 +128,15 @@ export default {
       tileWidthInMeters: ref(''),
       metersPerPixel: ref(''),
       zscale: ref(''),
-      map: null
+      map: null,
+      data: '',
     }
   },
   async mounted() {
     vips = await Vips();
     emitter.on('updatePreviewImage', (data) => {
-      this.updatePreviewImage(data)
+      this.data = data
+      this.updatePreviewImage()
     })
   },
   methods: {
@@ -157,12 +159,12 @@ export default {
       let zscale = (cm * 0.001953125)
       return zscale
     },
-    async updatePreviewImage(data) {
-      this.tile_info = data.tile_info
-      this.map = data.map
-      this.stats = data.stats
-      this.preview_image = data.preview_image
-      this.dirHandle = data.dirHandle
+    async updatePreviewImage() {
+      this.tile_info = this.data.tile_info
+      this.map = this.data.map
+      this.stats = this.data.stats
+      this.preview_image = this.data.preview_image
+      this.dirHandle = this.data.dirHandle
 
       let blob = await this.preview_image.toBlob()
       const objectURL = URL.createObjectURL(blob)
@@ -194,26 +196,63 @@ export default {
           let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
           this.tile_info.resolution = this.unrealLandscape.value
-      //  img = img.level()
+          //  img = img.level()
           //    img = img
           //       .grey({algorithm : 'average',keepAlpha :false, mergeAlpha:true})
           let arr
           let arrayBuff = await img.toBuffer()
           // console.log(arrayBuff)
-          if(this.unrealLandscape.value  !== 512) {
+          if (this.unrealLandscape.value !== 512) {
             let image = vips.Image.newFromBuffer(arrayBuff);
 
             image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
             const outBuffer = image.writeToBuffer('.PNG')
             // console.log(outBuffer)
             arr = new Uint8Array(outBuffer);
-          }else{
+          } else {
             arr = arrayBuff
           }
           await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arr)
-          let features = JSON.stringify(mapUtils.getFeaturesFromBB(this.map, this.tile_info.bb))
+          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.bb)
+          // let coordinates = features.geometry.coordinates
+
+
+          let points = []
+          //Replace long/lat coordinates with projected
+          let geofeatures = []
+          let goodPoints = []
+          let mypoints = []
+          for (const myfeature of features) {
+            // console.log(myfeature)
+            // console.log(myfeature)
+            if (myfeature.geometry) {
+              //console.log(myfeature.geometry.type)
+              if (myfeature.geometry.type === 'LineString') {
+                // console.log(myfeature.geometry.type)
+                //  console.log(myfeature.geometry.coordinates)
+                for (const coordinate of myfeature.geometry.coordinates) {
+                  mypoints = []
+               //   console.log(coordinate)
+                  const point = this.map.project(coordinate);
+                  console.log(point)
+                  console.log(point.x)
+                  console.log(point.y)
+                  mypoints[0] = point.x
+                  mypoints[1] = point.y
+                 // console.log(mypoints)
+                  goodPoints.push(mypoints)
+                }
+                myfeature.geometry.coordinates = goodPoints
+                goodPoints = []
+
+                geofeatures.push(myfeature)
+                // console.log(myfeature)
+              }
+            }
+          }
+          let strFeatures = JSON.stringify(geofeatures)
           let tile_info = JSON.stringify(this.tile_info)
-          await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', features)
+          await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
           await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
         } else {
           this.alert = true

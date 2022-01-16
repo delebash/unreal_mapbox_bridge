@@ -13,24 +13,25 @@
 </style>
 <template>
   <div id="map">
-    <q-toolbar id="mb-tbar" class="bg-black text-white q-pa-none q-ma-none">
-      <q-option-group
-          class="q-pl-sm"
-          v-model="style"
-          :options="style_options"
-          color="primary"
-          inline
-          dense
-          dark
-          @update:model-value="changeStyle"
-      />
-
-      <q-toggle
-          dark
-          v-model="threedview"
-          label="3D view"
-          @update:model-value="change3D"
-      />
+    <q-toolbar id="mb-tbar" class="bg-primary text-white q-pa-none q-ma-none">
+      <q-btn color="info" label="Map Settings">
+        <q-menu>
+          <div class="row no-wrap q-pa-md">
+            <div class="column">
+              <q-option-group
+                  dense
+                  color="red"
+                  checked-icon="check"
+                  unchecked-icon="clear"
+                  :options="layer_type"
+                  type="toggle"
+                  v-model="layers"
+                  @update:model-value="changeLayers"
+              />
+            </div>
+          </div>
+        </q-menu>
+      </q-btn>
     </q-toolbar>
   </div>
 </template>
@@ -54,27 +55,219 @@ export default {
       style_url: ref(''),
       access_token: ref(''),
       mapbox_raster_png_dem: ref(''),
-      terrain_threed_dem: ref(''),
+      // terrain_threed_dem: ref(''),
       map: ref(''),
-      bb: ref(null),
+      // bb: ref(null),
       threedview: ref(false),
-      style: ref('streets-v11'),
-      style_options: [
+      layers: ref([]),
+      layer_type: [
         {
-          label: 'Default',
-          value: 'streets-v11'
+          label: 'Hillshade',
+          value: 'hillshading'
+        },
+        {
+          label: 'Bounding Box',
+          value: 'bounding_box'
+        },
+        {
+          label: 'Undersea Lines',
+          value: 'undersea-features-lines'
+        },
+        {
+          label: 'Undersea Points',
+          value: 'undersea-features-points'
+        },
+        {
+          label: 'Undersea Labels',
+          value: 'undersea-features-points-label'
+        },
+        {
+          label: 'Depth',
+          value: '10m-bathymetry-81bsvj'
         },
         {
           label: 'Satellite',
-          value: 'satellite-streets-v11'
-        }
-      ]
+          value: 'satellite'
+        },
+        {
+          label: '3D',
+          value: '3d'
+        },
+      ],
     }
   },
   mounted() {
 
   },
   methods: {
+    async changeLayers(layers) {
+
+      for (const layertype of this.layer_type) {
+        if (layers.includes(layertype.value)) {
+          if (layertype.value !== '3d') {
+            this.map.setLayoutProperty(
+                layertype.value,
+                'visibility',
+                'visible'
+            )
+          } else {
+            this.map.setTerrain({'source': 'mapbox-3d', 'exaggeration': 1.5});
+          }
+        } else {
+          if (layertype.value !== '3d') {
+            this.map.setLayoutProperty(
+                layertype.value,
+                'visibility',
+                'none'
+            )
+          } else {
+            this.map.setTerrain(null)
+          }
+        }
+      }
+    },
+
+    //    Show 3D
+    //     if (layersEnabled.includes('3d') === true) {
+    //       this.map.setTerrain({'source': 'mapbox-3d', 'exaggeration': 1.5});
+    //     } else {
+    //
+    //     }
+
+    loadMapSourcesLayers(map) {
+
+      map.addSource('mapbox_raster_png_dem', {
+        "type": "raster-dem",
+        "url": this.mapbox_raster_png_dem,
+      });
+      map.addSource('satellite', {
+        'type': 'raster',
+        'url': 'mapbox://mapbox.satellite',
+        'tileSize': 512,
+      });
+
+      map.addLayer({
+        id: 'satellite',
+        source: 'satellite',
+        type: "raster",
+        'layout': {
+          'visibility': 'none'
+        }
+      });
+      // Hillshade
+      map.addLayer({
+        "id": "hillshading",
+        "source": "mapbox_raster_png_dem",
+        "type": "hillshade"
+      });
+
+      map.addSource('bounding_box_source', {
+        type: 'geojson',
+        data: {
+          'type': 'Feature',
+          'geometry': {
+            'type': 'Polygon',
+            'coordinates': [[[0, 0],
+              [0, 1],
+              [1, 1],
+              [1, 0],
+              [0, 0]]]
+          }
+        }
+      });
+
+      map.addLayer({
+        id: 'bounding_box',
+        type: 'fill',
+        source: 'bounding_box_source',
+        paint: {
+          'fill-color': '#008888',
+          'fill-opacity': 0
+        }
+      });
+
+
+      map.addSource('bathymetry', {
+        type: 'vector',
+        url: 'mapbox://mapbox-public.bathymetry'
+      });
+
+      map.addLayer({
+        'id': 'undersea-features-lines',
+        'type': 'line',
+        'source': 'bathymetry',
+        'source-layer': 'undersea-features-lines',
+        'layout': {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        'paint': {
+          'line-color': '#ff69b4',
+          'line-width': 2
+        }
+      });
+
+      map.addLayer({
+        'id': 'undersea-features-points',
+        'type': 'circle',
+        'source': 'bathymetry',
+        'source-layer': 'undersea-features-points',
+        'paint': {
+          'circle-radius': 4,
+          'circle-color': '#01fe01'
+        }
+      });
+
+      map.addLayer({
+        'id': 'undersea-features-points-label',
+        'type': 'symbol',
+        'source': 'bathymetry',
+        'source-layer': 'undersea-features-points',
+        'layout': {
+          'text-field': '{name}',
+          'text-anchor': 'top-left',
+          'text-size': 12
+        }
+      });
+
+      map.addSource('10m-bathymetry-81bsvj', {
+        type: 'vector',
+        url: 'mapbox://mapbox.9tm8dx88'
+      });
+
+      map.addSource('mapbox-3d', {
+        'type': 'raster-dem',
+        'url': this.mapbox_raster_png_dem,
+        'tileSize': 512,
+        'maxzoom': 14
+      });
+
+      map.addLayer(
+          {
+            'id': '10m-bathymetry-81bsvj',
+            'type': 'fill',
+            'source': '10m-bathymetry-81bsvj',
+            'source-layer': '10m-bathymetry-81bsvj',
+            'layout': {},
+            'paint': {
+              'fill-outline-color': 'hsla(337, 82%, 62%, 0)',
+              // cubic bezier is a four point curve for smooth and precise styling
+              // adjust the points to change the rate and intensity of interpolation
+              'fill-color': [
+                'interpolate',
+                ['cubic-bezier', 0, 0.5, 1, 0.5],
+                ['get', 'DEPTH'],
+                200,
+                '#78bced',
+                9000,
+                '#15659f'
+              ]
+            }
+          },
+          'land-structure-polygon'
+      );
+
+    },
 
     async loadMapboxMap() {
       // mapboxgl.baseApiUrl = 'https://api.mapbox.com';
@@ -84,7 +277,7 @@ export default {
       this.dirHandle = await idbKeyval.get('dirHandle')
       this.style_url = await idbKeyval.get('style_url')
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
-      this.terrain_threed_dem = await idbKeyval.get('terrain_threed_dem')
+      // this.terrain_threed_dem = await idbKeyval.get('terrain_threed_dem')
 
       let that = this
 
@@ -159,24 +352,34 @@ export default {
 
       map.addControl(new mapboxgl.FullscreenControl({}))
 
-// Add zoom and rotation controls to the map.
+      // Add zoom and rotation controls to the map.
       map.addControl(new mapboxgl.NavigationControl());
 
       //Game Navigation Controls
       // pixels the map pans when the up or down arrow is clicked
       const deltaDistance = 100;
 
-// degrees the map rotates when the left or right arrow is clicked
+      // degrees the map rotates when the left or right arrow is clicked
       const deltaDegrees = 25;
 
       function easing(t) {
         return t * (2 - t);
       }
 
+      map.on('style.load', () => {
+        const waiting = () => {
+          if (!map.isStyleLoaded()) {
+            setTimeout(waiting, 200);
+          } else {
+            //  if (that.style === "streets-v11") {
+            that.loadMapSourcesLayers(map)
+            //  }
+          }
+        };
+        waiting();
+      });
+
       map.on('load', function () {
-
-        // map.showTileBoundaries = true;
-
 
         //Game Controls
         map.getCanvas().focus();
@@ -210,133 +413,6 @@ export default {
               }
             },
             true
-        );
-
-        map.addSource('mapbox_raster_png_dem', {
-          "type": "raster-dem",
-          "url": that.mapbox_raster_png_dem,
-        });
-
-        // Hillshade
-        map.addLayer({
-          "id": "hillshading",
-          "source": "mapbox_raster_png_dem",
-          "type": "hillshade"
-        });
-
-        map.addSource('bounding_box_source', {
-          type: 'geojson',
-          data: {
-            'type': 'Feature',
-            'geometry': {
-              'type': 'Polygon',
-              'coordinates': [[[0, 0],
-                [0, 1],
-                [1, 1],
-                [1, 0],
-                [0, 0]]]
-            }
-          }
-        });
-
-        //set invisible on load
-        map.addLayer({
-          id: 'bounding_box',
-          type: 'fill',
-          source: 'bounding_box_source',
-          layout: {},
-          paint: {
-            'fill-color': '#008888',
-            'fill-opacity': 0
-          }
-        });
-
-
-        map.addSource('bathymetry', {
-          type: 'vector',
-          url: 'mapbox://mapbox-public.bathymetry'
-        });
-
-        // map.addLayer({
-        //   'id': 'water-depth',
-        //   'type': 'line',
-        //   'source': 'bathymetry',
-        //   'source-layer': 'water-depth',
-        //   'layout': {
-        //     'line-join': 'round',
-        //     'line-cap': 'round'
-        //   },
-        //   'paint': {
-        //     'line-color': '#69b4ff',
-        //     'line-width': 1
-        //   }
-        // });
-
-        map.addLayer({
-          'id': 'undersea-features-lines',
-          'type': 'line',
-          'source': 'bathymetry',
-          'source-layer': 'undersea-features-lines',
-          'layout': {
-            'line-join': 'round',
-            'line-cap': 'round'
-          },
-          'paint': {
-            'line-color': '#ff69b4',
-            'line-width': 2
-          }
-        });
-        //
-        map.addLayer({
-          'id': 'undersea-features-points',
-          'type': 'circle',
-          'source': 'bathymetry',
-          'source-layer': 'undersea-features-points',
-          'paint': {
-            'circle-radius': 4,
-            'circle-color': '#01fe01'
-          }
-        });
-        map.addLayer({
-          'id': 'undersea-features-points-label',
-          'type': 'symbol',
-          'source': 'bathymetry',
-          'source-layer': 'undersea-features-points',
-          'layout': {
-            'text-field': '{name}',
-            'text-anchor': 'top-left',
-            'text-size': 12
-          }
-        });
-
-        map.addSource('10m-bathymetry-81bsvj', {
-          type: 'vector',
-          url: 'mapbox://mapbox.9tm8dx88'
-        });
-
-        map.addLayer(
-            {
-              'id': '10m-bathymetry-81bsvj',
-              'type': 'fill',
-              'source': '10m-bathymetry-81bsvj',
-              'source-layer': '10m-bathymetry-81bsvj',
-              'layout': {},
-              'paint': {
-                'fill-outline-color': 'hsla(337, 82%, 62%, 0)',
-                // cubic bezier is a four point curve for smooth and precise styling
-                // adjust the points to change the rate and intensity of interpolation
-                'fill-color': [
-                  'interpolate',
-                  ['cubic-bezier', 0, 0.5, 1, 0.5],
-                  ['get', 'DEPTH'],
-                  200,
-                  '#78bced',
-                  9000,
-                  '#15659f'
-                ]
-              }
-            },
-            'land-structure-polygon'
         );
 
       });
@@ -408,49 +484,38 @@ export default {
               let properties = feat.properties
               let layer = feat.layer
               if (properties.DEPTH) {
-                obj.depth  = properties.DEPTH
+                obj.depth = properties.DEPTH
                 console.log(obj)
               } else {
               }
-             obj.type = feat.type
+              obj.type = feat.type
 
-             obj.id = layer.id
+              obj.id = layer.id
             }
           }
-
         }
       })
-    },
+    }
+    ,
 
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
-    },
-    async changeStyle() {
-      if (this.map.getSource("mapbox-threeD")) {
-        this.map.setTerrain(null)
-        this.map.removeSource("mapbox-threeD");
-        this.threedview = false
-      }
-      this.map.setStyle('mapbox://styles/mapbox/' + this.style);
-    },
+    }
+    ,
+    // async changeStyle() {
+    //   if (this.map.getSource("mapbox-3d")) {
+    //     this.map.setTerrain(null)
+    //     this.map.removeSource("mapbox-3d");
+    //     this.threedview = false
+    //   }
+    //   await this.map.setStyle('mapbox://styles/mapbox/' + this.style, {diff: false});
+    // },
+
     change3D() {
 
-      if (this.threedview === true) {
-        // //   //Add terrain-dem used for 3D
-        this.map.addSource('mapbox-threeD', {
-          'type': 'raster-dem',
-          'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-          'tileSize': 512,
-          'maxzoom': 14
-        });
-
-        this.map.setTerrain({'source': 'mapbox-threeD', 'exaggeration': 1.5});
-      } else {
-        this.map.setTerrain(null)
-        this.map.removeSource('mapbox-threeD')
-      }
-    },
+    }
+    ,
 
     async geoCodeReverse(options) {
       await MapboxGeocoder
@@ -466,7 +531,6 @@ export default {
     }
   }
 }
-
 
 //
 // (async () => {

@@ -143,8 +143,8 @@ export default {
     }
 
     idbKeyval.set('mapbox_api_url', 'https://api.mapbox.com/v4')
-    idbKeyval.set('mapbox_raster_png_dem', "mapbox://mapbox.terrain-rgb")
-    idbKeyval.set('terrain_threed_dem', "mapbox://mapbox.mapbox-terrain-dem-v1")
+    idbKeyval.set('mapbox_raster_png_dem', 'mapbox://mapbox.mapbox-terrain-dem-v1')
+    // idbKeyval.set('terrain_threed_dem', "mapbox://mapbox.mapbox-terrain-dem-v1")
 
     //Load user data
     await this.loadUserData();
