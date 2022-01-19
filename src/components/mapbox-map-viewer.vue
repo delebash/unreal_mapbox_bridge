@@ -18,6 +18,8 @@
         <q-menu>
           <div class="row no-wrap q-pa-md">
             <div class="column">
+              <u><b>Enable Layers</b></u>
+
               <q-option-group
                   dense
                   color="green"
