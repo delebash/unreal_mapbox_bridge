@@ -36,19 +36,27 @@ When you initially run the application you will have to set some data.
 
 **Map Tab**
 
-Click and hold to drag around the map
+Left click and hold to drag around the map
+Right click and hold to change the angle of the map
+
+Scroll wheel to zoom in out
+
+Game keys for navigation are also enabled WSAD
 
 Type in a name or coordinates in the search box
 
-Click on the tile square you want to select. It will turn blue when selected.
+Left click on the tile square you want to select. It will turn blue when selected.
 
 You will see a preview of what the heightmap will look like as well as some statistics.
 
 Click the download button to download the selected tile 16 bit heightmap file.
 
-Select Terrain size is currently not working.  The image will download as 512x512.
+Select Terrain size youu want to use for your Unreal Landscape size.
 
 The Scale number is correct but may look large in Unreal. You might want to use a different scale number when you import into Unreal.
+
+
+**Manually resize method if you want to edit your hegitmap in a photo editor**
 
 **Convert image to Unreal Landscape Size**
 
@@ -83,4 +91,4 @@ Example imported landscape standing on top of Mt. Rainier
 ![Mt. Rainier2](mt-rainier2.png)
 
 
-*Inspired by and some code used from this [project](https://github.com/colkassad/terrain-rgb-height).  A Big thanks to colkassad.*
+*Inspired by and some code used from this [project](https://github.com/colkassad/terrain-rgb-height).  A Big thanks to Shane Brennan ([colkassad](https://github.com/colkassad)).*
