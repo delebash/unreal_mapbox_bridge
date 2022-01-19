@@ -213,44 +213,44 @@ export default {
             arr = arrayBuff
           }
           await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arr)
-          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.bb)
+          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
           // let coordinates = features.geometry.coordinates
 
 
-          let points = []
-          //Replace long/lat coordinates with projected
-          let geofeatures = []
-          let goodPoints = []
-          let mypoints = []
-          for (const myfeature of features) {
-            // console.log(myfeature)
-            // console.log(myfeature)
-            if (myfeature.geometry) {
-              //console.log(myfeature.geometry.type)
-              if (myfeature.geometry.type === 'LineString') {
-                // console.log(myfeature.geometry.type)
-                //  console.log(myfeature.geometry.coordinates)
-                for (const coordinate of myfeature.geometry.coordinates) {
-                  mypoints = []
-               //   console.log(coordinate)
-                  const point = this.map.project(coordinate);
-                  console.log(point)
-                  console.log(point.x)
-                  console.log(point.y)
-                  mypoints[0] = point.x
-                  mypoints[1] = point.y
-                 // console.log(mypoints)
-                  goodPoints.push(mypoints)
-                }
-                myfeature.geometry.coordinates = goodPoints
-                goodPoints = []
-
-                geofeatures.push(myfeature)
-                // console.log(myfeature)
-              }
-            }
-          }
-          let strFeatures = JSON.stringify(geofeatures)
+          // let points = []
+          // //Replace long/lat coordinates with projected
+          // let geofeatures = []
+          // let goodPoints = []
+          // let mypoints = []
+          // for (const myfeature of features) {
+          //   // console.log(myfeature)
+          //   // console.log(myfeature)
+          //   if (myfeature.geometry) {
+          //     //console.log(myfeature.geometry.type)
+          //     if (myfeature.geometry.type === 'LineString') {
+          //       // console.log(myfeature.geometry.type)
+          //       //  console.log(myfeature.geometry.coordinates)
+          //       for (const coordinate of myfeature.geometry.coordinates) {
+          //         mypoints = []
+          //      //   console.log(coordinate)
+          //         const point = this.map.project(coordinate);
+          //         console.log(point)
+          //         console.log(point.x)
+          //         console.log(point.y)
+          //         mypoints[0] = point.x
+          //         mypoints[1] = point.y
+          //        // console.log(mypoints)
+          //         goodPoints.push(mypoints)
+          //       }
+          //       myfeature.geometry.coordinates = goodPoints
+          //       goodPoints = []
+          //
+          //       geofeatures.push(myfeature)
+          //       // console.log(myfeature)
+          //     }
+          //   }
+          // }
+          let strFeatures = JSON.stringify(features)
           let tile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
           await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)

@@ -20,7 +20,7 @@
             <div class="column">
               <q-option-group
                   dense
-                  color="red"
+                  color="green"
                   checked-icon="check"
                   unchecked-icon="clear"
                   :options="layer_type"
@@ -59,7 +59,7 @@ export default {
       map: ref(''),
       // bb: ref(null),
       threedview: ref(false),
-      layers: ref([]),
+      layers: ref(['hillshading','bounding_box','undersea-features-lines','undersea-features-points', 'undersea-features-points-label','10m-bathymetry-81bsvj']),
       layer_type: [
         {
           label: 'Hillshade',
@@ -436,7 +436,7 @@ export default {
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
         idbKeyval.set('tile_info', tile_info)
 
-        map.getSource('bounding_box_source').setData(tile_info.bb);
+        map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
         map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
 
 
