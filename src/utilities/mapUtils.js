@@ -39,8 +39,6 @@ function getTileInfo(lng, lat, map) {
 function getFeaturesFromBB(map, bbox) {
     console.log(bbox)
     if (bbox) {
-        console.log(bbox)
-        console.log('test')
         let sw = [bbox.geometry.coordinates[0][4]]
         let ne = [bbox.geometry.coordinates[0][2]]
         const swLonglat = new mapboxgl.LngLat(sw[0][0], sw[0][1]);
@@ -59,11 +57,6 @@ function getTileGeoJsonBB(tile_info) {
     let tile = [tile_info.x,tile_info.y,tile_info.z] // x,y,z
     let bbox = tilebelt.tileToBBOX(tile);
     let poly = turf.bboxPolygon(bbox);
-
-    // const llb = new mapboxgl.LngLatBounds(bbox);
-    // let center = llb.getCenter(); // = LngLat {lng: -73.96365, lat: 40.78315}
-    // console.log(bbox)
-    // console.log(center)
 
     let geoJson = {
         'type': 'Feature',

@@ -125,12 +125,12 @@ async function fileExists(dirHandle, fileName) {
 }
 
 function getHeightFromRgb(r, g, b,type) {
-    if (type === 1) { //Calculate correct stats
+    // if (type === 1) { //Calculate correct stats
         return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
-    }
-    if (type === 2) {  //Adjust height value for unreal sea level Z=0
-        return 22662 + ((r * 256 * 256 + g * 256 + b) * 0.1);
-    }
+    // }
+    // if (type === 2) {  //Adjust height value for unreal sea level Z=0
+    //     return 22662 + ((r * 256 * 256 + g * 256 + b) * 0.1);
+    // }
 }
 
 
