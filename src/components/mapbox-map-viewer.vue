@@ -458,7 +458,7 @@ export default {
         await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
 
         //Create preview imamge
-        let previewImageInfo = await fileUtils.createHeightMapImage(rgb_image, 32, "GREY")
+        let previewImageInfo = fileUtils.createHeightMapImage(rgb_image, 32, "GREY")
         let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtytwoFile.name)
         //Note file does not have to be written to disk in order to update preview image
         if (bFileExists === false) {

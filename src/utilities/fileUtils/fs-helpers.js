@@ -130,7 +130,7 @@ function getHeightFromRgb(r, g, b) {
 
 }
 
-async function getHeightArrayStats(image) {
+function getHeightArrayStats(image) {
     let decodedHeightArray = []
 
     let stats = {}
@@ -171,11 +171,9 @@ async function getHeightArrayStats(image) {
 
 function getMedianArray(array) {
 
-
     const arr = array.filter(val => !!val);
     const sum = arr.reduce((sum, val) => (sum += val));
     const len = arr.length;
-
 
     const arrSort = arr.sort();
     const mid = Math.ceil(len / 2);
@@ -185,11 +183,11 @@ function getMedianArray(array) {
     return median
 }
 
-async function createHeightMapImage(rgbImage, bitDepth, colorModel) {
+function createHeightMapImage(rgbImage, bitDepth, colorModel) {
 
-    let height_array_stats = await getHeightArrayStats(rgbImage)
+    let height_array_stats = getHeightArrayStats(rgbImage)
 
-    let image = await convertImage(height_array_stats.stats.width, height_array_stats.stats.height, height_array_stats.decodedHeightArray, bitDepth, colorModel)
+    let image = convertImage(height_array_stats.stats.width, height_array_stats.stats.height, height_array_stats.decodedHeightArray, bitDepth, colorModel)
     height_array_stats.image = image
     return height_array_stats
 }
@@ -199,7 +197,7 @@ async function loadImageFromArray(imageArray) {
     return image
 }
 
-async function convertImage(width, height, imageArray, bitDepth, colorModel) {
+function convertImage(width, height, imageArray, bitDepth, colorModel) {
     let newImage = new Image(width, height, imageArray, {kind: colorModel, bitDepth: bitDepth})
     return newImage
 }

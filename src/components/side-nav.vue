@@ -193,7 +193,7 @@ export default {
           // console.log(rgbImgBuff)
           let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
 
-          let sixteen_image_info = await fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
+          let sixteen_image_info = fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
           this.tile_info.resolution = this.unrealLandscape.value
           //  img = img.level()
