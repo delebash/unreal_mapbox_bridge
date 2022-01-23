@@ -124,15 +124,11 @@ async function fileExists(dirHandle, fileName) {
     }
 }
 
-function getHeightFromRgb(r, g, b,type) {
-    // if (type === 1) { //Calculate correct stats
-        return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
-    // }
-    // if (type === 2) {  //Adjust height value for unreal sea level Z=0
-    //     return 22662 + ((r * 256 * 256 + g * 256 + b) * 0.1);
-    // }
-}
+function getHeightFromRgb(r, g, b) {
 
+    return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
+
+}
 
 async function getHeightArrayStats(image) {
     let decodedHeightArray = []
@@ -148,21 +144,45 @@ async function getHeightArrayStats(image) {
         let g = pixel[1]
         let b = pixel[2]
 
-        let heightStats = getHeightFromRgb(r, g, b,1)
-        let height = getHeightFromRgb(r, g, b,2)
-        // height = height * 10
-        if (heightStats > stats.maxElevation) {
-            stats.maxElevation = heightStats;
+        // let heightStats = getHeightFromRgb(r, g, b, 1)
+        let height = getHeightFromRgb(r, g, b)
+
+        if (height > stats.maxElevation) {
+            stats.maxElevation = height;
         }
-        if (heightStats < stats.minElevation) {
-            stats.minElevation = heightStats;
+
+        if (height < stats.minElevation) {
+            stats.minElevation = height;
         }
 
         decodedHeightArray.push(height)
     }
+
+    //Get center elevations range and add that to height values to set Unreal Landscape at sea level
+    let median = getMedianArray(decodedHeightArray)
+    let adjustedHeightArray = decodedHeightArray.map(x => x + median);
+
+
     // stats.unrealZscale = ((stats.maxElevation/512) * 100)
     // console.log(stats.unrealZscale)
-    return {decodedHeightArray, stats}
+
+    return {adjustedHeightArray, stats}
+}
+
+function getMedianArray(array) {
+
+
+    const arr = array.filter(val => !!val);
+    const sum = arr.reduce((sum, val) => (sum += val));
+    const len = arr.length;
+
+
+    const arrSort = arr.sort();
+    const mid = Math.ceil(len / 2);
+
+    const median = len % 2 == 0 ? (arrSort[mid] + arrSort[mid - 1]) / 2 : arrSort[mid - 1];
+
+    return median
 }
 
 async function createHeightMapImage(rgbImage, bitDepth, colorModel) {
