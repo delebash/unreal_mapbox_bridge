@@ -166,7 +166,7 @@ function getHeightArrayStats(image) {
     // stats.unrealZscale = ((stats.maxElevation/512) * 100)
     // console.log(stats.unrealZscale)
 
-    return {adjustedHeightArray, stats}
+    return {decodedHeightArray, stats}
 }
 
 function getMedianArray(array) {

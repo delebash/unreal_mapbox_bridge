@@ -37,7 +37,7 @@ function getTileInfo(lng, lat, map) {
 }
 
 function getFeaturesFromBB(map, bbox) {
-    console.log(bbox)
+  //  console.log(bbox)
     if (bbox) {
         let sw = [bbox.geometry.coordinates[0][4]]
         let ne = [bbox.geometry.coordinates[0][2]]
