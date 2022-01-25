@@ -15,6 +15,10 @@ npm install
 ```bash
 npm start
 ```
+
+> NOTE:  When running the development server you will need to disble cors for your browser or the api calls to Mapbox will not work.  For Edge/Chrome there is a good plugin that I use to do this.  See https://microsoftedge.microsoft.com/addons/detail/cors-unblock/hkjklmhkbkdhlgnnfbbcihcajofmjgbh
+> 
+
 ## Build
 ```bash
 npm run build

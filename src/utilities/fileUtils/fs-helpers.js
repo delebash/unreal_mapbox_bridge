@@ -159,8 +159,8 @@ function getHeightArrayStats(image) {
     }
 
     //Get center elevations range and add that to height values to set Unreal Landscape at sea level
-    let median = getMedianArray(decodedHeightArray)
-    let adjustedHeightArray = decodedHeightArray.map(x => x + median);
+    // let median = getMedianArray(decodedHeightArray)
+    // let adjustedHeightArray = decodedHeightArray.map(x => x + median);
 
 
     // stats.unrealZscale = ((stats.maxElevation/512) * 100)
