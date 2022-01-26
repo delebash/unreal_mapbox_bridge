@@ -11,14 +11,14 @@
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ minmax }}</div>
         </template>
       </q-field>
-<!--      <q-field dense label="Elevation Range" stack-label>-->
-<!--        <template v-slot:control>-->
-<!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
-<!--              elevation_range-->
-<!--            }}-->
-<!--          </div>-->
-<!--        </template>-->
-<!--      </q-field>-->
+      <!--      <q-field dense label="Elevation Range" stack-label>-->
+      <!--        <template v-slot:control>-->
+      <!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
+      <!--              elevation_range-->
+      <!--            }}-->
+      <!--          </div>-->
+      <!--        </template>-->
+      <!--      </q-field>-->
       <q-field dense label="Tile width in meters" stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
@@ -27,19 +27,18 @@
           </div>
         </template>
       </q-field>
-<!--      <q-field dense label="Pixel width in meters" stack-label>-->
-<!--        <template v-slot:control>-->
-<!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
-<!--              metersPerPixel-->
-<!--            }}-->
-<!--          </div>-->
-<!--        </template>-->
-<!--      </q-field>-->
+
       <q-field dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale" stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ zscale }}</div>
         </template>
       </q-field>
+      <q-toggle
+          dense
+          v-model="levelImg"
+          color="green"
+          label="Normalize Image - Better for flat landscapes - need to reduce Z scale"
+      />
       <q-select dense class="q-pt-md"
                 label="Landscape Size"
                 transition-show="scale"
@@ -79,7 +78,7 @@ import fileUtils from '../utilities/fileUtils/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
 import mapUtils from '../utilities/mapUtils'
-import Jimp from 'jimp/browser/lib/jimp';
+
 
 let vips
 
@@ -117,19 +116,17 @@ export default {
       ],
       url: ref('thirtytwo-9-82-180.png'),
       tile_info: ref(''),
-      stats: ref(''),
       dirHandle: ref(''),
-      preview_imag: ref(''),
+      preview_image_info: ref(''),
       rgb_image: ref(''),
-      maxElevation: ref(''),
-      minElevation: ref(''),
       minmax: ref(''),
       elevation_range: ref(''),
       tileWidthInMeters: ref(''),
       metersPerPixel: ref(''),
       zscale: ref(''),
       map: null,
-      data: '',
+      data: null,
+      levelImg: ref(false)
     }
   },
   async mounted() {
@@ -143,13 +140,11 @@ export default {
 
     updateStats() {
       if (this.maxElevation !== '') {
-        //Rounding 3 decimal places
-        this.minElevation = this.minElevation.toFixed(3)
-        this.maxElevation = this.maxElevation.toFixed(3)
-        this.minmax = this.minElevation + ' / ' + this.maxElevation
-        this.elevation_range = (this.maxElevation - this.minElevation).toFixed(3)
-        this.tileWidthInMeters = this.tileWidthInMeters.toFixed(3)
-        this.metersPerPixel = this.metersPerPixel.toFixed(3)
+        this.minmax = this.preview_image_info.minElevation.toFixed(3) + ' / ' + this.preview_image_info.maxElevation.toFixed(3)
+        this.elevation_range = (this.preview_image_info.maxElevation - this.preview_image_info.minElevation).toFixed(3)
+        this.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
+        this.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
+        this.zscale = this.getUnrealZScale(this.preview_image_info.maxElevation).toFixed(3)
       } else {
         this.minmax = ''
       }
@@ -160,23 +155,13 @@ export default {
       return zscale
     },
     async updatePreviewImage() {
+      this.preview_image_info = await this.data.preview_image_info
       this.tile_info = this.data.tile_info
       this.map = this.data.map
-      this.stats = this.data.stats
-      this.preview_image = this.data.preview_image
-      this.dirHandle = this.data.dirHandle
 
-      let blob = await this.preview_image.toBlob()
+      let blob = await this.preview_image_info.image.toBlob()
       const objectURL = URL.createObjectURL(blob)
       this.url = objectURL
-      this.maxElevation = this.stats.maxElevation
-      this.minElevation = this.stats.minElevation
-
-      this.tileWidthInMeters = this.tile_info.tileWidthInMeters
-      this.metersPerPixel = this.tile_info.metersPerPixel
-      this.zscale = this.getUnrealZScale(this.maxElevation).toFixed(3)
-      //  this.zscale = this.stats.unrealZscale.toFixed(3)
-
       this.updateStats()
     },
     async createSixteenHeightMap() {
@@ -190,18 +175,21 @@ export default {
         let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
         if (bExists) {
           let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
-          // console.log(rgbImgBuff)
           let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
 
           let sixteen_image_info = fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
           this.tile_info.resolution = this.unrealLandscape.value
-          //  img = img.level()
-          //    img = img
+
+          if (this.levelImg === true) {
+            img = img.level()
+          }
+
+
+          //    img = imgs
           //       .grey({algorithm : 'average',keepAlpha :false, mergeAlpha:true})
           let arr
           let arrayBuff = await img.toBuffer()
-          // console.log(arrayBuff)
           if (this.unrealLandscape.value !== 512) {
             let image = vips.Image.newFromBuffer(arrayBuff);
 
@@ -212,44 +200,10 @@ export default {
           } else {
             arr = arrayBuff
           }
+
           await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arr)
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
-          // let coordinates = features.geometry.coordinates
 
-
-          // let points = []
-          // //Replace long/lat coordinates with projected
-          // let geofeatures = []
-          // let goodPoints = []
-          // let mypoints = []
-          // for (const myfeature of features) {
-          //   // console.log(myfeature)
-          //   // console.log(myfeature)
-          //   if (myfeature.geometry) {
-          //     //console.log(myfeature.geometry.type)
-          //     if (myfeature.geometry.type === 'LineString') {
-          //       // console.log(myfeature.geometry.type)
-          //       //  console.log(myfeature.geometry.coordinates)
-          //       for (const coordinate of myfeature.geometry.coordinates) {
-          //         mypoints = []
-          //      //   console.log(coordinate)
-          //         const point = this.map.project(coordinate);
-          //         console.log(point)
-          //         console.log(point.x)
-          //         console.log(point.y)
-          //         mypoints[0] = point.x
-          //         mypoints[1] = point.y
-          //        // console.log(mypoints)
-          //         goodPoints.push(mypoints)
-          //       }
-          //       myfeature.geometry.coordinates = goodPoints
-          //       goodPoints = []
-          //
-          //       geofeatures.push(myfeature)
-          //       // console.log(myfeature)
-          //     }
-          //   }
-          // }
           let strFeatures = JSON.stringify(features)
           let tile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
@@ -263,4 +217,44 @@ export default {
     }
   }
 }
+
+
+// let coordinates = features.geometry.coordinates
+
+
+// let points = []
+// //Replace long/lat coordinates with projected
+// let geofeatures = []
+// let goodPoints = []
+// let mypoints = []
+// for (const myfeature of features) {
+//   // console.log(myfeature)
+//   // console.log(myfeature)
+//   if (myfeature.geometry) {
+//     //console.log(myfeature.geometry.type)
+//     if (myfeature.geometry.type === 'LineString') {
+//       // console.log(myfeature.geometry.type)
+//       //  console.log(myfeature.geometry.coordinates)
+//       for (const coordinate of myfeature.geometry.coordinates) {
+//         mypoints = []
+//      //   console.log(coordinate)
+//         const point = this.map.project(coordinate);
+//         console.log(point)
+//         console.log(point.x)
+//         console.log(point.y)
+//         mypoints[0] = point.x
+//         mypoints[1] = point.y
+//        // console.log(mypoints)
+//         goodPoints.push(mypoints)
+//       }
+//       myfeature.geometry.coordinates = goodPoints
+//       goodPoints = []
+//
+//       geofeatures.push(myfeature)
+//       // console.log(myfeature)
+//     }
+//   }
+// }
 </script>
+
+

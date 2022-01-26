@@ -125,36 +125,17 @@ async function fileExists(dirHandle, fileName) {
 }
 
 function getHeightFromRgb(r, g, b) {
-
     return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
-
 }
 
-function getHeightArrayStats(image) {
+function getHeightArray(image) {
     let decodedHeightArray = []
-
-    let stats = {}
-    stats.minElevation = Number.MAX_VALUE;
-    stats.maxElevation = Number.MIN_VALUE;
-    stats.height = image.height;
-    stats.width = image.width;
     let pixelsArray = image.getPixelsArray()
     for (const pixel of pixelsArray) {
         let r = pixel[0]
         let g = pixel[1]
         let b = pixel[2]
-
-        // let heightStats = getHeightFromRgb(r, g, b, 1)
         let height = getHeightFromRgb(r, g, b)
-
-        if (height > stats.maxElevation) {
-            stats.maxElevation = height;
-        }
-
-        if (height < stats.minElevation) {
-            stats.minElevation = height;
-        }
-
         decodedHeightArray.push(height)
     }
 
@@ -166,11 +147,10 @@ function getHeightArrayStats(image) {
     // stats.unrealZscale = ((stats.maxElevation/512) * 100)
     // console.log(stats.unrealZscale)
 
-    return {decodedHeightArray, stats}
+    return {decodedHeightArray}
 }
 
 function getMedianArray(array) {
-
     const arr = array.filter(val => !!val);
     const sum = arr.reduce((sum, val) => (sum += val));
     const len = arr.length;
@@ -184,12 +164,14 @@ function getMedianArray(array) {
 }
 
 function createHeightMapImage(rgbImage, bitDepth, colorModel) {
+    let image_info = getHeightArray(rgbImage)
+    let image = convertImage(rgbImage.width, rgbImage.height, image_info.decodedHeightArray, bitDepth, colorModel)
 
-    let height_array_stats = getHeightArrayStats(rgbImage)
+    image_info.minElevation = image.min[0];
+    image_info.maxElevation = image.max[0];
+    image_info.image = image
 
-    let image = convertImage(height_array_stats.stats.width, height_array_stats.stats.height, height_array_stats.decodedHeightArray, bitDepth, colorModel)
-    height_array_stats.image = image
-    return height_array_stats
+    return image_info
 }
 
 async function loadImageFromArray(imageArray) {

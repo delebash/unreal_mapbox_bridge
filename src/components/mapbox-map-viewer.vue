@@ -469,8 +469,7 @@ export default {
         emitter.emit('updatePreviewImage', {
           dir_handle: dirHandle,
           tile_info: tile_info,
-          preview_image: previewImageInfo.image,
-          stats: previewImageInfo.stats,
+          preview_image_info: previewImageInfo,
           map: map
         })
       })
