@@ -40,9 +40,9 @@
 
 <script>
 import {ref} from "vue";
-import idbKeyval from '../utilities/fileUtils/idb-keyval-iife';
-import fileUtils from '../utilities/fileUtils/fs-helpers'
-import mapUtils from '../utilities/mapUtils'
+import idbKeyval from '../utilities/idb-keyval-iife';
+import fileUtils from '../utilities/fs-helpers'
+import mapUtils from '../utilities/map-utils'
 import emitter from "../utilities/emitter";
 
 import mapboxgl from 'mapbox-gl'
@@ -57,11 +57,12 @@ export default {
       style_url: ref(''),
       access_token: ref(''),
       mapbox_raster_png_dem: ref(''),
-      // terrain_threed_dem: ref(''),
+      mapbox_api_url: ref(''),
+      mapbox_rgb_image_url: ref(''),
       map: ref(''),
       // bb: ref(null),
       threedview: ref(false),
-      layers: ref(['hillshading','bounding_box','undersea-features-lines','undersea-features-points', 'undersea-features-points-label','10m-bathymetry-81bsvj']),
+      layers: ref(['hillshading', 'bounding_box', 'undersea-features-lines', 'undersea-features-points', 'undersea-features-points-label', '10m-bathymetry-81bsvj']),
       layer_type: [
         {
           label: 'Hillshade',
@@ -129,18 +130,11 @@ export default {
       }
     },
 
-    //    Show 3D
-    //     if (layersEnabled.includes('3d') === true) {
-    //       this.map.setTerrain({'source': 'mapbox-3d', 'exaggeration': 1.5});
-    //     } else {
-    //
-    //     }
-
     loadMapSourcesLayers(map) {
 
-      map.addSource('mapbox_raster_png_dem', {
+      map.addSource('mapbox_terrain_dem', {
         "type": "raster-dem",
-        "url": this.mapbox_raster_png_dem,
+        "url": 'mapbox://mapbox.mapbox-terrain-dem-v1',
       });
       map.addSource('satellite', {
         'type': 'raster',
@@ -159,7 +153,7 @@ export default {
       // Hillshade
       map.addLayer({
         "id": "hillshading",
-        "source": "mapbox_raster_png_dem",
+        "source": "mapbox_terrain_dem",
         "type": "hillshade"
       });
 
@@ -239,7 +233,7 @@ export default {
 
       map.addSource('mapbox-3d', {
         'type': 'raster-dem',
-        'url': this.mapbox_raster_png_dem,
+        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
         'tileSize': 512,
         'maxzoom': 14
       });
@@ -272,14 +266,13 @@ export default {
     },
 
     async loadMapboxMap() {
-      // mapboxgl.baseApiUrl = 'https://api.mapbox.com';
       mapboxgl.accessToken = await idbKeyval.get('access_token')
       this.access_token = mapboxgl.accessToken
-
+      this.mapbox_api_url = await idbKeyval.get('mapbox_api_url')
       this.dirHandle = await idbKeyval.get('dirHandle')
       this.style_url = await idbKeyval.get('style_url')
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
-      // this.terrain_threed_dem = await idbKeyval.get('terrain_threed_dem')
+
 
       let that = this
 
@@ -448,21 +441,23 @@ export default {
         //     .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
         //     .addTo(map);
 
-        let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
-        let mapbox_rgb_image_url = mapbox_api_url + `/mapbox.terrain-rgb/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
 
+        that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
         //Get terrain rgb from selected tile
-        let rgb_image = await fileUtils.getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url)
-        let rgb_buff = rgb_image.toBuffer()
+        let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
+        let rgb_buff = await (await rgb_image.toBlob()).arrayBuffer()
         await idbKeyval.set('rgb_image_buffer', rgb_buff)
         await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
 
         //Create preview imamge
-        let previewImageInfo = fileUtils.createHeightMapImage(rgb_image, 32, "GREY")
+        let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
         let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtytwoFile.name)
         //Note file does not have to be written to disk in order to update preview image
         if (bFileExists === false) {
-          let buff = await previewImageInfo.image.toBuffer()
+          let buff = await (await previewImageInfo.image.toBlob()).arrayBuffer()
+
+
           await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtytwoFile.name, buff)
         }
 
@@ -513,10 +508,6 @@ export default {
     //   await this.map.setStyle('mapbox://styles/mapbox/' + this.style, {diff: false});
     // },
 
-    change3D() {
-
-    }
-    ,
 
     async geoCodeReverse(options) {
       await MapboxGeocoder
