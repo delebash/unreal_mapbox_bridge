@@ -62,6 +62,16 @@
                        hint="You can use the default style or you can create your own custom style in Mapbox Studio."
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
+              <q-input dense class="q-pb-lg" v-model="mapbox_api_url" label="Mapbox base api url *" filled
+                       lazy-rules
+                       hint=""
+                       :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
+              </q-input>
+              <q-input dense class="q-pb-lg" v-model="mapbox_raster_png_dem" label="Mapbox Raster Dem Endpoint *" filled
+                       lazy-rules
+                       hint=""
+                       :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
+              </q-input>
               <div class="q-pa-none row items-start">
                 <div class="col q-pa-none">
                   <q-input dense class="q-pb-none" v-model="dirName" label="Enter download directory path *"
@@ -97,8 +107,8 @@ import {Notify} from 'quasar'
 import mapboxgl from "mapbox-gl";
 import {useQuasar} from 'quasar'
 import Help from '../components/help.vue'
-import idbKeyval from '../utilities/fileUtils/idb-keyval-iife';
-import fileUtils from '../utilities/fileUtils/fs-helpers';
+import idbKeyval from '../utilities/idb-keyval-iife';
+import fileUtils from '../utilities/fs-helpers';
 
 import ReloadPrompt from '../components/ReloadPrompt.vue'
 
@@ -129,6 +139,8 @@ export default {
       dirName: ref(''),
       style_url: ref(''),
       access_token: ref(''),
+      mapbox_api_url: ref(''),
+      mapbox_raster_png_dem: ref(''),
       showPwaBtn: true,
       isPwd: ref(true),
       drawerLeft: ref(false),
@@ -142,9 +154,6 @@ export default {
       this.showPwaBtn = false
     }
 
-    idbKeyval.set('mapbox_api_url', 'https://api.mapbox.com/v4')
-    idbKeyval.set('mapbox_raster_png_dem', 'mapbox://mapbox.mapbox-terrain-dem-v1')
-    // idbKeyval.set('terrain_threed_dem', "mapbox://mapbox.mapbox-terrain-dem-v1")
 
     //Load user data
     await this.loadUserData();
@@ -216,6 +225,8 @@ export default {
     saveUserSettings() {
       idbKeyval.set('access_token', this.access_token);
       idbKeyval.set('style_url', this.style_url);
+      idbKeyval.set('mapbox_api_url', this.mapbox_api_url);
+      idbKeyval.set('mapbox_raster_png_dem', this.mapbox_raster_png_dem);
       idbKeyval.set('create_folder', this.createFolder);
 
       if (this.isRequiredSettings() === true) {
@@ -225,10 +236,11 @@ export default {
     async loadUserData() {
       mapboxgl.accessToken = await idbKeyval.get('access_token')
       this.access_token = mapboxgl.accessToken || ''
-      this.style_url = await idbKeyval.get('style_url') || ''
-      if (this.style_url === '') {
-        this.style_url = 'mapbox://styles/mapbox/streets-v11'
-      }
+      this.style_url = await idbKeyval.get('style_url') || 'mapbox://styles/mapbox/streets-v11'
+      this.mapbox_api_url = await idbKeyval.get('mapbox_api_url') || 'https://api.mapbox.com/v4/'
+      this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem') || 'mapbox.mapbox-terrain-dem-v1'
+
+
       let dirHandle = await idbKeyval.get('dirHandle') || ''
       this.createFolder = await idbKeyval.get('create_folder') || ''
       this.dirHandle = dirHandle
