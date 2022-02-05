@@ -1,0 +1,1 @@
+import{_ as o}from"./index.c4588623.js";import{d as n,r as a,c as r,o as s}from"./vendor.238db0a9.js";const t=n({name:"PageIndex"});function c(p,_,d,f,m,x){const e=a("q-page");return s(),r(e,{class:"flex flex-center"})}var u=o(t,[["render",c]]);export{u as default};
