@@ -240,7 +240,6 @@ export default {
       this.mapbox_api_url = await idbKeyval.get('mapbox_api_url') || 'https://api.mapbox.com/v4/'
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem') || 'mapbox.mapbox-terrain-dem-v1'
 
-
       let dirHandle = await idbKeyval.get('dirHandle') || ''
       this.createFolder = await idbKeyval.get('create_folder') || ''
       this.dirHandle = dirHandle

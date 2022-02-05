@@ -186,11 +186,12 @@ function convertImage(width, height, imageArray, bitDepth, colorModel) {
  */
 function createHeightMapImage(image, bitDepth, colorModel) {
     let image_info = {}
+
     let decodedHeightArray = getHeightArray(image)
     let out_image = convertImage(image.width, image.height, decodedHeightArray, bitDepth, colorModel)
 
-    image_info.minElevation = image.min[0];
-    image_info.maxElevation = image.max[0];
+    image_info.minElevation = out_image.min[0];
+    image_info.maxElevation = out_image.max[0];
     image_info.image = out_image
 
     return image_info

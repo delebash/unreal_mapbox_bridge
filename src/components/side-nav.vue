@@ -33,12 +33,12 @@
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ zscale }}</div>
         </template>
       </q-field>
-      <q-toggle
-          dense
-          v-model="levelImg"
-          color="green"
-          label="Normalize Image - Better for flat landscapes - need to reduce Z scale"
-      />
+      <!--      <q-toggle-->
+      <!--          dense-->
+      <!--          v-model="levelImg"-->
+      <!--          color="green"-->
+      <!--          label="Normalize Image - Better for flat landscapes - need to reduce Z scale"-->
+      <!--      />-->
       <q-select dense class="q-pt-md"
                 label="Landscape Size"
                 transition-show="scale"
@@ -78,10 +78,10 @@ import fileUtils from '../utilities/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
-import {Image} from "image-js";
+// import {Image} from "image-js";
 
 let gdalWorker = new Worker('worker.js');
-let vips
+// let vips
 
 export default {
   name: 'SideNav',
@@ -131,7 +131,7 @@ export default {
     }
   },
   async mounted() {
-    vips = await Vips();
+    // vips = await Vips();
 
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
@@ -139,11 +139,15 @@ export default {
     })
 
     gdalWorker.onmessage = (evt) => {
-      //this.displayImage(evt.data);
+      this.saveImage(evt.data);
     }
   },
   methods: {
-
+    async saveImage(imageBytes) {
+      let dirHandle = await idbKeyval.get('dirHandle')
+      let outputBlob = new Blob([imageBytes], {type: 'image/png'});
+      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', outputBlob)
+    },
     updateStats() {
       if (this.maxElevation !== '') {
         this.minmax = this.preview_image_info.minElevation.toFixed(3) + ' / ' + this.preview_image_info.maxElevation.toFixed(3)
@@ -160,10 +164,6 @@ export default {
       let zscale = (cm * 0.001953125)
       return zscale
     },
-    async gdalScale(file, translateOptions) {
-      gdalWorker.postMessage(file, translateOptions);
-    },
-
     async writeFiles(buff) {
       let dirHandle = await idbKeyval.get('dirHandle')
       await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', buff)
@@ -206,39 +206,51 @@ export default {
           let min = parseInt(sixteen_image_info.minElevation).toString()
           let max = parseInt(sixteen_image_info.maxElevation).toString()
 
-          if (this.levelImg === true) {
-            img = img.level()
-          }
-
 
           let buff = await img.toBuffer()
-          if (this.unrealLandscape.value !== 512) {
-            let image = vips.Image.newFromBuffer(buff);
-            image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
-            const outBuffer = image.writeToBuffer('.PNG')
-            buff = new Uint8Array(outBuffer);
-          }
+          let resample = this.unrealLandscape.value.toString()
 
           let translateOptions = [
             '-ot', 'UInt16',
             '-of', 'PNG',
-            '-scale', '108', '4380', '32768', '65535'
+            '-scale', min, max, '32768', '65535',
+            '-outsize', resample, resample, '-r', 'lanczos'
           ];
 
+          let file = new File([buff], "heightmap.png", {
+            type: "image/png",
+            lastModified: Date.now()
+          });
 
-          // let file = new File([imgBlog], "heightmap.png", {
-          //   type: "image/png",
-          //   lastModified: Date.now()
-          // });
-          // let list = new DataTransfer();
-          // list.items.add(file);
-          // let myFileList = list.files;
-          // let data ={}
-          // data.files = myFileList
-          // data.translateOptions = translateOptions
-          // gdalWorker.postMessage(data);
+          let list = new DataTransfer();
+          list.items.add(file);
+          let myFileList = list.files;
+          let data = {}
+          data.files = myFileList
+          data.translateOptions = translateOptions
+          gdalWorker.postMessage(data);
 
-         // await this.writeFiles(buffer)
+          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
+
+          let strFeatures = JSON.stringify(features)
+          let tile_info = JSON.stringify(this.tile_info)
+          await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
+          await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
+
+
+          // if (this.levelImg === true) {
+          //   img = img.level()
+          // }
+
+
+          // if (this.unrealLandscape.value !== 512) {
+          //   let image = vips.Image.newFromBuffer(buff);
+          //   image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
+          //   const outBuffer = image.writeToBuffer('.PNG')
+          //   buff = new Uint8Array(outBuffer);
+          // }
+
+          // await this.writeFiles(buffer)
 
           // let args = ['-ot', 'UInt16', '-scale', min, max, '32768', '65535']
           // let translateOptions = [
@@ -271,13 +283,7 @@ export default {
           //   arr = await imgFinal.toBuffer()
           // }
 
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', buff)
-          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
-
-          let strFeatures = JSON.stringify(features)
-          let tile_info = JSON.stringify(this.tile_info)
-          await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
-          await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
+          // await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', buff)
 
         } else {
           this.alert = true
