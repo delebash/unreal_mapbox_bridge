@@ -74,12 +74,13 @@
 
 import {ref} from 'vue'
 
-import fileUtils from '../utilities/fileUtils/fs-helpers'
+import fileUtils from '../utilities/fs-helpers'
 import emitter from "../utilities/emitter";
-import idbKeyval from "../utilities/fileUtils/idb-keyval-iife";
-import mapUtils from '../utilities/mapUtils'
+import idbKeyval from "../utilities/idb-keyval-iife";
+import mapUtils from '../utilities/map-utils'
+import {Image} from "image-js";
 
-
+let gdalWorker = new Worker('worker.js');
 let vips
 
 export default {
@@ -131,10 +132,15 @@ export default {
   },
   async mounted() {
     vips = await Vips();
+
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
       this.updatePreviewImage()
     })
+
+    gdalWorker.onmessage = (evt) => {
+      //this.displayImage(evt.data);
+    }
   },
   methods: {
 
@@ -154,6 +160,21 @@ export default {
       let zscale = (cm * 0.001953125)
       return zscale
     },
+    async gdalScale(file, translateOptions) {
+      gdalWorker.postMessage(file, translateOptions);
+    },
+
+    async writeFiles(arrayBuffer) {
+      let dirHandle = await idbKeyval.get('dirHandle')
+      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arrayBuffer)
+      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
+
+      let strFeatures = JSON.stringify(features)
+      let tile_info = JSON.stringify(this.tile_info)
+      await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
+      await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
+    },
+
     async updatePreviewImage() {
       this.preview_image_info = await this.data.preview_image_info
       this.tile_info = this.data.tile_info
@@ -175,19 +196,20 @@ export default {
         let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
         if (bExists) {
           let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
-          let rgb_image = await fileUtils.loadImageFromArray(rgbImgBuff)
+          let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
 
-          let sixteen_image_info = fileUtils.createHeightMapImage(rgb_image, 16, "GREY")
+
+          let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
           this.tile_info.resolution = this.unrealLandscape.value
+
+          let min = parseInt(sixteen_image_info.minElevation).toString()
+          let max = parseInt(sixteen_image_info.maxElevation).toString()
 
           if (this.levelImg === true) {
             img = img.level()
           }
 
-
-          //    img = imgs
-          //       .grey({algorithm : 'average',keepAlpha :false, mergeAlpha:true})
           let arr
           let arrayBuff = await img.toBuffer()
           if (this.unrealLandscape.value !== 512) {
@@ -195,11 +217,62 @@ export default {
 
             image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
             const outBuffer = image.writeToBuffer('.PNG')
-            // console.log(outBuffer)
             arr = new Uint8Array(outBuffer);
           } else {
             arr = arrayBuff
           }
+
+          let translateOptions = [
+            '-ot', 'UInt16',
+            '-of', 'PNG',
+            '-scale', '108', '4380', '32768', '65535'
+          ];
+
+
+          // let file = new File([imgBlog], "heightmap.png", {
+          //   type: "image/png",
+          //   lastModified: Date.now()
+          // });
+          // let list = new DataTransfer();
+          // list.items.add(file);
+          // let myFileList = list.files;
+          // let data ={}
+          // data.files = myFileList
+          // data.translateOptions = translateOptions
+          // gdalWorker.postMessage(data);
+
+         // await this.writeFiles(buffer)
+
+          // let args = ['-ot', 'UInt16', '-scale', min, max, '32768', '65535']
+          // let translateOptions = [
+          //   '-ot', 'UInt16',
+          //   '-of', 'PNG',
+          //   '-scale', min, max, '32768', '65535'
+          // ];
+          //
+
+          // imgFinal = await fileUtils.loadImageFromArray(arrayBuff)
+          // let myblob = await imgFinal.toBlob()
+          // let file = new File([myblob], "heightmap.png", {
+          //   type: "image/png",
+          //   lastModified: Date.now()
+          // });
+          // let list = new DataTransfer();
+          // list.items.add(file);
+          // let myFileList = list.files;
+          // let data ={}
+          // data.files = myFileList
+          // data.translateOptions = translateOptions
+          // gdalWorker.postMessage(data);
+
+
+          //  await this.gdalScale(myFileList, translateOptions)
+
+          // if (this.levelImg === true) {
+          //   //    imgFinal = imgFinal.level({min:-255,max:255})
+          //   imgFinal = imgFinal.level()
+          //   arr = await imgFinal.toBuffer()
+          // }
 
           await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arr)
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
@@ -208,6 +281,7 @@ export default {
           let tile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
           await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
+
         } else {
           this.alert = true
         }
