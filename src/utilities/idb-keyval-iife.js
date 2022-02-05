@@ -4,11 +4,12 @@
       constructor(dbName = 'unreal-mapbox', storeName = 'keyval') {
           this.storeName = storeName;
           this._dbp = new Promise((resolve, reject) => {
-              const openreq = indexedDB.open(dbName, 1);
+              const openreq = indexedDB.open(dbName, 2);
               openreq.onerror = () => reject(openreq.error);
               openreq.onsuccess = () => resolve(openreq.result);
               // First time setup: create an empty object store
               openreq.onupgradeneeded = () => {
+                  openreq.result.deleteObjectStore(storeName);
                   openreq.result.createObjectStore(storeName);
               };
           });
