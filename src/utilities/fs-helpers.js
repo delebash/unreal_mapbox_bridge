@@ -75,15 +75,15 @@ async function writeFile(fileHandle, contents) {
  * Verify the user has granted permission to read or write to the file, if
  * permission hasn't been granted, request permission.
  *
- * @param {FileSystemFileHandle} fileHandle File handle to check.
+ * @param {FileSystemDirHandle} dirHandle Dir handle to check.
  * @param {boolean} withWrite True if write permission should be checked.
- * @return {boolean} True if the user has granted read/write permission.
+ * @return {boolean} True if permission granted.
+
  */
 async function verifyPermission(dirHandle, withWrite) {
     const opts = {};
     if (withWrite) {
         opts.writable = true;
-        // For Chrome 86 and later...
         opts.mode = 'readwrite';
     }
     // Check if we already have permission, if so, return true.
@@ -98,17 +98,31 @@ async function verifyPermission(dirHandle, withWrite) {
     return false;
 }
 
-async function writeFileToDisk(writeDirHandle, fileName, imgArray) {
-
-    let writeFileHandle = await writeDirHandle.getFileHandle(fileName, {create: true})
+/**
+ * Writes the contents to disk.
+ *
+ * @param {FileSystemDirHandle} dirHandle Dir handle to write to.
+ * @param {string} fileName File name including extension.
+ * @param {string, ArrayBuffer} contents Contents to write.
+ */
+async function writeFileToDisk(dirHandle, fileName, contents) {
+    let writeFileHandle = await dirHandle.getFileHandle(fileName, {create: true})
     let writable = await writeFileHandle.createWritable()
-    await writable.write(imgArray)
+    await writable.write(contents)
     await writable.close();
 }
 
+/**
+ * Check if file exists on disk.
+ *
+ * @param {FileSystemDirHandle} dirHandle Dir handle to write to.
+ * @param {string} fileName File name including extension.
+ * @return {boolean} True if file exists.
+ */
 async function fileExists(dirHandle, fileName) {
-    //Check if file exists
+
     try {
+
         await dirHandle.getFileHandle(fileName)
         // console.log(fileName + '  file already exists -- using cached file')
         return true
@@ -124,87 +138,13 @@ async function fileExists(dirHandle, fileName) {
     }
 }
 
-function getHeightFromRgb(r, g, b) {
-    return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
-}
-
-function getHeightArray(image) {
-    let decodedHeightArray = []
-    let pixelsArray = image.getPixelsArray()
-    for (const pixel of pixelsArray) {
-        let r = pixel[0]
-        let g = pixel[1]
-        let b = pixel[2]
-        let height = getHeightFromRgb(r, g, b)
-        decodedHeightArray.push(height)
-    }
-
-    //Get center elevations range and add that to height values to set Unreal Landscape at sea level
-    // let median = getMedianArray(decodedHeightArray)
-    // let adjustedHeightArray = decodedHeightArray.map(x => x + median);
-
-
-    // stats.unrealZscale = ((stats.maxElevation/512) * 100)
-    // console.log(stats.unrealZscale)
-
-    return {decodedHeightArray}
-}
-
-function getMedianArray(array) {
-    const arr = array.filter(val => !!val);
-    const sum = arr.reduce((sum, val) => (sum += val));
-    const len = arr.length;
-
-    const arrSort = arr.sort();
-    const mid = Math.ceil(len / 2);
-
-    const median = len % 2 == 0 ? (arrSort[mid] + arrSort[mid - 1]) / 2 : arrSort[mid - 1];
-
-    return median
-}
-
-function createHeightMapImage(rgbImage, bitDepth, colorModel) {
-    let image_info = getHeightArray(rgbImage)
-    let image = convertImage(rgbImage.width, rgbImage.height, image_info.decodedHeightArray, bitDepth, colorModel)
-
-    image_info.minElevation = image.min[0];
-    image_info.maxElevation = image.max[0];
-    image_info.image = image
-
-    return image_info
-}
-
-async function loadImageFromArray(imageArray) {
-    let image = await Image.load(imageArray)
-    return image
-}
-
-function convertImage(width, height, imageArray, bitDepth, colorModel) {
-    let newImage = new Image(width, height, imageArray, {kind: colorModel, bitDepth: bitDepth})
-    return newImage
-}
-
-async function getMapboxTerrainRgb(dir_handle, tile_info, mapbox_rgb_image_url) {
-    let rgbImageArrayBuffer
-
-    let bFileExists = await fileExists(dir_handle, tile_info.rgbFileName)
-    let image
-    if (bFileExists === false) {
-        rgbImageArrayBuffer = await downloadTerrainRgb(mapbox_rgb_image_url)
-    } else {
-        rgbImageArrayBuffer = await readFileFromDisk(dir_handle, tile_info.rgbFileName)
-    }
-
-    image = await loadImageFromArray(rgbImageArrayBuffer)
-    return image
-}
-
-async function downloadTerrainRgb(mapbox_rgb_image_url) {
-    //Fetch png tile from mapbox
-    const response = await fetch(mapbox_rgb_image_url);
-    let arrBuffer = response.arrayBuffer()
-    return arrBuffer
-}
+/**
+ * Writes the contents to disk.
+ *
+ * @param {FileSystemDirHandle} dirHandle Dir handle to write to.
+ * @param {string} fileName File name including extension.
+ * @return {ArrayBuffer} arrBuffer of image information.
+ */
 
 async function readFileFromDisk(dirHandle, fileName) {
     let fileHandle = await dirHandle.getFileHandle(fileName)
@@ -216,11 +156,8 @@ async function readFileFromDisk(dirHandle, fileName) {
 export default {
     getDirHandle,
     verifyPermission,
-    createHeightMapImage,
-    convertImage,
     writeFileToDisk,
-    getMapboxTerrainRgb,
     fileExists,
     getFileHandle,
-    loadImageFromArray
+    readFileFromDisk
 }
