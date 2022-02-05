@@ -240,10 +240,12 @@ export default {
               data.translateOptions = translateOptions
               gdalWorker.postMessage(data);
               break;
+
             case 'normalize':
               img = img.level()
               await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', img.toBuffer())
               break;
+
             case 'none':
               await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', img.toBuffer())
               break;
@@ -276,8 +278,6 @@ export default {
 
 
 // let coordinates = features.geometry.coordinates
-
-
 // let points = []
 // //Replace long/lat coordinates with projected
 // let geofeatures = []
