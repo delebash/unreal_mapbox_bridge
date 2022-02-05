@@ -33,12 +33,15 @@
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ zscale }}</div>
         </template>
       </q-field>
-      <!--      <q-toggle-->
-      <!--          dense-->
-      <!--          v-model="levelImg"-->
-      <!--          color="green"-->
-      <!--          label="Normalize Image - Better for flat landscapes - need to reduce Z scale"-->
-      <!--      />-->
+      <q-item-label class="q-pt-sm">Export Type:</q-item-label>
+      <q-option-group
+          dense
+          inline
+          :options="exportOptions"
+          type="radio"
+          v-model="exportType"
+      />
+
       <q-select dense class="q-pt-md"
                 label="Landscape Size"
                 transition-show="scale"
@@ -78,7 +81,7 @@ import fileUtils from '../utilities/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
-// import {Image} from "image-js";
+import {Image} from "image-js";
 
 let gdalWorker = new Worker('worker.js');
 // let vips
@@ -127,7 +130,12 @@ export default {
       zscale: ref(''),
       map: null,
       data: null,
-      levelImg: ref(false)
+      exportType: ref('unreal'),
+      exportOptions: [
+        {label: 'Unreal', value: 'unreal'},
+        {label: 'Normalize', value: 'normalize'},
+        {label: 'None', value: 'none'}
+      ]
     }
   },
   async mounted() {
@@ -161,7 +169,7 @@ export default {
     },
     getUnrealZScale(maxElevation) {
       let cm = (maxElevation * 100)
-     let zscale = (cm * 0.001953125)
+      let zscale = (cm * 0.001953125)
       return zscale
     },
     async writeFiles(buff) {
@@ -206,41 +214,46 @@ export default {
           let min = parseInt(sixteen_image_info.minElevation).toString()
           let max = parseInt(sixteen_image_info.maxElevation).toString()
 
-
           let buff = await img.toBuffer()
-          let resample = this.unrealLandscape.value.toString()
+          let resampleSize = this.unrealLandscape.value.toString()
 
-          let translateOptions = [
-            '-ot', 'UInt16',
-            '-of', 'PNG',
-            '-scale', min, max, '32768', '65535',
-            '-outsize', resample, resample, '-r', 'lanczos'
-          ];
+          switch (this.exportType) {
+            case 'unreal':
 
-          let file = new File([buff], "heightmap.png", {
-            type: "image/png",
-            lastModified: Date.now()
-          });
+              let translateOptions = [
+                '-ot', 'UInt16',
+                '-of', 'PNG',
+                '-scale', min, max, '32768', '65535',
+                '-outsize', resampleSize, resampleSize, '-r', 'lanczos'
+              ];
 
-          let list = new DataTransfer();
-          list.items.add(file);
-          let myFileList = list.files;
-          let data = {}
-          data.files = myFileList
-          data.translateOptions = translateOptions
-          gdalWorker.postMessage(data);
+              let file = new File([buff], "heightmap.png", {
+                type: "image/png",
+                lastModified: Date.now()
+              });
+
+              let list = new DataTransfer();
+              list.items.add(file);
+              let myFileList = list.files;
+              let data = {}
+              data.files = myFileList
+              data.translateOptions = translateOptions
+              gdalWorker.postMessage(data);
+              break;
+            case 'normalize':
+              img = img.level()
+              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', img.toBuffer())
+              break;
+            case 'none':
+              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', img.toBuffer())
+              break;
+          }
 
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
-
           let strFeatures = JSON.stringify(features)
           let tile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
           await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
-
-
-          // if (this.levelImg === true) {
-          //   img = img.level()
-          // }
 
 
           // if (this.unrealLandscape.value !== 512) {
@@ -250,40 +263,6 @@ export default {
           //   buff = new Uint8Array(outBuffer);
           // }
 
-          // await this.writeFiles(buffer)
-
-          // let args = ['-ot', 'UInt16', '-scale', min, max, '32768', '65535']
-          // let translateOptions = [
-          //   '-ot', 'UInt16',
-          //   '-of', 'PNG',
-          //   '-scale', min, max, '32768', '65535'
-          // ];
-          //
-
-          // imgFinal = await fileUtils.loadImageFromArray(arrayBuff)
-          // let myblob = await imgFinal.toBlob()
-          // let file = new File([myblob], "heightmap.png", {
-          //   type: "image/png",
-          //   lastModified: Date.now()
-          // });
-          // let list = new DataTransfer();
-          // list.items.add(file);
-          // let myFileList = list.files;
-          // let data ={}
-          // data.files = myFileList
-          // data.translateOptions = translateOptions
-          // gdalWorker.postMessage(data);
-
-
-          //  await this.gdalScale(myFileList, translateOptions)
-
-          // if (this.levelImg === true) {
-          //   //    imgFinal = imgFinal.level({min:-255,max:255})
-          //   imgFinal = imgFinal.level()
-          //   arr = await imgFinal.toBuffer()
-          // }
-
-          // await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', buff)
 
         } else {
           this.alert = true
