@@ -164,9 +164,9 @@ export default {
       gdalWorker.postMessage(file, translateOptions);
     },
 
-    async writeFiles(arrayBuffer) {
+    async writeFiles(buff) {
       let dirHandle = await idbKeyval.get('dirHandle')
-      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arrayBuffer)
+      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', buff)
       let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
 
       let strFeatures = JSON.stringify(features)
@@ -210,16 +210,13 @@ export default {
             img = img.level()
           }
 
-          let arr
-          let arrayBuff = await img.toBuffer()
-          if (this.unrealLandscape.value !== 512) {
-            let image = vips.Image.newFromBuffer(arrayBuff);
 
+          let buff = await img.toBuffer()
+          if (this.unrealLandscape.value !== 512) {
+            let image = vips.Image.newFromBuffer(buff);
             image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
             const outBuffer = image.writeToBuffer('.PNG')
-            arr = new Uint8Array(outBuffer);
-          } else {
-            arr = arrayBuff
+            buff = new Uint8Array(outBuffer);
           }
 
           let translateOptions = [
@@ -274,7 +271,7 @@ export default {
           //   arr = await imgFinal.toBuffer()
           // }
 
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', arr)
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-' + this.tile_info.resolution + '.png', buff)
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
 
           let strFeatures = JSON.stringify(features)
