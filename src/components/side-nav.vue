@@ -161,7 +161,7 @@ export default {
     },
     getUnrealZScale(maxElevation) {
       let cm = (maxElevation * 100)
-      let zscale = (cm * 0.001953125)
+     let zscale = (cm * 0.001953125)
       return zscale
     },
     async writeFiles(buff) {
