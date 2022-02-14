@@ -16,8 +16,10 @@
     "@quasar/extras": "^1.12.2",
     "@turf/turf": "^6.5.0",
     "fs-extra": "^10.0.0",
+    "geotiff": "^2.0.4",
     "idb-keyval": "^6.0.3",
     "image-js": "^0.33.1",
+    "loam": "^1.1.0",
     "mapbox-gl": "^2.6.1",
     "mitt": "^3.0.0",
     "quasar": "^2.4.4"

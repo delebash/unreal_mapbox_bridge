@@ -3,6 +3,7 @@ import tilebelt from '@mapbox/tilebelt'
 import * as turf from '@turf/turf'
 import {Image} from "image-js";
 import fileUtils from './fs-helpers'
+import idbKeyval from "../utilities/idb-keyval-iife";
 
 function getTileInfo(lng, lat, map) {
     let tileInfo = {}
@@ -24,6 +25,7 @@ function getTileInfo(lng, lat, map) {
     tileInfo.rgbFileName = 'terrain-rgb' + "-" + tileInfo.mapbox_tile_name + '.png'
     tileInfo.thirtytwoFile = {name: 'thirtytwo' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 32}
     tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name, bitDepth: 16}
+    tileInfo.landscapeName = ''
 
     let tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
 
@@ -90,6 +92,7 @@ function getHeightArray(image) {
         let g = pixel[1]
         let b = pixel[2]
         let height = getHeightFromRgb(r, g, b)
+        height = parseFloat(height)
         decodedHeightArray.push(height)
     }
 
@@ -134,11 +137,26 @@ function getMedianArray(array) {
 async function downloadTerrainRgb(mapbox_rgb_image_url) {
     //Fetch png tile from mapbox
     const response = await fetch(mapbox_rgb_image_url);
-    let arrBuffer = response.arrayBuffer()
+    let arrBuffer = await response.arrayBuffer()
     return arrBuffer
 }
 
+async function unrealRemoteControl(data) {
+// data = {
+//     "objectPath" : "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
+//     "functionName":"GetAllLevelActors"
+// }
+    const requestOptions = {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    };
+   const response = await fetch('http://localhost:30010/remote/object/call', requestOptions);
+   // const response = await fetch('http://localhost:30010/remote/info',);
+    const dataJson = await response.json();
+    return dataJson
 
+}
 /**
  * Check if RGB exists else initiate download
  *
@@ -156,6 +174,7 @@ async function getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url) {
     } else {
         rgbImageArrayBuffer = await fileUtils.readFileFromDisk(dirHandle, tile_info.rgbFileName)
     }
+    idbKeyval.set('rgbImageArrayBuffer', rgbImageArrayBuffer)
     image = await loadImageFromArray(rgbImageArrayBuffer)
     return image
 }
@@ -188,11 +207,15 @@ function createHeightMapImage(image, bitDepth, colorModel) {
     let image_info = {}
 
     let decodedHeightArray = getHeightArray(image)
+
+    idbKeyval.set('decodedHeightArray', decodedHeightArray)
+
     let out_image = convertImage(image.width, image.height, decodedHeightArray, bitDepth, colorModel)
 
     image_info.minElevation = out_image.min[0];
     image_info.maxElevation = out_image.max[0];
     image_info.image = out_image
+    image_info.decodedHeightArray = decodedHeightArray
 
     return image_info
 }
@@ -214,4 +237,4 @@ function getTileGeoJsonBB(tile_info) {
 
 }
 
-export default {getTileInfo, getFeaturesFromBB, getMapboxTerrainRgb, createHeightMapImage, loadImageFromArray}
+export default {getTileInfo, getFeaturesFromBB, getMapboxTerrainRgb, createHeightMapImage, loadImageFromArray,unrealRemoteControl}

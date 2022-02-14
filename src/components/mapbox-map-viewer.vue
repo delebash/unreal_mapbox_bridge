@@ -479,7 +479,6 @@ export default {
               let layer = feat.layer
               if (properties.DEPTH) {
                 obj.depth = properties.DEPTH
-                //console.log(obj)
               } else {
               }
               obj.type = feat.type
