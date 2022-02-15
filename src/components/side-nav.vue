@@ -213,7 +213,7 @@ export default {
           "functionName":"GetAllLevelActors"
         }
         let bluePrintId
-        let bluePrintName = "GenerateLandscape"
+        let bluePrintName = "GenerateMapboxLandscape_BP"
         let objArray = await mapUtils.unrealRemoteControl(listObjects)
         for(let obj of objArray.ReturnValue){
           let result = obj.includes(bluePrintName)
@@ -224,7 +224,7 @@ export default {
         bluePrintName = bluePrintName + '_' + bluePrintId
         let mapData = {
           "objectPath": "/Game/Maps/MapboxBrideExample.MapboxBrideExample:PersistentLevel." + bluePrintName,
-          "functionName": "Test",
+          "functionName": "GenMapboxLandscape",
           "parameters": {
             "FileName": this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png',
             "LandscapeName": this.tile_info.landscapeName
