@@ -3,6 +3,7 @@ const app = express();
 const port = 3000;
 const https = require("https");
 const fs = require('fs')
+const open = require('open');
 
 app.use(express.static(('dist'),
     {
@@ -22,3 +23,7 @@ https.createServer({
 }, app)
     .listen(port, () => console.log(`https://localhost:${port}`));
 
+openBrowser()
+async function openBrowser(){
+    await open(`http://localhost:${port}`)
+}
