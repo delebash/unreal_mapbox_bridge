@@ -123,7 +123,8 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {Image} from "image-js";
-import { useQuasar } from 'quasar'
+import {useQuasar} from 'quasar'
+
 let gdalWorker = new Worker('worker.js');
 // let vips
 
@@ -175,7 +176,7 @@ export default {
       bbinfoalert: ref(false),
       exportType: ref('unreal'),
       landscapeName: ref(''),
-      qt : $q,
+      qt: $q,
       exportOptions: [
         {label: 'Unreal', value: 'unreal'},
         {label: 'Normalize', value: 'normalize'},
@@ -209,15 +210,15 @@ export default {
         this.tile_info.landscapeName = this.landscapeName
 
         let listObjects = {
-          "objectPath" : "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
-          "functionName":"GetAllLevelActors"
+          "objectPath": "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
+          "functionName": "GetAllLevelActors"
         }
         let bluePrintId
         let bluePrintName = "GenerateMapboxLandscape_BP"
         let objArray = await mapUtils.unrealRemoteControl(listObjects)
-        for(let obj of objArray.ReturnValue){
+        for (let obj of objArray.ReturnValue) {
           let result = obj.includes(bluePrintName)
-          if(result === true){
+          if (result === true) {
             bluePrintId = obj.split('_').pop();
           }
         }

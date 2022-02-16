@@ -47,9 +47,7 @@ function getFeaturesFromBB(map, bbox) {
         const neLonglat = new mapboxgl.LngLat(ne[0][0], ne[0][1]);
         const swPt = map.project(swLonglat)
         const nePt = map.project(neLonglat)
-        const features = map.queryRenderedFeatures(
-            [swPt, nePt]
-        )
+        const features = map.queryRenderedFeatures([swPt, nePt])
         return features
     }
 }
@@ -147,16 +145,14 @@ async function unrealRemoteControl(data) {
 //     "functionName":"GetAllLevelActors"
 // }
     const requestOptions = {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
     };
-   const response = await fetch('http://localhost:30010/remote/object/call', requestOptions);
-   // const response = await fetch('http://localhost:30010/remote/info',);
+    const response = await fetch('http://localhost:30010/remote/object/call', requestOptions);
+    // const response = await fetch('http://localhost:30010/remote/info',);
     const dataJson = await response.json();
     return dataJson
-
 }
+
 /**
  * Check if RGB exists else initiate download
  *
@@ -194,7 +190,6 @@ function convertImage(width, height, imageArray, bitDepth, colorModel) {
     return newImage
 }
 
-
 /**
  * Calculate Medium value of array
  *
@@ -205,11 +200,8 @@ function convertImage(width, height, imageArray, bitDepth, colorModel) {
  */
 function createHeightMapImage(image, bitDepth, colorModel) {
     let image_info = {}
-
     let decodedHeightArray = getHeightArray(image)
-
     idbKeyval.set('decodedHeightArray', decodedHeightArray)
-
     let out_image = convertImage(image.width, image.height, decodedHeightArray, bitDepth, colorModel)
 
     image_info.minElevation = out_image.min[0];
@@ -227,14 +219,13 @@ function getTileGeoJsonBB(tile_info) {
     let poly = turf.bboxPolygon(bbox);
 
     let geoJson = {
-        'type': 'Feature',
-        'geometry': {
-            'type': poly.geometry.type,
-            'coordinates': poly.geometry.coordinates
+        'type': 'Feature', 'geometry': {
+            'type': poly.geometry.type, 'coordinates': poly.geometry.coordinates
         }
     };
     return geoJson;
-
 }
 
-export default {getTileInfo, getFeaturesFromBB, getMapboxTerrainRgb, createHeightMapImage, loadImageFromArray,unrealRemoteControl}
+export default {
+    getTileInfo, getFeaturesFromBB, getMapboxTerrainRgb, createHeightMapImage, loadImageFromArray, unrealRemoteControl
+}

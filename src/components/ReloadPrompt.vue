@@ -1,6 +1,5 @@
-
 <script setup lang="ts">
-import { useRegisterSW } from 'virtual:pwa-register/vue'
+import {useRegisterSW} from 'virtual:pwa-register/vue'
 
 // replaced dyanmicaly
 const reloadSW: any = '__RELOAD_SW__'
@@ -12,18 +11,17 @@ const {
 } = useRegisterSW({
   onRegistered(r) {
     if (reloadSW === 'true') {
-      r && setInterval(async() => {
+      r && setInterval(async () => {
         console.log('Checking for sw update')
         await r.update()
       }, 20000 /* 20s for testing purposes */)
-    }
-    else {
+    } else {
       console.log(`SW Registered: ${r}`)
     }
   },
 })
 
-const close = async() => {
+const close = async () => {
   offlineReady.value = false
   needRefresh.value = false
 }
@@ -66,9 +64,11 @@ const close = async() => {
   text-align: left;
   box-shadow: 3px 4px 5px 0px #8885;
 }
+
 .pwa-toast .message {
   margin-bottom: 8px;
 }
+
 .pwa-toast button {
   border: 1px solid #8885;
   outline: none;

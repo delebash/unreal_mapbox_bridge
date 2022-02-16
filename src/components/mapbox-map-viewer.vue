@@ -273,7 +273,6 @@ export default {
       this.style_url = await idbKeyval.get('style_url')
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
 
-
       let that = this
 
       let map = new mapboxgl.Map({

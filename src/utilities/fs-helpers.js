@@ -1,5 +1,3 @@
-import {Image} from "image-js";
-
 /**
  * Open a handle to an existing file on the local file system.
  *
@@ -34,8 +32,7 @@ function getNewFileHandle() {
     if ('showSaveFilePicker' in window) {
         const opts = {
             types: [{
-                description: 'Text file',
-                accept: {'text/plain': ['.txt']},
+                description: 'Text file', accept: {'text/plain': ['.txt']},
             }],
         };
         return window.showSaveFilePicker(opts);
@@ -120,9 +117,7 @@ async function writeFileToDisk(dirHandle, fileName, contents) {
  * @return {boolean} True if file exists.
  */
 async function fileExists(dirHandle, fileName) {
-
     try {
-
         await dirHandle.getFileHandle(fileName)
         // console.log(fileName + '  file already exists -- using cached file')
         return true
@@ -154,10 +149,5 @@ async function readFileFromDisk(dirHandle, fileName) {
 }
 
 export default {
-    getDirHandle,
-    verifyPermission,
-    writeFileToDisk,
-    fileExists,
-    getFileHandle,
-    readFileFromDisk
+    getDirHandle, verifyPermission, writeFileToDisk, fileExists, getFileHandle, readFileFromDisk
 }
