@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const port = 3000;
-
+const open = require('open');
 
 app.use(express.static(('dist'),
     {
@@ -16,4 +16,10 @@ app.use(express.static(('dist'),
 ))
 
 app.listen(port, () => console.log(`http://localhost:${port}`));
+
+openBrowser()
+async function openBrowser(){
+    await open(`http://localhost:${port}`)
+}
+
 

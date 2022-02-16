@@ -16,6 +16,7 @@ export default defineConfig({
           res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
           next();
         });
+
       },
     },
     VitePWA({
