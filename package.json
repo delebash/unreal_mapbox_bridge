@@ -9,7 +9,7 @@
     "serve": "node server.js",
     "copyssl": "node copyssl.js",
     "deps": "npm-check-updates",
-    "depsupdate": "npm-check-updates -u"
+    "depsupdate": "npm-check-updates -u",
   },
   "dependencies": {
     "@mapbox/mapbox-gl-geocoder": "^4.7.4",
