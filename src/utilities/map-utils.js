@@ -39,7 +39,7 @@ function getTileInfo(lng, lat, map) {
     tileInfo.originCoordinates = tileInfo.bboxNW  //NE corner usually considered Origin coordinates
 
     let convUtm = utm.fromLatLon(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
-    tileInfo.mbProject = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
+    tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
 
     tileInfo.easting = convUtm.easting
     tileInfo.northing = convUtm.northing

@@ -49,7 +49,16 @@
           type="radio"
           v-model="exportType"
       />
+      <q-option-group
+          class="q-mt-none q-pt-none"
+          dense
+          inline
+          :options="otherOptions"
+          @update:model-value="otherOptionsModelChange"
+          type="checkbox"
+          v-model="otherOptionsModel"
 
+      />
       <q-select dense class="q-pt-none q-mt-xs"
                 label="Landscape Size"
                 transition-show="scale"
@@ -176,6 +185,10 @@ export default {
       exportType: ref('unreal'),
       landscapeName: ref(''),
       qt: $q,
+      otherOptionsModel: ref(['zrange']),
+      otherOptions: [
+        {label: 'Zrange-sea level=0', value: 'zrange'},
+      ],
       exportOptions: [
         {label: 'Unreal', value: 'unreal'},
         {label: 'Normalize', value: 'normalize'},
@@ -195,6 +208,27 @@ export default {
     }
   },
   methods: {
+    adjustedZscale() {
+      let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
+
+      // Use only positive range ( 0 to 255.992)
+      //Use entire UE4 Z range (-256 to 255.992)
+      let ZrangeSeaLevel = 32767
+
+      if (this.otherOptionsModel.includes('zrange')) {
+        this.tile_info.startZRange = ZrangeSeaLevel
+        this.tile_info.zscale = (ZrangeSeaLevel / zScale).toFixed(3)
+      } else {
+        this.tile_info.startZRange = 0
+        this.tile_info.zscale = zScale.toFixed(3)
+      }
+      return this.tile_info.zscale
+    },
+    otherOptionsModelChange(e) {
+      this.otherOptionsModel = e
+      this.adjustedZscale()
+    },
+
     showBBInfo() {
       if (this.tile_info) {
         this.bbinfoalert = true
@@ -251,7 +285,8 @@ export default {
         this.tile_info.elevation_range = (this.tile_info.MaxElevation - this.tile_info.MinElevation).toFixed(3)
         this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
         this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
-        this.tile_info.zscale = this.getUnrealZScale(this.preview_image_info.maxElevation).toFixed(3)
+        this.tile_info.zscale = this.adjustedZscale()
+
       } else {
         this.tile_info.minmax = ''
       }
@@ -307,13 +342,23 @@ export default {
 
           let buff = await img.toBuffer()
           let resampleSize = this.unrealLandscape.value.toString()
+          this.tile_info.resampleSize = resampleSize
+
+          this.tile_info.startLng = this.tile_info.originCoordinates.lng
+          this.tile_info.startLat = this.tile_info.originCoordinates.lat
+          let totalX = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
+          let totalY = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
+          this.tile_info.xTransform = (this.tile_info.startLng + totalX).toFixed(4)
+          this.tile_info.yTransform = (this.tile_info.startLat - totalY).toFixed(4)
+
+          this.tile_info.maxPngValue = 65535
 
           switch (this.exportType) {
             case 'unreal':
               let translateOptions = [
                 '-ot', 'UInt16',
                 '-of', 'PNG',
-                '-scale', min, max, '32767', '65535',
+                '-scale', min, max, this.tile_info.startZRange.toString(),  this.tile_info.maxPngValue.toString(),
                 '-outsize', resampleSize, resampleSize, '-r', 'lanczos'
               ];
 
@@ -321,25 +366,6 @@ export default {
                 type: "image/png",
                 lastModified: Date.now()
               });
-              // let totalX = 1 * resampleSize * this.tile_info.metersPerPixel
-              // let totalY = 1 * resampleSize * this.tile_info.metersPerPixel
-              // console.log(this.tile_info.originCoordinates)
-              // this.tile_info.StartLng = this.tile_info.originCoordinates.lng
-              // this.tile_info.StartLat = this.tile_info.originCoordinates.lat
-              // let xrange = this.tile_info.StartLng + totalX
-              // let yrange = this.tile_info.StartLat - totalY
-              // console.log(xrange)
-              // console.log(range)
-
-
-              // zspace = YN("Use entire UE4 Z range (-256 to 255.992) for Level/tiles?"
-              // " Will use only positive range otherwise ( 0 to 255.992)")
-
-              // let zSpace = false
-              // let startRange = 0
-              // if (zSpace === false) {
-              //   startRange = 32767
-              // }
 
 
               let list = new DataTransfer();
