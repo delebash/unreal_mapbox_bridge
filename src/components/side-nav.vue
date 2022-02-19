@@ -8,7 +8,7 @@
     <div style="width: 100%">
       <q-field dense class="text-weight-bolder q-pt-none q-mt-xs" label="Min/Max Elevation" stack-label>
         <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ minmax }}</div>
+          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ this.tile_info.minmax }}</div>
         </template>
       </q-field>
       <!--      <q-field dense label="Elevation Range" stack-label>-->
@@ -22,7 +22,7 @@
       <q-field class="q-pt-none q-mt-xs" dense label="Tile width in meters" stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
-              tileWidthInMeters
+              this.tile_info.tileWidthInMeters
             }}
           </div>
         </template>
@@ -31,7 +31,7 @@
       <q-field class="q-pt-none q-mt-xs" dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale"
                stack-label>
         <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ zscale }}</div>
+          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ this.tile_info.zscale }}</div>
         </template>
       </q-field>
       <q-item-label class="q-pt-none q-mt-xs">Export Type:</q-item-label>
@@ -164,11 +164,6 @@ export default {
       dirHandle: ref(''),
       preview_image_info: ref(''),
       rgb_image: ref(''),
-      minmax: ref(''),
-      elevation_range: ref(''),
-      tileWidthInMeters: ref(''),
-      metersPerPixel: ref(''),
-      zscale: ref(''),
       map: null,
       data: null,
       bbinfoalert: ref(false),
@@ -243,14 +238,16 @@ export default {
       this.qt.loading.hide()
     },
     updateStats() {
-      if (this.maxElevation !== '') {
-        this.minmax = this.preview_image_info.minElevation.toFixed(3) + ' / ' + this.preview_image_info.maxElevation.toFixed(3)
-        this.elevation_range = (this.preview_image_info.maxElevation - this.preview_image_info.minElevation).toFixed(3)
-        this.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
-        this.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
-        this.zscale = this.getUnrealZScale(this.preview_image_info.maxElevation).toFixed(3)
+      if (this.preview_image_info.maxElevation !== '') {
+        this.tile_info.MaxElevation = this.preview_image_info.maxElevation
+        this.tile_info.MinElevation = this.preview_image_info.minElevation
+        this.tile_info.minmax = this.tile_info.MinElevation.toFixed(3) + ' / ' + this.tile_info.MaxElevation.toFixed(3)
+        this.tile_info.elevation_range = (this.tile_info.MaxElevation  - this.tile_info.MinElevation ).toFixed(3)
+        this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
+        this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
+        this.tile_info.zscale = this.getUnrealZScale(this.preview_image_info.maxElevation).toFixed(3)
       } else {
-        this.minmax = ''
+        this.tile_info.minmax = ''
       }
     },
     getUnrealZScale(maxElevation) {
@@ -277,7 +274,7 @@ export default {
       let blob = await this.preview_image_info.image.toBlob()
       const objectURL = URL.createObjectURL(blob)
       this.url = objectURL
-      this.updateStats()
+      this.updateStats(this.tile_info)
     },
     async createSixteenHeightMap() {
       // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
