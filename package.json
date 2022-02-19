@@ -10,6 +10,7 @@
     "copyssl": "node copyssl.js"
   },
   "dependencies": {
+    "@jayarjo/utm": "^1.1.3",
     "@mapbox/mapbox-gl-geocoder": "^4.7.4",
     "@mapbox/tilebelt": "^1.0.2",
     "@quasar/app": "^3.3.3",

@@ -4,7 +4,7 @@ import * as turf from '@turf/turf'
 import {Image} from "image-js";
 import fileUtils from './fs-helpers'
 import idbKeyval from "../utilities/idb-keyval-iife";
-
+import * as utm from '@jayarjo/utm'
 
 function getTileInfo(lng, lat, map) {
     let tileInfo = {}
@@ -16,8 +16,8 @@ function getTileInfo(lng, lat, map) {
     tileInfo.z = zoom
     tileInfo.x = xyzpoint[0]
     tileInfo.y = xyzpoint[1]
-    tileInfo.long = lng
-    tileInfo.lat = lat
+    tileInfo.pointLng = lng
+    tileInfo.pointLat = lat
     tileInfo.tileWidthInMeters = widthInMeters
     tileInfo.metersPerPixel = metersPerPixel
     tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
@@ -28,12 +28,23 @@ function getTileInfo(lng, lat, map) {
     tileInfo.tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
     tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
     tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
+
     const llb = new mapboxgl.LngLatBounds(tileInfo.bbox);
+
     tileInfo.bboxCT = llb.getCenter();
     tileInfo.bboxSW = llb.getSouthWest()
     tileInfo.bboxNE = llb.getNorthEast()
     tileInfo.bboxNW = llb.getNorthWest()
     tileInfo.bboxSE = llb.getSouthEast()
+    tileInfo.originCoordinates = tileInfo.bboxNW  //NE corner usually considered Origin coordinates
+
+    let convUtm = utm.fromLatLon(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
+    tileInfo.mbProject = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
+
+    tileInfo.easting = convUtm.easting
+    tileInfo.northing = convUtm.northing
+    tileInfo.zoneLetter = convUtm.zoneLetter
+    tileInfo.zoneNum = convUtm.zoneNum
 
     return tileInfo
 }
@@ -50,9 +61,11 @@ function getTileGeoJsonBB(bbox) {
 }
 
 function getFeaturesFromBB(map, tile_info) {
-    const swPt = map.project(tile_info.bboxSW)
-    const nePt = map.project(tile_info.bboxNE)
-    const features = map.queryRenderedFeatures([swPt, nePt])
+    tile_info.swPt = map.project(tile_info.bboxSW)
+    tile_info.nePt = map.project(tile_info.bboxNE)
+    tile_info.nwPt = map.project(tile_info.bboxNW)
+    tile_info.sePt = map.project(tile_info.bboxSE)
+    const features = map.queryRenderedFeatures([tile_info.swPt, tile_info.nePt])
 
     return features
 }

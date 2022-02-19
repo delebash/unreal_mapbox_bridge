@@ -8,7 +8,10 @@
     <div style="width: 100%">
       <q-field dense class="text-weight-bolder q-pt-none q-mt-xs" label="Min/Max Elevation" stack-label>
         <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ this.tile_info.minmax }}</div>
+          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
+              this.tile_info.minmax
+            }}
+          </div>
         </template>
       </q-field>
       <!--      <q-field dense label="Elevation Range" stack-label>-->
@@ -31,7 +34,10 @@
       <q-field class="q-pt-none q-mt-xs" dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale"
                stack-label>
         <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{ this.tile_info.zscale }}</div>
+          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
+              this.tile_info.zscale
+            }}
+          </div>
         </template>
       </q-field>
       <q-item-label class="q-pt-none q-mt-xs">Export Type:</q-item-label>
@@ -242,7 +248,7 @@ export default {
         this.tile_info.MaxElevation = this.preview_image_info.maxElevation
         this.tile_info.MinElevation = this.preview_image_info.minElevation
         this.tile_info.minmax = this.tile_info.MinElevation.toFixed(3) + ' / ' + this.tile_info.MaxElevation.toFixed(3)
-        this.tile_info.elevation_range = (this.tile_info.MaxElevation  - this.tile_info.MinElevation ).toFixed(3)
+        this.tile_info.elevation_range = (this.tile_info.MaxElevation - this.tile_info.MinElevation).toFixed(3)
         this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
         this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
         this.tile_info.zscale = this.getUnrealZScale(this.preview_image_info.maxElevation).toFixed(3)
@@ -307,7 +313,7 @@ export default {
               let translateOptions = [
                 '-ot', 'UInt16',
                 '-of', 'PNG',
-                '-scale', min, max, '32768', '65535',
+                '-scale', min, max, '32767', '65535',
                 '-outsize', resampleSize, resampleSize, '-r', 'lanczos'
               ];
 
@@ -315,40 +321,26 @@ export default {
                 type: "image/png",
                 lastModified: Date.now()
               });
+              // let totalX = 1 * resampleSize * this.tile_info.metersPerPixel
+              // let totalY = 1 * resampleSize * this.tile_info.metersPerPixel
+              // console.log(this.tile_info.originCoordinates)
+              // this.tile_info.StartLng = this.tile_info.originCoordinates.lng
+              // this.tile_info.StartLat = this.tile_info.originCoordinates.lat
+              // let xrange = this.tile_info.StartLng + totalX
+              // let yrange = this.tile_info.StartLat - totalY
+              // console.log(xrange)
+              // console.log(range)
 
-              // const EPSG4326 =
-              //     'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]';
-              //
-              // // const response = await fetch("https://download.osgeo.org/geotiff/samples/made_up/e_tile.tif");
-              // // let arrBuffer = await response.blob()
-              // //   console.log(arrBuffer)
-              // loam.open(file).then((ds) => {
-              //   return Promise.all([ds.width(), ds.height(), ds.count(), ds.wkt(), ds.transform()]).then(
-              //       ([width, height, count, wkt, geoTransform]) => {
-              //         console.log(wkt)
-              //         const cornersPx = [
-              //           [0, 0],
-              //           [width, 0],
-              //           [width, height],
-              //           [0, height],
-              //         ];
-              //         const cornersGeo = cornersPx.map(([x, y]) => {
-              //           return [
-              //             // http://www.gdal.org/gdal_datamodel.html
-              //             geoTransform[0] + geoTransform[1] * x + geoTransform[2] * y,
-              //             geoTransform[3] + geoTransform[4] * x + geoTransform[5] * y,
-              //           ];
-              //         });
-              //
-              //         loam.reproject(wkt, EPSG4326, cornersGeo).then((cornersLngLat) => {
-              //
-              //           cornersLngLat.forEach(([lng, lat], i) => {
-              //             console.log(cornersGeo[i][0].toString() + ',' +  cornersGeo[i][1].toString()  + ',' +  lng.toString() + ',' + lat.toString())
-              //           });
-              //         });
-              //       }
-              //   );
-              // });
+
+              // zspace = YN("Use entire UE4 Z range (-256 to 255.992) for Level/tiles?"
+              // " Will use only positive range otherwise ( 0 to 255.992)")
+
+              // let zSpace = false
+              // let startRange = 0
+              // if (zSpace === false) {
+              //   startRange = 32767
+              // }
+
 
               let list = new DataTransfer();
               list.items.add(file);
@@ -362,10 +354,12 @@ export default {
             case 'normalize':
               img = img.level()
               await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', img.toBuffer())
+              this.qt.loading.hide()
               break;
 
             case 'none':
               await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', img.toBuffer())
+              this.qt.loading.hide()
               break;
           }
 
