@@ -139,7 +139,7 @@ import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
 
-let gdalWorker = new Worker('worker.js');
+let gdalWorker = new Worker('gdalWorker.js');
 
 
 export default {

@@ -22,14 +22,7 @@ export default defineConfig({
     VitePWA({
       base: '/',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png',
-        'favicon.ico',
-        'robots.txt',
-        'apple-touch-icon.png',
-        'thirtytwo-9-82-180.png',
-        'vips.js',
-        'vips.wasm',
-        'vips.worker.js'
+      includeAssets: [
       ],
       manifest: {
         name: 'Unreal Mapbox Bridge',
