@@ -80,7 +80,8 @@
   <!--  </div>-->
   <div class="row justify-betweenq-pt-none q-mt-xs">
     <q-btn @click="createSixteenHeightMap" dense color="primary" no-caps label="Download HeightMap"/>
-    <q-btn @click="sendToUnreal" dense color="green" class="q-ml-xs" no-caps label="Send To Unreal"/>
+    <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
+           label="Send To Unreal"/>
   </div>
 
   <!--  <q-dialog v-model="bbinfoalert">-->
@@ -147,6 +148,7 @@ export default {
     const $q = useQuasar()
     return {
       alert: ref(false),
+      isDisabled: ref(true),
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
         {
@@ -197,7 +199,11 @@ export default {
     }
   },
   async mounted() {
-
+    console.log('test')
+    //Send to unreal must be from local host
+    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+      this.isDisabled = false
+    }
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
       this.updatePreviewImage()
@@ -208,6 +214,7 @@ export default {
     }
   },
   methods: {
+
     adjustedZscale() {
       let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
 
@@ -358,7 +365,7 @@ export default {
               let translateOptions = [
                 '-ot', 'UInt16',
                 '-of', 'PNG',
-                '-scale', min, max, this.tile_info.startZRange.toString(),  this.tile_info.maxPngValue.toString(),
+                '-scale', min, max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
                 '-outsize', resampleSize, resampleSize, '-r', 'lanczos'
               ];
 
