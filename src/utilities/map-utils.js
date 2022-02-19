@@ -5,12 +5,12 @@ import {Image} from "image-js";
 import fileUtils from './fs-helpers'
 import idbKeyval from "../utilities/idb-keyval-iife";
 
+
 function getTileInfo(lng, lat, map) {
     let tileInfo = {}
     let zoom = Math.floor(map.getZoom());
     let widthInMeters = 40075016.686 * Math.abs(Math.cos(lat)) / Math.pow(2, zoom);
     let metersPerPixel = widthInMeters / 512;
-
     let xyzpoint = tilebelt.pointToTile(lng, lat, zoom)
 
     tileInfo.z = zoom
@@ -20,38 +20,42 @@ function getTileInfo(lng, lat, map) {
     tileInfo.lat = lat
     tileInfo.tileWidthInMeters = widthInMeters
     tileInfo.metersPerPixel = metersPerPixel
-    tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo)
     tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
     tileInfo.rgbFileName = 'terrain-rgb' + "-" + tileInfo.mapbox_tile_name + '.png'
     tileInfo.thirtytwoFile = {name: 'thirtytwo' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 32}
     tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name, bitDepth: 16}
     tileInfo.landscapeName = ''
-
-    let tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
-
-    let bbox = tilebelt.tileToBBOX(tile);
-    tileInfo.bbox = bbox
-
+    tileInfo.tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
+    tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
+    tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
     const llb = new mapboxgl.LngLatBounds(tileInfo.bbox);
-    let center = llb.getCenter(); // = LngLat {lng: -73.96365, lat: 40.78315}
-    tileInfo.bbox_center = center
+    tileInfo.bboxCT = llb.getCenter();
+    tileInfo.bboxSW = llb.getSouthWest()
+    tileInfo.bboxNE = llb.getNorthEast()
+    tileInfo.bboxNW = llb.getNorthWest()
+    tileInfo.bboxSE = llb.getSouthEast()
 
     return tileInfo
 }
 
-function getFeaturesFromBB(map, bbox) {
-    if (bbox) {
-        let sw = [bbox.geometry.coordinates[0][4]]
-        let ne = [bbox.geometry.coordinates[0][2]]
-        const swLonglat = new mapboxgl.LngLat(sw[0][0], sw[0][1]);
-        const neLonglat = new mapboxgl.LngLat(ne[0][0], ne[0][1]);
-        const swPt = map.project(swLonglat)
-        const nePt = map.project(neLonglat)
-        const features = map.queryRenderedFeatures([swPt, nePt])
-        return features
-    }
+function getTileGeoJsonBB(bbox) {
+    let poly = turf.bboxPolygon(bbox);
+    let geoJson = {
+        'type': 'Feature', 'geometry': {
+            'type': poly.geometry.type, 'coordinates': poly.geometry.coordinates
+        }
+    };
+
+    return geoJson;
 }
 
+function getFeaturesFromBB(map, tile_info) {
+    const swPt = map.project(tile_info.bboxSW)
+    const nePt = map.project(tile_info.bboxNE)
+    const features = map.queryRenderedFeatures([swPt, nePt])
+
+    return features
+}
 
 /**
  * Load image-js image from array
@@ -61,6 +65,7 @@ function getFeaturesFromBB(map, bbox) {
  */
 async function loadImageFromArray(imageArray) {
     let image = await Image.load(imageArray)
+
     return image
 }
 
@@ -73,6 +78,7 @@ async function loadImageFromArray(imageArray) {
  * @return {height} New height value.
  */
 function getHeightFromRgb(r, g, b) {
+
     return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
 }
 
@@ -105,7 +111,6 @@ function getHeightArray(image) {
     return decodedHeightArray
 }
 
-
 /**
  * Calculate Medium value of array
  *
@@ -125,7 +130,6 @@ function getMedianArray(array) {
     return median
 }
 
-
 /**
  * Download RGB terrain png from Mapbox api
  *
@@ -136,6 +140,7 @@ async function downloadTerrainRgb(mapbox_rgb_image_url) {
     //Fetch png tile from mapbox
     const response = await fetch(mapbox_rgb_image_url);
     let arrBuffer = await response.arrayBuffer()
+
     return arrBuffer
 }
 
@@ -150,6 +155,7 @@ async function unrealRemoteControl(data) {
     const response = await fetch('http://localhost:30010/remote/object/call', requestOptions);
     // const response = await fetch('http://localhost:30010/remote/info',);
     const dataJson = await response.json();
+
     return dataJson
 }
 
@@ -172,6 +178,7 @@ async function getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url) {
     }
     idbKeyval.set('rgbImageArrayBuffer', rgbImageArrayBuffer)
     image = await loadImageFromArray(rgbImageArrayBuffer)
+
     return image
 }
 
@@ -187,6 +194,7 @@ async function getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url) {
  */
 function convertImage(width, height, imageArray, bitDepth, colorModel) {
     let newImage = new Image(width, height, imageArray, {kind: colorModel, bitDepth: bitDepth})
+
     return newImage
 }
 
@@ -210,20 +218,6 @@ function createHeightMapImage(image, bitDepth, colorModel) {
     image_info.decodedHeightArray = decodedHeightArray
 
     return image_info
-}
-
-
-function getTileGeoJsonBB(tile_info) {
-    let tile = [tile_info.x, tile_info.y, tile_info.z] // x,y,z
-    let bbox = tilebelt.tileToBBOX(tile);
-    let poly = turf.bboxPolygon(bbox);
-
-    let geoJson = {
-        'type': 'Feature', 'geometry': {
-            'type': poly.geometry.type, 'coordinates': poly.geometry.coordinates
-        }
-    };
-    return geoJson;
 }
 
 export default {

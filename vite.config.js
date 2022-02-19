@@ -60,9 +60,9 @@ export default defineConfig({
       }
     })
   ],
-  server: {
-    open: 'http://localhost:3000'
-  },
+  // server: {
+  //   open: 'http://localhost:3000'
+  // },
   define: {
     'process.env': {}
   }

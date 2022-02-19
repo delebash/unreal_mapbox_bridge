@@ -117,16 +117,14 @@
 <script>
 
 import {ref} from 'vue'
-
 import fileUtils from '../utilities/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
-import {Image} from "image-js";
 import {useQuasar} from 'quasar'
 
 let gdalWorker = new Worker('worker.js');
-// let vips
+
 
 export default {
   name: 'SideNav',
@@ -185,7 +183,6 @@ export default {
     }
   },
   async mounted() {
-    // vips = await Vips();
 
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
@@ -264,7 +261,7 @@ export default {
     async writeFiles(buff) {
       let dirHandle = await idbKeyval.get('dirHandle')
       await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', buff)
-      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
+      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
 
       let strFeatures = JSON.stringify(features)
       let tile_info = JSON.stringify(this.tile_info)
@@ -283,6 +280,7 @@ export default {
       this.updateStats()
     },
     async createSixteenHeightMap() {
+      // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
       if (this.tile_info) {
         this.qt.loading.show()
         let dirHandle = await idbKeyval.get('dirHandle')
@@ -294,9 +292,8 @@ export default {
         let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
         if (bExists) {
           let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
-          let rgbImageArrayBuffer = await idbKeyval.get('rgbImageArrayBuffer')
+          //let rgbImageArrayBuffer = await idbKeyval.get('rgbImageArrayBuffer')
           let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
-
 
           let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
@@ -322,6 +319,40 @@ export default {
                 lastModified: Date.now()
               });
 
+              // const EPSG4326 =
+              //     'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]';
+              //
+              // // const response = await fetch("https://download.osgeo.org/geotiff/samples/made_up/e_tile.tif");
+              // // let arrBuffer = await response.blob()
+              // //   console.log(arrBuffer)
+              // loam.open(file).then((ds) => {
+              //   return Promise.all([ds.width(), ds.height(), ds.count(), ds.wkt(), ds.transform()]).then(
+              //       ([width, height, count, wkt, geoTransform]) => {
+              //         console.log(wkt)
+              //         const cornersPx = [
+              //           [0, 0],
+              //           [width, 0],
+              //           [width, height],
+              //           [0, height],
+              //         ];
+              //         const cornersGeo = cornersPx.map(([x, y]) => {
+              //           return [
+              //             // http://www.gdal.org/gdal_datamodel.html
+              //             geoTransform[0] + geoTransform[1] * x + geoTransform[2] * y,
+              //             geoTransform[3] + geoTransform[4] * x + geoTransform[5] * y,
+              //           ];
+              //         });
+              //
+              //         loam.reproject(wkt, EPSG4326, cornersGeo).then((cornersLngLat) => {
+              //
+              //           cornersLngLat.forEach(([lng, lat], i) => {
+              //             console.log(cornersGeo[i][0].toString() + ',' +  cornersGeo[i][1].toString()  + ',' +  lng.toString() + ',' + lat.toString())
+              //           });
+              //         });
+              //       }
+              //   );
+              // });
+
               let list = new DataTransfer();
               list.items.add(file);
               let myFileList = list.files;
@@ -341,20 +372,11 @@ export default {
               break;
           }
 
-          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info.polygon_bb)
+          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
           let strFeatures = JSON.stringify(features)
           let tile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
           await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
-
-
-          // if (this.unrealLandscape.value !== 512) {
-          //   let image = vips.Image.newFromBuffer(buff);
-          //   image = image.resize(this.unrealLandscape.value / image.width, {kernel: 'lanczos3'})
-          //   const outBuffer = image.writeToBuffer('.PNG')
-          //   buff = new Uint8Array(outBuffer);
-          // }
-
 
         } else {
           this.alert = true

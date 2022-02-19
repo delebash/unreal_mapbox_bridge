@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.2",
+    "loam": "^1.1.0",
     "open": "^8.4.0"
   }
 }
