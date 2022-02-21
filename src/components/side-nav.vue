@@ -71,7 +71,7 @@
 
     </div>
   </div>
-  <q-field class="q-pt-none q-mt-xs" dense label="Landscape Name" hint="Enter Unique Landscape Name"
+  <q-field class="q-pt-none q-mt-xs" dense label="Landscape Name (Optional)" hint="Enter Unique Landscape Name"
   >
     <q-input v-model="landscapeName"/>
   </q-field>
@@ -120,7 +120,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        Please select a tile to download first.
+        {{ alertMsg }}
       </q-card-section>
 
       <q-card-actions align="right">
@@ -138,6 +138,7 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
+
 
 let gdalWorker = new Worker('gdalWorker.js');
 
@@ -188,6 +189,7 @@ export default {
       landscapeName: ref(''),
       qt: $q,
       otherOptionsModel: ref(['zrange']),
+      alertMsg: ref(''),
       otherOptions: [
         {label: 'Zrange-sea level=0', value: 'zrange'},
       ],
@@ -199,7 +201,6 @@ export default {
     }
   },
   async mounted() {
-    console.log('test')
     //Send to unreal must be from local host
     if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
       this.isDisabled = false
@@ -209,12 +210,11 @@ export default {
       this.updatePreviewImage()
     })
 
-    gdalWorker.onmessage = (evt) => {
-      this.saveImage(evt.data);
+    gdalWorker.onmessage = async (evt) => {
+      await this.saveImage(evt.data);
     }
   },
   methods: {
-
     adjustedZscale() {
       let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
 
@@ -235,7 +235,6 @@ export default {
       this.otherOptionsModel = e
       this.adjustedZscale()
     },
-
     showBBInfo() {
       if (this.tile_info) {
         this.bbinfoalert = true
@@ -244,37 +243,54 @@ export default {
       }
     },
     async sendToUnreal() {
-      if (this.tile_info) {
-        this.qt.loading.show()
-        this.tile_info.landscapeName = this.landscapeName
+      this.tile_info.resolution = this.unrealLandscape.value
+      let fileName = this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png'
 
-        let listObjects = {
-          "objectPath": "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
-          "functionName": "GetAllLevelActors"
-        }
-        let bluePrintId
-        let bluePrintName = "GenerateMapboxLandscape_BP"
-        let objArray = await mapUtils.unrealRemoteControl(listObjects)
-        for (let obj of objArray.ReturnValue) {
-          let result = obj.includes(bluePrintName)
-          if (result === true) {
-            bluePrintId = obj.split('_').pop();
-          }
-        }
-        bluePrintName = bluePrintName + '_' + bluePrintId
-        let mapData = {
-          "objectPath": "/Game/Maps/MapboxBrideExample.MapboxBrideExample:PersistentLevel." + bluePrintName,
-          "functionName": "GenMapboxLandscape",
-          "parameters": {
-            "FileName": this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png',
-            "LandscapeName": this.tile_info.landscapeName
-          }
-        }
+      let dirHandle = await idbKeyval.get('dirHandle')
+      //Verify user has permission to rea/write from selected directory
+      if (fileUtils.verifyPermission(dirHandle, true) === false) {
+        console.error(`User did not grant permission to '${dirHandle.name}'`);
+        return;
+      }
 
-        let response = await mapUtils.unrealRemoteControl(mapData)
-        console.log(response)
-        this.qt.loading.hide()
+      let bExists = await fileUtils.fileExists(dirHandle, fileName)
+      if (bExists) {
+        if (this.tile_info) {
+          console.log('sending')
+          this.qt.loading.show()
+          this.tile_info.landscapeName = this.landscapeName
+
+          let listObjects = {
+            "objectPath": "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
+            "functionName": "GetAllLevelActors"
+          }
+          let bluePrintId
+          let bluePrintName = "GenerateMapboxLandscape_BP"
+          let objArray = await mapUtils.unrealRemoteControl(listObjects)
+          for (let obj of objArray.ReturnValue) {
+            let result = obj.includes(bluePrintName)
+            if (result === true) {
+              bluePrintId = obj.split('_').pop();
+            }
+          }
+          bluePrintName = bluePrintName + '_' + bluePrintId
+          let mapData = {
+            "objectPath": "/Game/Maps/MapboxBrideExample.MapboxBrideExample:PersistentLevel." + bluePrintName,
+            "functionName": "GenMapboxLandscape",
+            "parameters": {
+              "FileName": this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png',
+              "LandscapeName": this.tile_info.landscapeName
+            }
+          }
+
+          let response = await mapUtils.unrealRemoteControl(mapData)
+          console.log(response)
+          this.qt.loading.hide()
+        } else {
+          this.alert = true
+        }
       } else {
+        this.alertMsg = 'Please download heightmap first'
         this.alert = true
       }
     },
@@ -284,6 +300,7 @@ export default {
       await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', outputBlob)
       this.qt.loading.hide()
     },
+
     updateStats() {
       if (this.preview_image_info.maxElevation !== '') {
         this.tile_info.MaxElevation = this.preview_image_info.maxElevation
@@ -293,7 +310,6 @@ export default {
         this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
         this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
         this.tile_info.zscale = this.adjustedZscale()
-
       } else {
         this.tile_info.minmax = ''
       }
@@ -313,7 +329,6 @@ export default {
       await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
       await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
     },
-
     async updatePreviewImage() {
       this.preview_image_info = await this.data.preview_image_info
       this.tile_info = this.data.tile_info
@@ -350,14 +365,12 @@ export default {
           let buff = await img.toBuffer()
           let resampleSize = this.unrealLandscape.value.toString()
           this.tile_info.resampleSize = resampleSize
-
           this.tile_info.startLng = this.tile_info.originCoordinates.lng
           this.tile_info.startLat = this.tile_info.originCoordinates.lat
           let totalX = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
           let totalY = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
           this.tile_info.xTransform = (this.tile_info.startLng + totalX).toFixed(4)
           this.tile_info.yTransform = (this.tile_info.startLat - totalY).toFixed(4)
-
           this.tile_info.maxPngValue = 65535
 
           switch (this.exportType) {
@@ -373,7 +386,6 @@ export default {
                 type: "image/png",
                 lastModified: Date.now()
               });
-
 
               let list = new DataTransfer();
               list.items.add(file);
@@ -398,11 +410,13 @@ export default {
 
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
           let strFeatures = JSON.stringify(features)
+
           let tile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
           await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
 
         } else {
+          this.alertMsg = 'Please download file first'
           this.alert = true
         }
       } else {

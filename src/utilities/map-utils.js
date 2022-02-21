@@ -40,13 +40,23 @@ function getTileInfo(lng, lat, map) {
 
     let convUtm = utm.fromLatLon(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
     tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
-
+    tileInfo.epsg = getEpsg(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
     tileInfo.easting = convUtm.easting
     tileInfo.northing = convUtm.northing
     tileInfo.zoneLetter = convUtm.zoneLetter
     tileInfo.zoneNum = convUtm.zoneNum
 
     return tileInfo
+}
+function getEpsg(lat, lng) {
+    let offset = Math.round((183 + lng) / 6)
+    let epsg = 0
+    if (lat > 0) {
+        epsg = 32600 + offset
+    } else {
+        epsg = 32700 + offset
+    }
+    return epsg
 }
 
 function getTileGeoJsonBB(bbox) {

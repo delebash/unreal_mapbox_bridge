@@ -47,7 +47,9 @@ import emitter from "../utilities/emitter";
 
 import mapboxgl from 'mapbox-gl'
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'
+import mbxGeocoding from '@mapbox/mapbox-sdk/services/geocoding'
 
+let geocoder
 
 export default {
   name: 'mapbox-map-viewer',
@@ -335,14 +337,15 @@ export default {
         return geocodes;
       };
 
-      map.addControl(new MapboxGeocoder({
+      geocoder = new MapboxGeocoder({
         accessToken: this.access_token,
         mapboxgl: mapboxgl,
         localGeocoder: coordinatesGeocoder,
         zoom: 10,
         placeholder: 'Try: -40, 170 or  Name',
         reverseGeocode: true
-      }));
+      })
+      map.addControl(geocoder)
 
       map.addControl(new mapboxgl.FullscreenControl({}))
 
@@ -430,6 +433,9 @@ export default {
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
         idbKeyval.set('tile_info', tile_info)
 
+        //Reverse Geocoding
+        await that.geoCodeReverse(tile_info)
+
         map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
         map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
 
@@ -505,15 +511,46 @@ export default {
     // },
 
 
-    async geoCodeReverse(options) {
-      await MapboxGeocoder
-          .reverseGeocode({
-            query: [options.lng, options.lat]
-          })
+    async geoCodeReverse(tile_info) {
+      // mapboxClient = mapboxSdk({ accessToken:  this.access_token });
+      //  const baseClient = mbxClient({ accessToken: MY_ACCESS_TOKEN });
+      const geocodingClient = mbxGeocoding({accessToken: mapboxgl.accessToken});
+
+      geocodingClient.reverseGeocode({
+        query: [tile_info.lng, tile_info.lat]
+      })
           .send()
           .then(function (response) {
             if (response && response.body && response.body.features) {
-              options.address = response.body.features[0].place_name
+              tile_info.address = response.body.features[0].place_name
+              let context = response.body.features[0].context
+              for (let feature of context) {
+                let id = feature.id
+                const type = id.substring(0, id.indexOf('.'))
+                switch (type) {
+                  case "neighborhood":
+                    tile_info.neighborhood = feature.text
+                    break;
+                  case "postcode":
+                    tile_info.postcode = feature.text
+                    break;
+                  case "locality":
+                    tile_info.locality = feature.text
+                    break;
+                  case "place":
+                    tile_info.place = feature.text
+                    break;
+                  case "district":
+                    tile_info.district = feature.text
+                    break;
+                  case "region":
+                    tile_info.region = feature.text
+                    break;
+                  case "country":
+                    tile_info.country = feature.text
+                    break;
+                }
+              }
             }
           });
     }
