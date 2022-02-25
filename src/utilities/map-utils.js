@@ -20,11 +20,7 @@ function getTileInfo(lng, lat, map) {
     tileInfo.pointLat = lat
     tileInfo.tileWidthInMeters = widthInMeters
     tileInfo.metersPerPixel = metersPerPixel
-    tileInfo.mapbox_tile_name = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
-    tileInfo.rgbFileName = 'terrain-rgb' + "-" + tileInfo.mapbox_tile_name + '.png'
-    tileInfo.thirtytwoFile = {name: 'thirtytwo' + "-" + tileInfo.mapbox_tile_name + '.png', bitDepth: 32}
-    tileInfo.sixteenFile = {name: 'sixteen' + "-" + tileInfo.mapbox_tile_name, bitDepth: 16}
-    tileInfo.landscapeName = ''
+    tileInfo.mapboxTileName = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
     tileInfo.tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
     tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
     tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
@@ -45,9 +41,16 @@ function getTileInfo(lng, lat, map) {
     tileInfo.northing = convUtm.northing
     tileInfo.zoneLetter = convUtm.zoneLetter
     tileInfo.zoneNum = convUtm.zoneNum
-
+    tileInfo.originLng = tileInfo.originCoordinates.lng
+    tileInfo.originLat = tileInfo.originCoordinates.lat
+    tileInfo.maxPngValue = 65535
+    tileInfo.rgbFileName = 'terrain-rgb' + '-' +  tileInfo.mapboxTileName + '.png'
+    tileInfo.thirtyTwoFileName = 'thirtytwo' + '-' + tileInfo.mapboxTileName + '.png'
+    tileInfo.tileInfoFileName = 'tile-info' + '-' + tileInfo.mapboxTileName + '.json'
+    tileInfo.geoJsonFileName = 'geojson'  + '-' + tileInfo.mapboxTileName + '.json'
     return tileInfo
 }
+
 function getEpsg(lat, lng) {
     let offset = Math.round((183 + lng) / 6)
     let epsg = 0

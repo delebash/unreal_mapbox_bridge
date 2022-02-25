@@ -243,8 +243,8 @@ export default {
       }
     },
     async sendToUnreal() {
-      this.tile_info.resolution = this.unrealLandscape.value
-      let fileName = this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+
+      let fileName = this.tile_info.sixteenFileName
 
       let dirHandle = await idbKeyval.get('dirHandle')
       //Verify user has permission to rea/write from selected directory
@@ -265,21 +265,23 @@ export default {
             "functionName": "GetAllLevelActors"
           }
           let bluePrintId
-          let bluePrintName = "GenerateMapboxLandscape_BP"
-          let objArray = await mapUtils.unrealRemoteControl(listObjects)
-          for (let obj of objArray.ReturnValue) {
-            let result = obj.includes(bluePrintName)
-            if (result === true) {
-              bluePrintId = obj.split('_').pop();
-            }
-          }
-          bluePrintName = bluePrintName + '_' + bluePrintId
+          let bluePrintName = "Mapbox_BP"
+          //  let objArray = await mapUtils.unrealRemoteControl(listObjects)
+          // for (let obj of objArray.ReturnValue) {
+          //   let result = obj.includes(bluePrintName)
+          //   if (result === true) {
+          //     bluePrintId = obj.split('_').pop();
+          //   }
+          // }
+          // bluePrintName = bluePrintName + '_' + bluePrintId
+          bluePrintName = "Mapbox_BP_C_1"
           let mapData = {
-            "objectPath": "/Game/Maps/MapboxBrideExample.MapboxBrideExample:PersistentLevel." + bluePrintName,
-            "functionName": "GenMapboxLandscape",
+            "objectPath": "/Game/Maps/MapboxBridgeExample.MapboxBridgeExample:PersistentLevel." + bluePrintName,
+            "functionName": "GenerateMapboxLandscape",
             "parameters": {
-              "FileName": this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png',
-              "LandscapeName": this.tile_info.landscapeName
+              "LandscapeName": this.tile_info.landscapeName,
+              "LandscapeSize": this.tile_info.resolution,
+              "TileInfoFileName": this.tile_info.mapboxTileName
             }
           }
 
@@ -297,7 +299,7 @@ export default {
     async saveImage(imageBytes) {
       let dirHandle = await idbKeyval.get('dirHandle')
       let outputBlob = new Blob([imageBytes], {type: 'image/png'});
-      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', outputBlob)
+      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, outputBlob)
       this.qt.loading.hide()
     },
 
@@ -321,13 +323,13 @@ export default {
     },
     async writeFiles(buff) {
       let dirHandle = await idbKeyval.get('dirHandle')
-      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', buff)
+      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, buff)
       let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
 
       let strFeatures = JSON.stringify(features)
       let tile_info = JSON.stringify(this.tile_info)
-      await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
-      await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
+      await fileUtils.writeFileToDisk(dirHandle, strFeatures)
+      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.tileInfoFileName, tile_info)
     },
     async updatePreviewImage() {
       this.preview_image_info = await this.data.preview_image_info
@@ -341,6 +343,13 @@ export default {
     },
     async createSixteenHeightMap() {
       // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
+      this.tile_info.resolution = this.unrealLandscape.value
+
+      this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
+      this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
+      this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+
+
       if (this.tile_info) {
         this.qt.loading.show()
         let dirHandle = await idbKeyval.get('dirHandle')
@@ -357,29 +366,28 @@ export default {
 
           let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
-          this.tile_info.resolution = this.unrealLandscape.value
+
 
           let min = parseInt(sixteen_image_info.minElevation).toString()
           let max = parseInt(sixteen_image_info.maxElevation).toString()
 
           let buff = await img.toBuffer()
-          let resampleSize = this.unrealLandscape.value.toString()
-          this.tile_info.resampleSize = resampleSize
-          this.tile_info.startLng = this.tile_info.originCoordinates.lng
-          this.tile_info.startLat = this.tile_info.originCoordinates.lat
+          this.tile_info.resampleSize = this.unrealLandscape.value.toString()
+          this.tile_info.resizeMethod = 'lanczos'
+
           let totalX = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
           let totalY = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
-          this.tile_info.xTransform = (this.tile_info.startLng + totalX).toFixed(4)
-          this.tile_info.yTransform = (this.tile_info.startLat - totalY).toFixed(4)
-          this.tile_info.maxPngValue = 65535
+          this.tile_info.xTransform = (this.tile_info.originLng + totalX).toFixed(4)
+          this.tile_info.yTransform = (this.tile_info.originLat - totalY).toFixed(4)
+          this.tile_info.exportType = this.exportType
 
-          switch (this.exportType) {
+          switch (this.tile_info.exportType) {
             case 'unreal':
               let translateOptions = [
                 '-ot', 'UInt16',
                 '-of', 'PNG',
                 '-scale', min, max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
-                '-outsize', resampleSize, resampleSize, '-r', 'lanczos'
+                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
               ];
 
               let file = new File([buff], "heightmap.png", {
@@ -398,12 +406,12 @@ export default {
 
             case 'normalize':
               img = img.level()
-              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', img.toBuffer())
+              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, img.toBuffer())
               this.qt.loading.hide()
               break;
 
             case 'none':
-              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFile.name + '-LandscapeSize-' + this.tile_info.resolution + '.png', img.toBuffer())
+              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, img.toBuffer())
               this.qt.loading.hide()
               break;
           }
@@ -411,9 +419,9 @@ export default {
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
           let strFeatures = JSON.stringify(features)
 
-          let tile_info = JSON.stringify(this.tile_info)
-          await fileUtils.writeFileToDisk(dirHandle, 'geojson-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', strFeatures)
-          await fileUtils.writeFileToDisk(dirHandle, 'tile_info-' + this.tile_info.mapbox_tile_name + '-' + this.tile_info.resolution + '.json', tile_info)
+          let jsonTile_info = JSON.stringify(this.tile_info)
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.geoJsonFileName, strFeatures)
+          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.tileInfoFileName, jsonTile_info)
 
         } else {
           this.alertMsg = 'Please download file first'

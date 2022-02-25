@@ -431,6 +431,7 @@ export default {
         let lat = e.lngLat.lat
 
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
+
         idbKeyval.set('tile_info', tile_info)
 
         //Reverse Geocoding
@@ -457,11 +458,11 @@ export default {
         //Create preview imamge
         let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
 
-        let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtytwoFile.name)
+        let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
         //Note file does not have to be written to disk in order to update preview image
         if (bFileExists === false) {
           let buff = await previewImageInfo.image.toBuffer()
-          await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtytwoFile.name, buff)
+          await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
         }
 
         emitter.emit('updatePreviewImage', {
