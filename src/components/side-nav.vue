@@ -280,12 +280,15 @@ export default {
             "functionName": "GenerateMapboxLandscape",
             "parameters": {
               "LandscapeName": this.tile_info.landscapeName,
-              "LandscapeSize": this.tile_info.resolution,
+              "LandscapeSize": this.tile_info.resolution.toString(),
               "TileHeightmapFileName": this.tile_info.sixteenFileName,
               "TileGeojsonFileName": this.tile_info.geoJsonFileName,
               "TileInfoFileName": this.tile_info.tileInfoFileName,
-
-
+              "OriginLng": this.tile_info.originLng.toString(),
+              "OriginLat": this.tile_info.originLat.toString(),
+              "Epsg": this.tile_info.epsg.toString(),
+              "Northing": this.tile_info.northing.toString(),
+              "Easting": this.tile_info.easting.toString()
             }
           }
 
