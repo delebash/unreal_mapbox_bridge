@@ -281,7 +281,11 @@ export default {
             "parameters": {
               "LandscapeName": this.tile_info.landscapeName,
               "LandscapeSize": this.tile_info.resolution,
-              "TileInfoFileName": this.tile_info.mapboxTileName
+              "TileHeightmapFileName": this.tile_info.sixteenFileName,
+              "TileGeojsonFileName": this.tile_info.geoJsonFileName,
+              "TileInfoFileName": this.tile_info.tileInfoFileName,
+
+
             }
           }
 
