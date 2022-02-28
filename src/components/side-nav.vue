@@ -274,6 +274,7 @@ export default {
           //   }
           // }
           // bluePrintName = bluePrintName + '_' + bluePrintId
+
           bluePrintName = "Mapbox_BP_C_1"
           let mapData = {
             "objectPath": "/Game/Maps/MapboxBridgeExample.MapboxBridgeExample:PersistentLevel." + bluePrintName,

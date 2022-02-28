@@ -518,7 +518,7 @@ export default {
       const geocodingClient = mbxGeocoding({accessToken: mapboxgl.accessToken});
 
       geocodingClient.reverseGeocode({
-        query: [tile_info.lng, tile_info.lat]
+        query: [tile_info.pointLng, tile_info.pointLat]
       })
           .send()
           .then(function (response) {

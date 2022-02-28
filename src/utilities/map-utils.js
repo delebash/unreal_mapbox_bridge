@@ -32,7 +32,7 @@ function getTileInfo(lng, lat, map) {
     tileInfo.bboxNE = llb.getNorthEast()
     tileInfo.bboxNW = llb.getNorthWest()
     tileInfo.bboxSE = llb.getSouthEast()
-    tileInfo.originCoordinates = tileInfo.bboxNW  //NE corner usually considered Origin coordinates
+    tileInfo.originCoordinates = tileInfo.bboxNW  //NW corner usually considered Origin coordinates
 
     let convUtm = utm.fromLatLon(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
     tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
@@ -48,6 +48,7 @@ function getTileInfo(lng, lat, map) {
     tileInfo.thirtyTwoFileName = 'thirtytwo' + '-' + tileInfo.mapboxTileName + '.png'
     tileInfo.tileInfoFileName = 'tile-info' + '-' + tileInfo.mapboxTileName + '.json'
     tileInfo.geoJsonFileName = 'geojson'  + '-' + tileInfo.mapboxTileName + '.json'
+    console.log(tileInfo)
     return tileInfo
 }
 
