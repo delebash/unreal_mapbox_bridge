@@ -22,14 +22,14 @@
       <!--          </div>-->
       <!--        </template>-->
       <!--      </q-field>-->
-      <q-field class="q-pt-none q-mt-xs" dense label="Tile width in meters" stack-label>
-        <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
-              this.tile_info.tileWidthInMeters
-            }}
-          </div>
-        </template>
-      </q-field>
+<!--      <q-field class="q-pt-none q-mt-xs" dense label="Tile width in meters" stack-label>-->
+<!--        <template v-slot:control>-->
+<!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
+<!--              this.tile_info.tileWidthInMeters-->
+<!--            }}-->
+<!--          </div>-->
+<!--        </template>-->
+<!--      </q-field>-->
 
       <q-field class="q-pt-none q-mt-xs" dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale"
                stack-label>
@@ -138,12 +138,7 @@
           <div class="text-h6">seEasting:</div>
           {{ tile_info.seEasting }}
 
-
-
-
-
         </q-card-section>
-
         <q-card-actions align="right">
           <q-btn flat label="OK" color="primary" v-close-popup/>
         </q-card-actions>
@@ -356,7 +351,7 @@ export default {
         this.tile_info.MinElevation = this.preview_image_info.minElevation
         this.tile_info.minmax = this.tile_info.MinElevation.toFixed(3) + ' / ' + this.tile_info.MaxElevation.toFixed(3)
         this.tile_info.elevation_range = (this.tile_info.MaxElevation - this.tile_info.MinElevation).toFixed(3)
-        this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
+      //  this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
         this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
         this.tile_info.zscale = this.adjustedZscale()
       } else {
