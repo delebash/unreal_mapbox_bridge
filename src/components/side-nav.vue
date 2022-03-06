@@ -103,9 +103,9 @@
           {{ tile_info.bbox[2] }}
           <div class="text-h6">Zoom:</div>
           {{ tile_info.z }}
-          <div class="text-h6">Point Northing:</div>
+          <div class="text-h6">Mouse Point Northing:</div>
           {{ tile_info.pointNorthing }}
-          <div class="text-h6">Point Easting:</div>
+          <div class="text-h6">Mouse Point Easting:</div>
           {{ tile_info.pointEasting }}
 
 
