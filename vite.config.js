@@ -1,13 +1,13 @@
 import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import {VitePWA} from 'vite-plugin-pwa'
-import mkcert from'vite-plugin-mkcert'
-import path from 'path'
+// import mkcert from'vite-plugin-mkcert'
+// import path from 'path'
 
 export default defineConfig({
   plugins: [
     vue(),
-    mkcert({}),
+    // mkcert({}),
     {
       name: "configure-response-headers",
       configureServer: (server) => {
@@ -22,7 +22,15 @@ export default defineConfig({
     VitePWA({
       base: '/',
       registerType: 'autoUpdate',
-      includeAssets: [
+      includeAssets: ['favicon.png',
+        'favicon.ico',
+        'robots.txt',
+        'apple-touch-icon.png',
+        'thirtytwo-9-82-180.png',
+        'gdal.js',
+        'gdal.data',
+        'gdal.wasm',
+        'gdalWorker.js'
       ],
       manifest: {
         name: 'Unreal Mapbox Bridge',
