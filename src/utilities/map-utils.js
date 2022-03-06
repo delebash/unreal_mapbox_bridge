@@ -32,23 +32,59 @@ function getTileInfo(lng, lat, map) {
     tileInfo.bboxNE = llb.getNorthEast()
     tileInfo.bboxNW = llb.getNorthWest()
     tileInfo.bboxSE = llb.getSouthEast()
+
+    //UE4_XY_SCALE = (REAL_WORLD_XY_TILE_LENGHT / (TILE_SIZE - 1)) * 100
+
+    //NW
+    //NE
+    //
+
+    //Changeo geojson coord from lng lat to projected
+    // xx = (float(coord[0]) - UTMx) * 100.0
+    // yy = (UTMy - float(coord[1])) * 100.0
+
+
     tileInfo.originCoordinates = tileInfo.bboxNW  //NW corner usually considered Origin coordinates
 
-    let convUtm = utm.fromLatLon(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
+    let convUtm = converLatLngTotUtm(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
     tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
     tileInfo.epsg = getEpsg(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
-    tileInfo.easting = convUtm.easting
-    tileInfo.northing = convUtm.northing
+    tileInfo.OriginEasting = convUtm.easting
+    tileInfo.OriginNorthing = convUtm.northing
     tileInfo.zoneLetter = convUtm.zoneLetter
     tileInfo.zoneNum = convUtm.zoneNum
     tileInfo.originLng = tileInfo.originCoordinates.lng
     tileInfo.originLat = tileInfo.originCoordinates.lat
     tileInfo.maxPngValue = 65535
-    tileInfo.rgbFileName = 'terrain-rgb' + '-' +  tileInfo.mapboxTileName + '.png'
+    tileInfo.rgbFileName = 'terrain-rgb' + '-' + tileInfo.mapboxTileName + '.png'
     tileInfo.thirtyTwoFileName = 'thirtytwo' + '-' + tileInfo.mapboxTileName + '.png'
     tileInfo.tileInfoFileName = 'tile-info' + '-' + tileInfo.mapboxTileName + '.json'
-    tileInfo.geoJsonFileName = 'geojson'  + '-' + tileInfo.mapboxTileName + '.json'
-    console.log(tileInfo)
+    tileInfo.geoJsonFileName = 'geojson' + '-' + tileInfo.mapboxTileName + '.json'
+
+    convUtm = converLatLngTotUtm(tileInfo.pointLat, tileInfo.pointLng)
+    tileInfo.pointNorthing = convUtm.northing
+    tileInfo.pointEasting = convUtm.easting
+
+    convUtm = converLatLngTotUtm(tileInfo.bboxCT.lat, tileInfo.bboxCT.lng)
+    tileInfo.ctNorthing = convUtm.northing
+    tileInfo.ctEasting = convUtm.easting
+
+    convUtm = converLatLngTotUtm(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
+    tileInfo.swNorthing = convUtm.northing
+    tileInfo.swEasting = convUtm.easting
+
+    convUtm = converLatLngTotUtm(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
+    tileInfo.neNorthing = convUtm.northing
+    tileInfo.neEasting = convUtm.easting
+
+    convUtm = converLatLngTotUtm(tileInfo.bboxNW.lat, tileInfo.bboxNW.lng)
+    tileInfo.nwNorthing = convUtm.northing
+    tileInfo.nwEasting = convUtm.easting
+
+    convUtm = converLatLngTotUtm(tileInfo.bboxSE.lat, tileInfo.bboxSE.lng)
+    tileInfo.seNorthing = convUtm.northing
+    tileInfo.seEasting = convUtm.easting
+
     return tileInfo
 }
 
@@ -62,6 +98,45 @@ function getEpsg(lat, lng) {
     }
     return epsg
 }
+
+function converLatLngTotUtm(lat, lng) {
+    return utm.fromLatLon(lat, lng)
+}
+
+function convertGeoJsonCoordinatesToUTM(features) {
+    features.forEach(geojson => {
+        let coordinates = geojson.geometry.coordinates
+        traverseArray(coordinates)
+    });
+    return features
+}
+
+function traverseArray(arr) {
+    let i = 0
+    let lng
+    let lat
+
+    arr.forEach((element, index) => {
+        if (Array.isArray(element)) {
+            traverseArray(element);
+        } else {
+            if (i === 0) {
+                lng = element
+            }
+            if (i === 1) {
+                lat = element
+                let convUtm = converLatLngTotUtm(lat, lng)
+                arr[0] = convUtm.northing
+                arr[1] = convUtm.easting
+            }
+            i = i + 1
+            if (i === 2) {
+                i = 0
+            }
+        }
+    });
+}
+
 
 function getTileGeoJsonBB(bbox) {
     let poly = turf.bboxPolygon(bbox);
@@ -221,7 +296,6 @@ async function getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url) {
  */
 function convertImage(width, height, imageArray, bitDepth, colorModel) {
     let newImage = new Image(width, height, imageArray, {kind: colorModel, bitDepth: bitDepth})
-
     return newImage
 }
 
@@ -239,6 +313,7 @@ function createHeightMapImage(image, bitDepth, colorModel) {
     idbKeyval.set('decodedHeightArray', decodedHeightArray)
     let out_image = convertImage(image.width, image.height, decodedHeightArray, bitDepth, colorModel)
 
+
     image_info.minElevation = out_image.min[0];
     image_info.maxElevation = out_image.max[0];
     image_info.image = out_image
@@ -248,5 +323,12 @@ function createHeightMapImage(image, bitDepth, colorModel) {
 }
 
 export default {
-    getTileInfo, getFeaturesFromBB, getMapboxTerrainRgb, createHeightMapImage, loadImageFromArray, unrealRemoteControl
+    converLatLngTotUtm,
+    getTileInfo,
+    getFeaturesFromBB,
+    getMapboxTerrainRgb,
+    createHeightMapImage,
+    loadImageFromArray,
+    unrealRemoteControl,
+    convertGeoJsonCoordinatesToUTM
 }

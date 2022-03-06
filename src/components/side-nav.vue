@@ -75,43 +75,76 @@
   >
     <q-input v-model="landscapeName"/>
   </q-field>
-  <!--  <div class="row justify-around q-pt-none q-mt-sm">-->
-  <!--    <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>-->
-  <!--  </div>-->
+    <div class="row justify-around q-pt-none q-mt-sm">
+      <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
+    </div>
   <div class="row justify-betweenq-pt-none q-mt-xs">
     <q-btn @click="createSixteenHeightMap" dense color="primary" no-caps label="Download HeightMap"/>
     <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
            label="Send To Unreal"/>
   </div>
 
-  <!--  <q-dialog v-model="bbinfoalert">-->
-  <!--    <q-card>-->
-  <!--      <q-card-section>-->
-  <!--        <div class="text-h6"><u>Coordinates for Unreal LandscapeGen Plugin</u></div>-->
+    <q-dialog v-model="bbinfoalert">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6"><u>Coordinates for Unreal LandscapeGen Plugin</u></div>
 
-  <!--      </q-card-section>-->
+        </q-card-section>
 
-  <!--      <q-card-section class="q-pt-none">-->
+        <q-card-section class="q-pt-none">
 
-  <!--        <div class="text-h6">Max Latitude:</div>-->
-  <!--        {{ tile_info.bbox[3] }}-->
-  <!--        <div class="text-h6">Max Longitude:</div>-->
-  <!--        {{ this.tile_info.bbox[0] }}-->
-  <!--        <div class="text-h6"> Min Latitude:</div>-->
-  <!--        {{ tile_info.bbox[1] }}-->
-  <!--        <div class="text-h6"> Min Longitude:</div>-->
-  <!--        {{ tile_info.bbox[2] }}-->
-  <!--        <div class="text-h6">Zoom:</div>-->
-  <!--        {{ tile_info.z }}-->
+          <div class="text-h6">Max Latitude:</div>
+          {{ tile_info.bbox[3] }}
+          <div class="text-h6">Max Longitude:</div>
+          {{ this.tile_info.bbox[0] }}
+          <div class="text-h6"> Min Latitude:</div>
+          {{ tile_info.bbox[1] }}
+          <div class="text-h6"> Min Longitude:</div>
+          {{ tile_info.bbox[2] }}
+          <div class="text-h6">Zoom:</div>
+          {{ tile_info.z }}
+          <div class="text-h6">Point Northing:</div>
+          {{ tile_info.pointNorthing }}
+          <div class="text-h6">Point Easting:</div>
+          {{ tile_info.pointEasting }}
 
 
-  <!--      </q-card-section>-->
+          <div class="text-h6">Center Northing:</div>
+          {{ tile_info.ctNorthing }}
+          <div class="text-h6">Center Easting:</div>
+          {{ tile_info.ctEasting }}
 
-  <!--      <q-card-actions align="right">-->
-  <!--        <q-btn flat label="OK" color="primary" v-close-popup/>-->
-  <!--      </q-card-actions>-->
-  <!--    </q-card>-->
-  <!--  </q-dialog>-->
+          <div class="text-h6">swNorthing:</div>
+          {{ tile_info.swNorthing }}
+          <div class="text-h6">swEasting:</div>
+          {{ tile_info.swEasting }}
+
+          <div class="text-h6">neNorthing:</div>
+          {{ tile_info.neNorthing }}
+          <div class="text-h6">neEasting:</div>
+          {{ tile_info.neEasting }}
+
+          <div class="text-h6">nwNorthing:</div>
+          {{ tile_info.nwNorthing }}
+          <div class="text-h6">nwEasting:</div>
+          {{ tile_info.nwEasting }}
+
+          <div class="text-h6">seNorthing:</div>
+          {{ tile_info.seNorthing }}
+          <div class="text-h6">seEasting:</div>
+          {{ tile_info.seEasting }}
+
+
+
+
+
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup/>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
 
   <q-dialog v-model="alert">
     <q-card>
@@ -275,7 +308,7 @@ export default {
           // }
           // bluePrintName = bluePrintName + '_' + bluePrintId
 
-          bluePrintName = "Mapbox_BP_C_1"
+          bluePrintName = "Mapbox_BP_C_2"
           let mapData = {
             "objectPath": "/Game/Maps/MapboxBridgeExample.MapboxBridgeExample:PersistentLevel." + bluePrintName,
             "functionName": "GenerateMapboxLandscape",
@@ -288,8 +321,10 @@ export default {
               "OriginLng": this.tile_info.originLng.toString(),
               "OriginLat": this.tile_info.originLat.toString(),
               "Epsg": this.tile_info.epsg.toString(),
-              "Northing": this.tile_info.northing.toString(),
-              "Easting": this.tile_info.easting.toString()
+              "OriginNorthing": this.tile_info.OriginNorthing.toString(),
+              "OriginEasting": this.tile_info.OriginEasting.toString(),
+              "PointNorthing": this.tile_info.pointNorthing.toString(),
+              "PointEasting": this.tile_info.pointEasting.toString()
             }
           }
 
@@ -374,7 +409,11 @@ export default {
 
           let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let img = sixteen_image_info.image
+          // //Flip y for Unreal
 
+        // img = img.flipY()
+        //   img = img.flipX()
+      //  img = img.rotate(-90)
 
           let min = parseInt(sixteen_image_info.minElevation).toString()
           let max = parseInt(sixteen_image_info.maxElevation).toString()
@@ -388,6 +427,10 @@ export default {
           this.tile_info.xTransform = (this.tile_info.originLng + totalX).toFixed(4)
           this.tile_info.yTransform = (this.tile_info.originLat - totalY).toFixed(4)
           this.tile_info.exportType = this.exportType
+
+          let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
+          this.tile_info.OriginNorthing = convUtm.northing
+          this.tile_info.OriginEasting = convUtm.easting
 
           switch (this.tile_info.exportType) {
             case 'unreal':
@@ -425,7 +468,8 @@ export default {
           }
 
           let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
-          let strFeatures = JSON.stringify(features)
+          let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
+          let strFeatures = JSON.stringify(utmFeatures)
 
           let jsonTile_info = JSON.stringify(this.tile_info)
           await fileUtils.writeFileToDisk(dirHandle, this.tile_info.geoJsonFileName, strFeatures)
@@ -443,40 +487,6 @@ export default {
 }
 
 
-// let coordinates = features.geometry.coordinates
-// let points = []
-// //Replace long/lat coordinates with projected
-// let geofeatures = []
-// let goodPoints = []
-// let mypoints = []
-// for (const myfeature of features) {
-//   // console.log(myfeature)
-//   // console.log(myfeature)
-//   if (myfeature.geometry) {
-//     //console.log(myfeature.geometry.type)
-//     if (myfeature.geometry.type === 'LineString') {
-//       // console.log(myfeature.geometry.type)
-//       //  console.log(myfeature.geometry.coordinates)
-//       for (const coordinate of myfeature.geometry.coordinates) {
-//         mypoints = []
-//      //   console.log(coordinate)
-//         const point = this.map.project(coordinate);
-//         console.log(point)
-//         console.log(point.x)
-//         console.log(point.y)
-//         mypoints[0] = point.x
-//         mypoints[1] = point.y
-//        // console.log(mypoints)
-//         goodPoints.push(mypoints)
-//       }
-//       myfeature.geometry.coordinates = goodPoints
-//       goodPoints = []
-//
-//       geofeatures.push(myfeature)
-//       // console.log(myfeature)
-//     }
-//   }
-// }
 </script>
 
 
