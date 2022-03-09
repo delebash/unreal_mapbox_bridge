@@ -22,14 +22,14 @@
       <!--          </div>-->
       <!--        </template>-->
       <!--      </q-field>-->
-<!--      <q-field class="q-pt-none q-mt-xs" dense label="Tile width in meters" stack-label>-->
-<!--        <template v-slot:control>-->
-<!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
-<!--              this.tile_info.tileWidthInMeters-->
-<!--            }}-->
-<!--          </div>-->
-<!--        </template>-->
-<!--      </q-field>-->
+      <!--      <q-field class="q-pt-none q-mt-xs" dense label="Tile width in meters" stack-label>-->
+      <!--        <template v-slot:control>-->
+      <!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
+      <!--              this.tile_info.tileWidthInMeters-->
+      <!--            }}-->
+      <!--          </div>-->
+      <!--        </template>-->
+      <!--      </q-field>-->
 
       <q-field class="q-pt-none q-mt-xs" dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale"
                stack-label>
@@ -75,75 +75,79 @@
   >
     <q-input v-model="landscapeName"/>
   </q-field>
-    <div class="row justify-around q-pt-none q-mt-sm">
-      <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
-    </div>
+  <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"
+  >
+    <q-input v-model="unrealMapPath"/>
+  </q-field>
+  <div class="row justify-around q-pt-none q-mt-sm">
+    <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
+  </div>
   <div class="row justify-betweenq-pt-none q-mt-xs">
     <q-btn @click="createSixteenHeightMap" dense color="primary" no-caps label="Download HeightMap"/>
     <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
            label="Send To Unreal"/>
   </div>
 
-    <q-dialog v-model="bbinfoalert">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6"><u>Coordinates for Unreal LandscapeGen Plugin</u></div>
+  <q-dialog v-model="bbinfoalert">
+    <q-card>
+      <q-card-section>
+        <div class="text-h6"><u>Coordinates for Unreal LandscapeGen Plugin</u></div>
 
-        </q-card-section>
+      </q-card-section>
 
-        <q-card-section class="q-pt-none">
+      <q-card-section class="q-pt-none">
 
-          <div class="text-h6">Max Latitude:</div>
-          {{ tile_info.bbox[3] }}
-          <div class="text-h6">Max Longitude:</div>
-          {{ this.tile_info.bbox[0] }}
-          <div class="text-h6"> Min Latitude:</div>
-          {{ tile_info.bbox[1] }}
-          <div class="text-h6"> Min Longitude:</div>
-          {{ tile_info.bbox[2] }}
-          <div class="text-h6">Zoom:</div>
-          {{ tile_info.z }}
-          <div class="text-h6">Mouse Point Lat:</div>
-          {{ tile_info.pointLat }}
-          <div class="text-h6">Mouse Point Lng:</div>
-          {{ tile_info.pointLng }}
-          <div class="text-h6">Mouse Point Northing:</div>
-          {{ tile_info.pointNorthing }}
-          <div class="text-h6">Mouse Point Easting:</div>
-          {{ tile_info.pointEasting }}
+        <div class="text-h6">Max Latitude:</div>
+        {{ tile_info.bbox[3] }}
+        <div class="text-h6">Max Longitude:</div>
+        {{ this.tile_info.bbox[0] }}
+        <div class="text-h6"> Min Latitude:</div>
+        {{ tile_info.bbox[1] }}
+        <div class="text-h6"> Min Longitude:</div>
+        {{ tile_info.bbox[2] }}
+        <div class="text-h6">Zoom:</div>
+        {{ tile_info.z }}
+        <div class="text-h6">Mouse Point Lat:</div>
+        {{ tile_info.pointLat }}
+        <div class="text-h6">Mouse Point Lng:</div>
+        {{ tile_info.pointLng }}
+        <div class="text-h6">Mouse Point Northing:</div>
+        {{ tile_info.pointNorthing }}
+        <div class="text-h6">Mouse Point Easting:</div>
+        {{ tile_info.pointEasting }}
 
 
-          <div class="text-h6">Center Northing:</div>
-          {{ tile_info.ctNorthing }}
-          <div class="text-h6">Center Easting:</div>
-          {{ tile_info.ctEasting }}
+        <div class="text-h6">Center Northing:</div>
+        {{ tile_info.ctNorthing }}
+        <div class="text-h6">Center Easting:</div>
+        {{ tile_info.ctEasting }}
 
-          <div class="text-h6">swNorthing:</div>
-          {{ tile_info.swNorthing }}
-          <div class="text-h6">swEasting:</div>
-          {{ tile_info.swEasting }}
+        <div class="text-h6">swNorthing:</div>
+        {{ tile_info.swNorthing }}
+        <div class="text-h6">swEasting:</div>
+        {{ tile_info.swEasting }}
 
-          <div class="text-h6">neNorthing:</div>
-          {{ tile_info.neNorthing }}
-          <div class="text-h6">neEasting:</div>
-          {{ tile_info.neEasting }}
+        <div class="text-h6">neNorthing:</div>
+        {{ tile_info.neNorthing }}
+        <div class="text-h6">neEasting:</div>
+        {{ tile_info.neEasting }}
 
-          <div class="text-h6">nwNorthing:</div>
-          {{ tile_info.nwNorthing }}
-          <div class="text-h6">nwEasting:</div>
-          {{ tile_info.nwEasting }}
+        <div class="text-h6">nwNorthing:</div>
+        {{ tile_info.nwNorthing }}
+        <div class="text-h6">nwEasting:</div>
+        {{ tile_info.nwEasting }}
 
-          <div class="text-h6">seNorthing:</div>
-          {{ tile_info.seNorthing }}
-          <div class="text-h6">seEasting:</div>
-          {{ tile_info.seEasting }}
+        <div class="text-h6">seNorthing:</div>
+        {{ tile_info.seNorthing }}
+        <div class="text-h6">seEasting:</div>
+        {{ tile_info.seEasting }}
 
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="OK" color="primary" v-close-popup/>
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn flat label="OK" color="primary" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 
   <q-dialog v-model="alert">
     <q-card>
@@ -219,6 +223,7 @@ export default {
       bbinfoalert: ref(false),
       exportType: ref('unreal'),
       landscapeName: ref(''),
+      unrealMapPath: ref(''),
       qt: $q,
       otherOptionsModel: ref(['zrange']),
       alertMsg: ref(''),
@@ -241,7 +246,7 @@ export default {
       this.data = data
       this.updatePreviewImage()
     })
-
+    this.unrealMapPath = await idbKeyval.get('unrealMapPath')
     gdalWorker.onmessage = async (evt) => {
       await this.saveImage(evt.data);
     }
@@ -275,7 +280,7 @@ export default {
       }
     },
     async sendToUnreal() {
-
+      idbKeyval.set('unrealMapPath', this.unrealMapPath)
       let fileName = this.tile_info.sixteenFileName
 
       let dirHandle = await idbKeyval.get('dirHandle')
@@ -298,18 +303,18 @@ export default {
           }
           let bluePrintId
           let bluePrintName = "Mapbox_BP"
-          //  let objArray = await mapUtils.unrealRemoteControl(listObjects)
-          // for (let obj of objArray.ReturnValue) {
-          //   let result = obj.includes(bluePrintName)
-          //   if (result === true) {
-          //     bluePrintId = obj.split('_').pop();
-          //   }
-          // }
-          // bluePrintName = bluePrintName + '_' + bluePrintId
 
-          bluePrintName = "Mapbox_BP_C_2"
+          let objArray = await mapUtils.unrealRemoteControl(listObjects)
+          for (let obj of objArray.ReturnValue) {
+            let result = obj.includes(bluePrintName)
+            if (result === true) {
+              bluePrintId = obj.split('_').pop();
+            }
+          }
+          bluePrintName = bluePrintName + '_' + bluePrintId
+        let bpPath = this.unrealMapPath + ':PersistentLevel.' + bluePrintName
           let mapData = {
-            "objectPath": "/Game/Maps/MapboxBridgeExample.MapboxBridgeExample:PersistentLevel." + bluePrintName,
+            "objectPath": bpPath,
             "functionName": "GenerateMapboxLandscape",
             "parameters": {
               "LandscapeName": this.tile_info.landscapeName,
@@ -351,8 +356,8 @@ export default {
         this.tile_info.MinElevation = this.preview_image_info.minElevation
         this.tile_info.minmax = this.tile_info.MinElevation.toFixed(3) + ' / ' + this.tile_info.MaxElevation.toFixed(3)
         this.tile_info.elevation_range = (this.tile_info.MaxElevation - this.tile_info.MinElevation).toFixed(3)
-      //  this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
-        this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
+        //  this.tile_info.tileWidthInMeters = this.tile_info.tileWidthInMeters.toFixed(3)
+        //  this.tile_info.metersPerPixel = this.tile_info.metersPerPixel.toFixed(3)
         this.tile_info.zscale = this.adjustedZscale()
       } else {
         this.tile_info.minmax = ''
@@ -374,6 +379,7 @@ export default {
       await fileUtils.writeFileToDisk(dirHandle, this.tile_info.tileInfoFileName, tile_info)
     },
     async updatePreviewImage() {
+
       this.preview_image_info = await this.data.preview_image_info
       this.tile_info = this.data.tile_info
       this.map = this.data.map
@@ -410,9 +416,9 @@ export default {
           let img = sixteen_image_info.image
           // //Flip y for Unreal
 
-        // img = img.flipY()
-        //   img = img.flipX()
-      //  img = img.rotate(-90)
+          // img = img.flipY()
+          //   img = img.flipX()
+          //  img = img.rotate(-90)
 
           let min = parseInt(sixteen_image_info.minElevation).toString()
           let max = parseInt(sixteen_image_info.maxElevation).toString()
@@ -421,10 +427,10 @@ export default {
           this.tile_info.resampleSize = this.unrealLandscape.value.toString()
           this.tile_info.resizeMethod = 'lanczos'
 
-          let totalX = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
-          let totalY = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
-          this.tile_info.xTransform = (this.tile_info.originLng + totalX).toFixed(4)
-          this.tile_info.yTransform = (this.tile_info.originLat - totalY).toFixed(4)
+          // let totalX = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
+          //   let totalY = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
+          //  this.tile_info.xTransform = (this.tile_info.originLng + totalX).toFixed(4)
+          //  this.tile_info.yTransform = (this.tile_info.originLat - totalY).toFixed(4)
           this.tile_info.exportType = this.exportType
 
           let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
