@@ -185,7 +185,7 @@ export default {
     const $q = useQuasar()
     return {
       alert: ref(false),
-      isDisabled: ref(true),
+      isDisabled: ref(false),
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
         {
@@ -239,9 +239,9 @@ export default {
   },
   async mounted() {
     //Send to unreal must be from local host
-    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-      this.isDisabled = false
-    }
+    // if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    //   this.isDisabled = false
+    // }
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
       this.updatePreviewImage()
