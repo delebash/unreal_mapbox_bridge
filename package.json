@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "start": "vite",
+    "build-tauri": "vite-tauri build",
     "preview": "vite preview",
     "ssl": "npm run build && npm run copyssl && npm run serve",
     "build": "vite build",
@@ -16,7 +17,7 @@
     "@mapbox/mapbox-sdk": "^0.13.3",
     "@mapbox/tilebelt": "^1.0.2",
     "@quasar/app": "^3.3.3",
-    "@quasar/extras": "^1.12.5",
+    "@quasar/extras": "^1.13.0",
     "@turf/turf": "^6.5.0",
     "fs-extra": "^10.0.1",
     "idb-keyval": "^6.1.0",
@@ -27,12 +28,14 @@
     "utm-zone": "^1.0.1"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^1.0.0-rc.7",
     "@vitejs/plugin-vue": "^2.2.4",
     "core-js": "^3.21.1",
     "mkcert": "^1.5.0",
     "sass": "^1.49.9",
     "vite": "^2.8.6",
     "vite-plugin-mkcert": "^1.6.0",
-    "vite-plugin-pwa": "^0.11.13"
+    "vite-plugin-pwa": "^0.11.13",
+    "vite-plugin-tauri": "^1.1.2"
   }
 }
