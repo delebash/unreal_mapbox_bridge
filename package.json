@@ -4,6 +4,7 @@
   "scripts": {
     "start": "vite",
     "build-tauri": "vite-tauri build",
+    "debug-tauri": "vite-tauri build --debug",
     "preview": "vite preview",
     "ssl": "npm run build && npm run copyssl && npm run serve",
     "build": "vite build",
@@ -18,6 +19,7 @@
     "@mapbox/tilebelt": "^1.0.2",
     "@quasar/app": "^3.3.3",
     "@quasar/extras": "^1.13.0",
+    "@tauri-apps/api": "^1.0.0-rc.2",
     "@turf/turf": "^6.5.0",
     "fs-extra": "^10.0.1",
     "idb-keyval": "^6.1.0",

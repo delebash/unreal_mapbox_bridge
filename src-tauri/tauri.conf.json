@@ -10,6 +10,16 @@
     "beforeBuildCommand": ""
   },
   "tauri": {
+    "cli": {
+      "args": [
+        {
+          "name": "mappath",
+          "short": "t",
+          "takesValue": true,
+          "possibleValues": []
+        }
+      ]
+    },
     "systemTray": {
       "iconPath": "icons/unreal_mapbox.ico",
       "iconAsTemplate": true
@@ -19,7 +29,7 @@
       "targets": "all",
       "identifier": "com.tauri.dev",
       "icon": [
-        "icons/pwa-512x512.png"
+        "icons/unreal_mapbox.ico"
       ],
       "resources": [],
       "externalBin": [],

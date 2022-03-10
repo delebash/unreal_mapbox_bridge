@@ -75,10 +75,7 @@
   >
     <q-input v-model="landscapeName"/>
   </q-field>
-  <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"
-  >
-    <q-input v-model="unrealMapPath"/>
-  </q-field>
+
   <div class="row justify-around q-pt-none q-mt-sm">
     <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
   </div>
@@ -246,7 +243,6 @@ export default {
       this.data = data
       this.updatePreviewImage()
     })
-    this.unrealMapPath = await idbKeyval.get('unrealMapPath')
     gdalWorker.onmessage = async (evt) => {
       await this.saveImage(evt.data);
     }
@@ -280,7 +276,7 @@ export default {
       }
     },
     async sendToUnreal() {
-      idbKeyval.set('unrealMapPath', this.unrealMapPath)
+      this.unrealMapPath = await idbKeyval.get('mappath')
       let fileName = this.tile_info.sixteenFileName
 
       let dirHandle = await idbKeyval.get('dirHandle')
