@@ -2,7 +2,7 @@
   <q-layout view="lHr lpr lfr">
     <q-header dense elevated class="bg-primary text-white" height-hint="98">
     </q-header>
-    <ReloadPrompt/>
+<!--    <ReloadPrompt/>-->
     <q-drawer dense show-if-above v-model="drawerLeft" side="left" @hide='resizeMap' class="no-margin no-padding">
       <div class="row  q-pa-xs full-height">
         <q-card class="col q-pl-xs">
@@ -26,8 +26,8 @@
             <q-btn dense flat @click="changeDrawer" round icon="menu"/>
             <q-tab dense name="map" label="Map"/>
             <q-tab dense name="settings" label="Settings"/>
-            <q-btn v-show="showPwaBtn" style="color: white" label="Install as App" class="q-mr-lg bg-positive"
-                   @click="installPWA()"/>
+<!--            <q-btn v-show="showPwaBtn" style="color: white" label="Install as App" class="q-mr-lg bg-positive"-->
+<!--                   @click="installPWA()"/>-->
             <q-btn style="background: #FF0080; color: white" label="Help" class="q-mr-lg" @click="showDialog"/>
             <q-btn dense flat round
                    @click="$q.dark.toggle()"
@@ -115,7 +115,7 @@ import Help from '../components/help.vue'
 import idbKeyval from '../utilities/idb-keyval-iife';
 import fileUtils from '../utilities/fs-helpers';
 import {getMatches} from '@tauri-apps/api/cli'
-import ReloadPrompt from '../components/ReloadPrompt.vue'
+// import ReloadPrompt from '../components/ReloadPrompt.vue'
 
 export default {
   setup() {
@@ -267,8 +267,8 @@ export default {
   components: {
     MapboxMapViewer,
     SideNav,
-    Help,
-    ReloadPrompt
+    Help
+    // ReloadPrompt
   }
 }
 </script>
