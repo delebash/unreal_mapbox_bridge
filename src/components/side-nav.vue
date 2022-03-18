@@ -287,29 +287,39 @@ export default {
       }
 
       let bExists = await fileUtils.fileExists(dirHandle, fileName)
+      let response
       if (bExists) {
         if (this.tile_info) {
           console.log('sending')
           this.qt.loading.show()
           this.tile_info.landscapeName = this.landscapeName
 
-          let listObjects = {
-            "objectPath": "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
-            "functionName": "GetAllLevelActors"
-          }
-          let bluePrintId
-          let bluePrintName = "Mapbox_BP"
 
-          let objArray = await mapUtils.unrealRemoteControl(listObjects)
-          for (let obj of objArray.ReturnValue) {
-            let result = obj.includes(bluePrintName)
-            if (result === true) {
-              bluePrintId = obj.split('_').pop();
+          let host = 'http://localhost:30010/'
+          let search = 'remote/search/assets'
+          let call = 'remote/object/call'
+          let data = {}
+
+          data = {
+            "Query": "Mapbox_BP",
+            "Filter": {
+              "PackageNames": [],
+              "ClassNames": [],
+              "PackagePaths": [],
+              "RecursiveClassesExclusionSet": [],
+              "RecursivePaths": true,
+              "RecursiveClasses": true
             }
           }
-          bluePrintName = bluePrintName + '_' + bluePrintId
-        let bpPath = this.unrealMapPath + ':PersistentLevel.' + bluePrintName
-          let mapData = {
+          response = await mapUtils.unrealRemoteControl(data, host + search)
+          let bpPath = response.Assets[0].Path
+
+          // data = {
+          //    "objectPath" : "/Engine/UnrealEd/EditorSubsystem.Default__EditorActorSubsystem",
+          //      "functionName":"GetAllLevelActors"
+          //  }
+
+          data = {
             "objectPath": bpPath,
             "functionName": "GenerateMapboxLandscape",
             "parameters": {
@@ -328,8 +338,9 @@ export default {
             }
           }
 
-          let response = await mapUtils.unrealRemoteControl(mapData)
+          response = await mapUtils.unrealRemoteControl(data, host + call)
           console.log(response)
+          
           this.qt.loading.hide()
         } else {
           this.alert = true
@@ -432,6 +443,10 @@ export default {
           let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
           this.tile_info.OriginNorthing = convUtm.northing
           this.tile_info.OriginEasting = convUtm.easting
+
+
+          // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
+
 
           switch (this.tile_info.exportType) {
             case 'unreal':

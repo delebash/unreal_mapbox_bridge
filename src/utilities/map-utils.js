@@ -246,16 +246,12 @@ async function downloadTerrainRgb(mapbox_rgb_image_url) {
     return arrBuffer
 }
 
-async function unrealRemoteControl(data) {
-// data = {
-//     "objectPath" : "/Script/EditorScriptingUtilities.Default__EditorLevelLibrary",
-//     "functionName":"GetAllLevelActors"
-// }
+async function unrealRemoteControl(data,url) {
     const requestOptions = {
         method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
     };
-    const response = await fetch('http://localhost:30010/remote/object/call', requestOptions);
-    // const response = await fetch('http://localhost:30010/remote/info',);
+    const response = await fetch(url, requestOptions);
+
     const dataJson = await response.json();
 
     return dataJson
