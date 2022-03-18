@@ -300,24 +300,44 @@ export default {
           let call = 'remote/object/call'
           let data = {}
 
-          data = {
-            "Query": "Mapbox_BP",
-            "Filter": {
-              "PackageNames": [],
-              "ClassNames": [],
-              "PackagePaths": [],
-              "RecursiveClassesExclusionSet": [],
-              "RecursivePaths": true,
-              "RecursiveClasses": true
-            }
-          }
-          response = await mapUtils.unrealRemoteControl(data, host + search)
-          let bpPath = response.Assets[0].Path
+          // data = {
+          //   "Query": "Mapbox_BP",
+          //   "Filter": {
+          //     "PackageNames": [],
+          //     "ClassNames": [],
+          //     "PackagePaths": [],
+          //     "RecursiveClassesExclusionSet": [],
+          //     "RecursivePaths": true,
+          //     "RecursiveClasses": true
+          //   }
+          // }
 
           // data = {
-          //    "objectPath" : "/Engine/UnrealEd/EditorSubsystem.Default__EditorActorSubsystem",
+          //    "objectPath" : "",
           //      "functionName":"GetAllLevelActors"
           //  }
+
+           data = {
+            "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
+            "functionName": "GetAllLevelActors"
+          }
+          // let objPath = []
+          // let mapPath = ''
+          // let bluePrintId = ''
+
+          let bpPath = ''
+          let bluePrintName = "Mapbox_BP"
+
+          let objArray = await mapUtils.unrealRemoteControl(data,  host + call)
+          for (let obj of objArray.ReturnValue) {
+            let result = obj.includes(bluePrintName)
+            if (result === true) {
+              bpPath = obj
+              // objPath = obj.split('.')
+              // mapPath = objPath[0]
+              // bluePrintId = objPath[1]
+            }
+          }
 
           data = {
             "objectPath": bpPath,
@@ -340,7 +360,7 @@ export default {
 
           response = await mapUtils.unrealRemoteControl(data, host + call)
           console.log(response)
-          
+
           this.qt.loading.hide()
         } else {
           this.alert = true

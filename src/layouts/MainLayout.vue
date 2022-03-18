@@ -87,11 +87,11 @@
               </div>
               <!--              <q-checkbox v-model="createFolder" label="Creat a folder for each tile information downloaded" />-->
               <br>
-              <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"
-              >
-                <q-input v-model="unrealMapPath"/>
-              </q-field>
-              <br>
+<!--              <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"-->
+<!--              >-->
+<!--                <q-input v-model="unrealMapPath"/>-->
+<!--              </q-field>-->
+<!--              <br>-->
               <q-btn class="q-pt-none" dense @click="saveUserSettings()" color="secondary"
                      label="Save settings"></q-btn>
             </q-tab-panel>
@@ -146,7 +146,7 @@ export default {
       access_token: ref(''),
       mapbox_api_url: ref(''),
       mapbox_raster_png_dem: ref(''),
-      unrealMapPath: ref(''),
+     // unrealMapPath: ref(''),
       showPwaBtn: true,
       isPwd: ref(true),
       drawerLeft: ref(false),
@@ -158,9 +158,9 @@ export default {
     //Used for Tauri app exe send to unreal, will not work as regular web server app
     try {
       let tauriArgs = await getMatches()
-      this.unrealMapPath = tauriArgs.args.mappath.value
+     // this.unrealMapPath = tauriArgs.args.mappath.value
       idbKeyval.set('tauriArgs', tauriArgs)
-      idbKeyval.set('mappath', this.unrealMapPath)
+    //  idbKeyval.set('mappath', this.unrealMapPath)
     } catch (e) {
     }
 
@@ -245,7 +245,7 @@ export default {
       idbKeyval.set('mapbox_api_url', this.mapbox_api_url);
       idbKeyval.set('mapbox_raster_png_dem', this.mapbox_raster_png_dem);
       idbKeyval.set('create_folder', this.createFolder);
-      idbKeyval.set('mappath', this.unrealMapPath );
+    //  idbKeyval.set('mappath', this.unrealMapPath );
 
       if (this.isRequiredSettings() === true) {
         this.loadMap()
