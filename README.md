@@ -4,6 +4,8 @@
 
 # Check out the demo running live [here](https://terrain.justgeektechs.com/)
 
+<a href="https://discord.gg/2WkHWNDf8q" target="_blank">Discord Server</a>
+
 For what is coming next check the **<a href="https://trello.com/b/7jXYlo13/unreal-mapbox-bridge" target="_blank">RoadMap</a>**
 
 ## Install the dependencies
