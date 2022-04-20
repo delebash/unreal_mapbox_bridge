@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "start": "vite",
+    "info-tauri": "vite-tauri info",
     "build-tauri": "vite-tauri build",
     "debug-tauri": "vite-tauri build --debug",
     "preview": "vite preview",
@@ -27,11 +28,12 @@
     "mapbox-gl": "^2.8.1",
     "mitt": "^3.0.0",
     "quasar": "^2.6.6",
-    "utm-zone": "^1.0.1"
+    "utm-zone": "^1.0.1",
+    "vue-cli-plugin-tauri": "^1.0.0-rc.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.0.0-rc.8",
-    "@vitejs/plugin-vue": "^2.3.1",
+    "@vitejs/plugin-vue": "^1.0.0-rc.3",
     "core-js": "^3.22.1",
     "mkcert": "^1.5.0",
     "sass": "^1.50.1",
