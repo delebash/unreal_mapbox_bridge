@@ -429,7 +429,6 @@ export default {
 
         let lng = e.lngLat.lng
         let lat = e.lngLat.lat
-console.log(lat + ',' + lng)
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
 
         idbKeyval.set('tile_info', tile_info)

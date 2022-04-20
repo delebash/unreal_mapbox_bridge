@@ -317,7 +317,7 @@ export default {
           //      "functionName":"GetAllLevelActors"
           //  }
 
-           data = {
+          data = {
             "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
             "functionName": "GetAllLevelActors"
           }
@@ -328,7 +328,7 @@ export default {
           let bpPath = ''
           let bluePrintName = "Mapbox_BP"
 
-          let objArray = await mapUtils.unrealRemoteControl(data,  host + call)
+          let objArray = await mapUtils.unrealRemoteControl(data, host + call)
           for (let obj of objArray.ReturnValue) {
             let result = obj.includes(bluePrintName)
             if (result === true) {
@@ -372,8 +372,8 @@ export default {
     },
     async saveImage(imageBytes) {
       let dirHandle = await idbKeyval.get('dirHandle')
-      let outputBlob = new Blob([imageBytes], {type: 'image/png'});
-      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, outputBlob)
+      let outputBlob = new Blob([imageBytes], {type: 'image/tif'});
+      await fileUtils.writeFileToDisk(dirHandle, 'test.tif', outputBlob)
       this.qt.loading.hide()
     },
 
@@ -476,6 +476,15 @@ export default {
                 '-scale', min, max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
                 '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
               ];
+
+              //  gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
+
+              translateOptions = [
+                '-of', 'GTiff',
+                '-a_srs', 'EPSG:4326',
+                '-a_ullr', this.tile_info.bboxNW.lng, this.tile_info.bboxNW.lat, this.tile_info.bboxSE.lng, this.tile_info.bboxSE.lat
+              ]
+
 
               let file = new File([buff], "heightmap.png", {
                 type: "image/png",
