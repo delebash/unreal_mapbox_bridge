@@ -72,6 +72,11 @@
                        hint=""
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
+              <q-input dense class="q-pb-lg" v-model="mapbox_satellite_endpoint" label="Mapbox Satellite Endpoint *" filled
+                       lazy-rules
+                       hint=""
+                       :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
+              </q-input>
               <div class="q-pa-none row items-start">
                 <div class="col q-pa-none">
                   <q-input dense class="q-pb-none" v-model="dirName" label="Enter download directory path *"
@@ -146,6 +151,7 @@ export default {
       access_token: ref(''),
       mapbox_api_url: ref(''),
       mapbox_raster_png_dem: ref(''),
+      mapbox_satellite_endpoint: ref(''),
      // unrealMapPath: ref(''),
       showPwaBtn: true,
       isPwd: ref(true),
@@ -243,6 +249,7 @@ export default {
       idbKeyval.set('access_token', this.access_token);
       idbKeyval.set('style_url', this.style_url);
       idbKeyval.set('mapbox_api_url', this.mapbox_api_url);
+      idbKeyval.set('mapbox_satellite_endpoint', this.mapbox_satellite_endpoint);
       idbKeyval.set('mapbox_raster_png_dem', this.mapbox_raster_png_dem);
       idbKeyval.set('create_folder', this.createFolder);
     //  idbKeyval.set('mappath', this.unrealMapPath );
@@ -256,6 +263,7 @@ export default {
       this.access_token = mapboxgl.accessToken || ''
       this.style_url = await idbKeyval.get('style_url') || 'mapbox://styles/mapbox/streets-v11'
       this.mapbox_api_url = await idbKeyval.get('mapbox_api_url') || 'https://api.mapbox.com/v4/'
+      this.mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint') || 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles'
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem') || 'mapbox.mapbox-terrain-dem-v1'
 
       let dirHandle = await idbKeyval.get('dirHandle') || ''

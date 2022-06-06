@@ -171,17 +171,16 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
+import mapboxgl from "mapbox-gl";
 
-
-let gdalWorker = new Worker('gdalWorker.js');
-
-
+const gdalWorker = new Worker('gdalWorker.js');
 export default {
   name: 'SideNav',
   setup() {
     const $q = useQuasar()
     return {
       alert: ref(false),
+      access_token: ref(''),
       isDisabled: ref(false),
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
@@ -212,6 +211,7 @@ export default {
       ],
       url: ref('thirtytwo-9-82-180.png'),
       tile_info: ref(''),
+      save_fileName: ref(''),
       dirHandle: ref(''),
       preview_image_info: ref(''),
       rgb_image: ref(''),
@@ -243,9 +243,6 @@ export default {
       this.data = data
       this.updatePreviewImage()
     })
-    gdalWorker.onmessage = async (evt) => {
-      await this.saveImage(evt.data);
-    }
   },
   methods: {
     adjustedZscale() {
@@ -370,12 +367,7 @@ export default {
         this.alert = true
       }
     },
-    async saveImage(imageBytes) {
-      let dirHandle = await idbKeyval.get('dirHandle')
-      let outputBlob = new Blob([imageBytes], {type: 'image/tif'});
-      await fileUtils.writeFileToDisk(dirHandle, 'test.tif', outputBlob)
-      this.qt.loading.hide()
-    },
+
 
     updateStats() {
       if (this.preview_image_info.maxElevation !== '') {
@@ -416,7 +408,37 @@ export default {
       this.url = objectURL
       this.updateStats(this.tile_info)
     },
+    async saveImage(imageBytes, save_fileName) {
+      let dirHandle = await idbKeyval.get('dirHandle')
+      let outputBlob = new Blob([imageBytes], {type: 'image/png'});
+      await fileUtils.writeFileToDisk(dirHandle, save_fileName, outputBlob)
+    },
+
+    async createWorker(buff, filename, translateOptions) {
+      let that = this
+      return new Promise(function (resolve) {
+        let file = new File([buff], "temp.png", {
+          type: "image/png",
+          lastModified: Date.now()
+        });
+
+        let list = new DataTransfer();
+        list.items.add(file);
+        let myFileList = list.files;
+        let data = {}
+        data.files = myFileList
+        data.translateOptions = translateOptions
+        gdalWorker.postMessage(data);
+        gdalWorker.onmessage = async function (event) {
+          console.log(filename)
+          await that.saveImage(event.data, filename)
+          resolve(true);
+        };
+      });
+    },
     async createSixteenHeightMap() {
+      mapboxgl.accessToken = await idbKeyval.get('access_token')
+      this.access_token = mapboxgl.accessToken
       // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
       this.tile_info.resolution = this.unrealLandscape.value
 
@@ -424,6 +446,10 @@ export default {
       this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
       this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
 
+      let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
+      let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
+      this.tile_info.mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}?access_token=` + this.access_token;
+      let satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
 
       if (this.tile_info) {
         this.qt.loading.show()
@@ -436,11 +462,11 @@ export default {
         let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
         if (bExists) {
           let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
-          //let rgbImageArrayBuffer = await idbKeyval.get('rgbImageArrayBuffer')
+          let satellite_buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
           let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
 
           let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
-          let img = sixteen_image_info.image
+          let sixteen_img = sixteen_image_info.image
           // //Flip y for Unreal
 
           // img = img.flipY()
@@ -450,7 +476,7 @@ export default {
           let min = parseInt(sixteen_image_info.minElevation).toString()
           let max = parseInt(sixteen_image_info.maxElevation).toString()
 
-          let buff = await img.toBuffer()
+          let sixteen_buff = await sixteen_img.toBuffer()
           this.tile_info.resampleSize = this.unrealLandscape.value.toString()
           this.tile_info.resizeMethod = 'lanczos'
 
@@ -470,6 +496,7 @@ export default {
 
           switch (this.tile_info.exportType) {
             case 'unreal':
+              //sixteen bit height map
               let translateOptions = [
                 '-ot', 'UInt16',
                 '-of', 'PNG',
@@ -477,31 +504,21 @@ export default {
                 '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
               ];
 
-              //  gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
 
+              await this.createWorker(sixteen_buff, this.tile_info.sixteenFileName, translateOptions);
+
+              //satellite image
               translateOptions = [
-                '-of', 'GTiff',
-                '-a_srs', 'EPSG:4326',
-                '-a_ullr', this.tile_info.bboxNW.lng, this.tile_info.bboxNW.lat, this.tile_info.bboxSE.lng, this.tile_info.bboxSE.lat
+                '-of', 'PNG',
+                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
               ]
 
-
-              let file = new File([buff], "heightmap.png", {
-                type: "image/png",
-                lastModified: Date.now()
-              });
-
-              let list = new DataTransfer();
-              list.items.add(file);
-              let myFileList = list.files;
-              let data = {}
-              data.files = myFileList
-              data.translateOptions = translateOptions
-              gdalWorker.postMessage(data);
+              await this.createWorker(satellite_buff, satelliteFileName, translateOptions)
+              this.qt.loading.hide()
               break;
 
             case 'normalize':
-              img = img.level()
+              let img = img.level()
               await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, img.toBuffer())
               this.qt.loading.hide()
               break;

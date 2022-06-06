@@ -1,6 +1,6 @@
 {
-  "name": "vite-example",
-  "version": "0.0.0",
+  "name": "unreal_mapbox_bridge",
+  "version": "1.2.0",
   "scripts": {
     "start": "vite",
     "info-tauri": "vite-tauri info",
