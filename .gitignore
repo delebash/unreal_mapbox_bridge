@@ -4,7 +4,7 @@ node_modules
 
 # Quasar core related directories
 .quasar
-package-lock.json
+/dist
 
 # Cordova related directories and files
 /src-cordova/node_modules
@@ -15,10 +15,6 @@ package-lock.json
 # Capacitor related directories and files
 /src-capacitor/www
 /src-capacitor/node_modules
-
-# BEX related directories and files
-/src-bex/www
-/src-bex/js/core
 
 # Log files
 npm-debug.log*
@@ -31,3 +27,6 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+!/electron-builder.yml
+electron-builder.yml
+/electron-builder.yml
