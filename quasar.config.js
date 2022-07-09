@@ -200,7 +200,6 @@ module.exports = configure(function (/* ctx */) {
         },
         win: {// configuration parameters of installation software under Windows
           target: [
-            "NSIS", // package as NSIS installation file
             "Zip" // package as the installation file zip
           ]
         },
