@@ -192,7 +192,6 @@ module.exports = configure(function (/* ctx */) {
         // https://www.electron.build/configuration/configuration
 
         appId: 'unreal-mapbox-bridge',
-        electronCompile: false,
         files: [
           "!node_modules"
         ],
