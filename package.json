@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "quasar dev",
     "start": "quasar dev -m electron",
-    "build": "quasar build --debug -m electron",
+    "build": "quasar build -m electron",
     "publish": "quasar build --debug -m electron -P always",
     "debug": "quasar dev --debug -m electron -t mat -- --remote-debugging-port=9222"
   },
@@ -36,7 +36,7 @@
     "@quasar/app-vite": "^1.0.5",
     "autoprefixer": "^10.4.7",
     "electron": "^19.0.8",
-    "electron-builder": "^22.14.13"
+    "electron-builder": "^23.1.0"
   },
   "engines": {
     "node": "^18 || ^16 || ^14.19",
