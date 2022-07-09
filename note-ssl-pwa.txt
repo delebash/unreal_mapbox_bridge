@@ -1,0 +1,9 @@
+SharedBufferArray needs certain headers.  This is configured in vite config but does not work for vite preview
+
+Pwa install for some reason does not show up to install when running vite preview
+
+Temporary solution:
+npm run ssl.  After the server launches once you can close server and just use vite for dev and hotmodule reload
+
+If you just want to run a server from dist directory run npm run serve.  You will need to build the project to see any
+changes in dist
