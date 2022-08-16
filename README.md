@@ -15,7 +15,6 @@ Other free projects
 
 https://github.com/delebash/unreal_vault_organizer
 
-https://github.com/delebash/unreal_mapbox_bridge
 
 ## Install the dependencies
 ```bash
