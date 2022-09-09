@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme } from 'electron'
+import {app, BrowserWindow, nativeTheme} from 'electron'
 import path from 'path'
 import os from 'os'
 
@@ -10,11 +10,12 @@ try {
   if (platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
     require('fs').unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
   }
-} catch (_) { }
+} catch (_) {
+}
 
 let mainWindow
 
-function createWindow () {
+function createWindow() {
   /**
    * Initial window options
    */
@@ -32,14 +33,14 @@ function createWindow () {
   })
 
   mainWindow.loadURL(process.env.APP_URL)
- mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
-   mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools()
   } else {
     // we're on production; no access to devtools pls
     mainWindow.webContents.on('devtools-opened', () => {
-     mainWindow.webContents.closeDevTools()
+      mainWindow.webContents.closeDevTools()
     })
   }
 
@@ -48,6 +49,7 @@ function createWindow () {
   })
 
 }
+
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.whenReady().then(createWindow)
 

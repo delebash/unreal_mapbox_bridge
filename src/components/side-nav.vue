@@ -193,11 +193,11 @@ import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
 import mapboxgl from "mapbox-gl";
-import Jimp from 'jimp/browser/lib/jimp.js';
+
 
 const gdalWorker = new Worker('gdalWorker.js');
 
-const vips = await Vips();
+// const vips = await Vips();
 
 let ZrangeSeaLevel = 32767
 
