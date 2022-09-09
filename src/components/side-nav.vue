@@ -1,8 +1,8 @@
 <template>
   <div id="previewTitle" class="text-h6 bg-primary text-white">Preview Image</div>
   <q-img
-      :src=url
-      height=150px
+    :src=url
+    height=150px
   />
   <div class="row justify-start q-pa-none q-ma-none">
     <div style="width: 100%">
@@ -42,24 +42,26 @@
       </q-field>
       <q-item-label class="q-pt-none q-mt-xs">Export Type:</q-item-label>
       <q-option-group
-          class="q-mt-none q-pt-none"
-          dense
-          inline
-          :options="exportOptions"
-          type="radio"
-          v-model="exportType"
+        class="q-mt-none q-pt-none"
+        dense
+        inline
+        :options="exportOptions"
+        @update:model-value="exportType_Change"
+        type="radio"
+        v-model="exportType"
       />
-      <q-option-group
-          class="q-mt-none q-pt-none"
-          dense
-          inline
-          :options="otherOptions"
-          @update:model-value="otherOptionsModelChange"
-          type="checkbox"
-          v-model="otherOptionsModel"
+      <q-option-group v-show="!isAlphaBrush"
+                      class="q-mt-none q-pt-none"
+                      dense
+                      inline
+                      :options="otherOptions"
+                      @update:model-value="otherOptionsModelChange"
+                      type="checkbox"
+                      v-model="otherOptionsModel"
 
       />
-      <q-select dense class="q-pt-none q-mt-xs"
+
+      <q-select v-show="!isAlphaBrush" dense class="q-pt-none q-mt-xs"
                 label="Landscape Size"
                 transition-show="scale"
                 transition-hide="scale"
@@ -70,20 +72,39 @@
       />
 
     </div>
+    <q-field v-show="isAlphaBrush" class="q-pt-none q-mt-xs" label="Alpha Brush Size"
+    >
+      <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushHeight" label="Height"/>
+      <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushWidth" label="Width"/>
+    </q-field>
+    <q-field class="q-pt-none q-mt-xs" label="Blur Radius"
+    >
+      <q-input class="q-pt-none q-mt-xs" filled v-model="blurRadius" label="Blur Radius"/>
+    </q-field>
+    <q-field v-show="isAlphaBrush" class="q-pt-none q-mt-xs">
+      <q-input
+        ref="alphaBrushNameRef"
+        filled
+        v-model="alphaBrushName"
+        label="Alpha Brush Name"
+      />
+    </q-field>
+    <q-field v-show="!isAlphaBrush" class="q-pt-none q-mt-xs" dense label="Landscape Name (Optional)"
+             hint="Enter Unique Landscape Name"
+    >
+      <q-input v-model="landscapeName"/>
+    </q-field>
   </div>
-  <q-field class="q-pt-none q-mt-xs" dense label="Landscape Name (Optional)" hint="Enter Unique Landscape Name"
-  >
-    <q-input v-model="landscapeName"/>
-  </q-field>
 
-  <div class="row justify-around q-pt-none q-mt-sm">
-    <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
-  </div>
-  <div class="row justify-betweenq-pt-none q-mt-xs">
-    <q-btn @click="createSixteenHeightMap" dense color="primary" no-caps label="Download HeightMap"/>
-    <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
-           label="Send To Unreal"/>
-  </div>
+  <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
+
+  <q-btn @click="createSixteenHeightMap" ref="btnDownload" dense color="primary" no-caps
+         label="Download HeightMap"/>
+
+
+  <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
+         label="Send To Unreal"/>
+
 
   <q-dialog v-model="bbinfoalert">
     <q-card>
@@ -172,14 +193,22 @@ import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
 import mapboxgl from "mapbox-gl";
+import Jimp from 'jimp/browser/lib/jimp.js';
 
 const gdalWorker = new Worker('gdalWorker.js');
+
+const vips = await Vips();
+
+let ZrangeSeaLevel = 32767
+
 export default {
   name: 'SideNav',
   setup() {
     const $q = useQuasar()
     return {
       alert: ref(false),
+      isAlphaBrush: ref(false),
+      blurRadius: ref(0),
       access_token: ref(''),
       isDisabled: ref(false),
       unrealLandscape: ref({label: 505, value: 505}),
@@ -215,30 +244,34 @@ export default {
       dirHandle: ref(''),
       preview_image_info: ref(''),
       rgb_image: ref(''),
+      img_min: ref(''),
+      img_max: ref(''),
       map: null,
       data: null,
       bbinfoalert: ref(false),
       exportType: ref('unreal'),
       landscapeName: ref(''),
+      alphaBrushName: ref(''),
+      alphaBrushHeight: ref(505),
+      alphaBrushWidth: ref(505),
       unrealMapPath: ref(''),
       qt: $q,
       otherOptionsModel: ref(['zrange']),
       alertMsg: ref(''),
       otherOptions: [
         {label: 'Zrange-sea level=0', value: 'zrange'},
+        {label: 'Download Satellite', value: 'satellite'},
+        {label: 'Download Geojson Features', value: 'features'},
       ],
       exportOptions: [
-        {label: 'Unreal', value: 'unreal'},
-        {label: 'Normalize', value: 'normalize'},
+        {label: 'Unreal Heightmap', value: 'unreal'},
+        {label: 'Unreal Alpha Brush', value: 'unreal_alpha_brush'},
         {label: 'None', value: 'none'}
       ]
     }
   },
   async mounted() {
-    //Send to unreal must be from local host
-    // if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-    //   this.isDisabled = false
-    // }
+
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
       this.updatePreviewImage()
@@ -250,7 +283,6 @@ export default {
 
       // Use only positive range ( 0 to 255.992)
       //Use entire UE4 Z range (-256 to 255.992)
-      let ZrangeSeaLevel = 32767
 
       if (this.otherOptionsModel.includes('zrange')) {
         this.tile_info.startZRange = ZrangeSeaLevel
@@ -265,109 +297,24 @@ export default {
       this.otherOptionsModel = e
       this.adjustedZscale()
     },
+    exportType_Change(e) {
+
+      if (e === "unreal_alpha_brush") {
+        this.isAlphaBrush = true
+        this.btnDownloadText = "Download Alpha Brush"
+
+      } else {
+        this.isAlphaBrush = false
+        this.btnDownloadText = "Download "
+      }
+    },
     showBBInfo() {
       if (this.tile_info) {
         this.bbinfoalert = true
       } else {
-        this.alert = true
+        this.alert = false
       }
     },
-    async sendToUnreal() {
-      this.unrealMapPath = await idbKeyval.get('mappath')
-      let fileName = this.tile_info.sixteenFileName
-
-      let dirHandle = await idbKeyval.get('dirHandle')
-      //Verify user has permission to rea/write from selected directory
-      if (await fileUtils.verifyPermission(dirHandle, true) === false) {
-        console.error(`User did not grant permission to '${dirHandle.name}'`);
-        return;
-      }
-
-      let bExists = await fileUtils.fileExists(dirHandle, fileName)
-      let response
-      if (bExists) {
-        if (this.tile_info) {
-          console.log('sending')
-          this.qt.loading.show()
-          this.tile_info.landscapeName = this.landscapeName
-
-
-          let host = 'http://localhost:30010/'
-          let search = 'remote/search/assets'
-          let call = 'remote/object/call'
-          let data = {}
-
-          // data = {
-          //   "Query": "Mapbox_BP",
-          //   "Filter": {
-          //     "PackageNames": [],
-          //     "ClassNames": [],
-          //     "PackagePaths": [],
-          //     "RecursiveClassesExclusionSet": [],
-          //     "RecursivePaths": true,
-          //     "RecursiveClasses": true
-          //   }
-          // }
-
-          // data = {
-          //    "objectPath" : "",
-          //      "functionName":"GetAllLevelActors"
-          //  }
-
-          data = {
-            "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
-            "functionName": "GetAllLevelActors"
-          }
-          // let objPath = []
-          // let mapPath = ''
-          // let bluePrintId = ''
-
-          let bpPath = ''
-          let bluePrintName = "Mapbox_BP"
-
-          let objArray = await mapUtils.unrealRemoteControl(data, host + call)
-          for (let obj of objArray.ReturnValue) {
-            let result = obj.includes(bluePrintName)
-            if (result === true) {
-              bpPath = obj
-              // objPath = obj.split('.')
-              // mapPath = objPath[0]
-              // bluePrintId = objPath[1]
-            }
-          }
-
-          data = {
-            "objectPath": bpPath,
-            "functionName": "GenerateMapboxLandscape",
-            "parameters": {
-              "LandscapeName": this.tile_info.landscapeName,
-              "LandscapeSize": this.tile_info.resolution.toString(),
-              "TileHeightmapFileName": this.tile_info.sixteenFileName,
-              "TileGeojsonFileName": this.tile_info.geoJsonFileName,
-              "TileInfoFileName": this.tile_info.tileInfoFileName,
-              "OriginLng": this.tile_info.originLng.toString(),
-              "OriginLat": this.tile_info.originLat.toString(),
-              "Epsg": this.tile_info.epsg.toString(),
-              "OriginNorthing": this.tile_info.OriginNorthing.toString(),
-              "OriginEasting": this.tile_info.OriginEasting.toString(),
-              "PointNorthing": this.tile_info.pointNorthing.toString(),
-              "PointEasting": this.tile_info.pointEasting.toString()
-            }
-          }
-
-          response = await mapUtils.unrealRemoteControl(data, host + call)
-          console.log(response)
-
-          this.qt.loading.hide()
-        } else {
-          this.alert = true
-        }
-      } else {
-        this.alertMsg = 'Please download heightmap first'
-        this.alert = true
-      }
-    },
-
 
     updateStats() {
       if (this.preview_image_info.maxElevation !== '') {
@@ -387,16 +334,7 @@ export default {
       let zscale = (cm * 0.001953125)
       return zscale
     },
-    async writeFiles(buff) {
-      let dirHandle = await idbKeyval.get('dirHandle')
-      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, buff)
-      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
 
-      let strFeatures = JSON.stringify(features)
-      let tile_info = JSON.stringify(this.tile_info)
-      await fileUtils.writeFileToDisk(dirHandle, strFeatures)
-      await fileUtils.writeFileToDisk(dirHandle, this.tile_info.tileInfoFileName, tile_info)
-    },
     async updatePreviewImage() {
 
       this.preview_image_info = await this.data.preview_image_info
@@ -414,7 +352,7 @@ export default {
       await fileUtils.writeFileToDisk(dirHandle, save_fileName, outputBlob)
     },
 
-    async createWorker(buff, filename, translateOptions, file_type) {
+    async createWorker(buff, filename, translateOptions, file_type, process_type) {
       let that = this
       return new Promise(function (resolve) {
         let file = new File([buff], "temp." + file_type, {
@@ -430,17 +368,91 @@ export default {
         data.translateOptions = translateOptions
         gdalWorker.postMessage(data);
         gdalWorker.onmessage = async function (event) {
-          console.log(filename)
-          await that.saveImage(event.data, filename, file_type)
+          if (process_type === "createHeightmap") {
+            await that.saveImage(event.data, filename, file_type)
+          }
           resolve(true);
         };
       });
     },
+    async sendToUnreal() {
+      let host = 'http://localhost:30010/'
+      let search = 'remote/search/assets'
+      let call = 'remote/object/call'
+      let data = {}
+      let response
+
+      data = {
+        "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
+        "functionName": "GetAllLevelActors"
+      }
+
+      let bpPath = ''
+      let bluePrintName = "Mapbox_BP"
+
+      let objArray = await mapUtils.unrealRemoteControl(data, host + call)
+      for (let obj of objArray.ReturnValue) {
+        let result = obj.includes(bluePrintName)
+        if (result === true) {
+          bpPath = obj
+        }
+      }
+
+      await this.createSixteenHeightMap()
+
+      if (this.isAlphaBrush === true) {
+        data = {
+          "objectPath": bpPath,
+          "functionName": "MakeLandscapeStamp",
+          "parameters": {
+            "AlphaBrushName": this.tile_info.alphaBrushFileName
+          }
+        }
+        response = await mapUtils.unrealRemoteControl(data, host + call)
+        this.qt.loading.hide()
+      } else {
+        this.unrealMapPath = await idbKeyval.get('mappath')
+        this.tile_info.landscapeName = this.landscapeName
+        data = {
+          "objectPath": bpPath,
+          "functionName": "GenerateMapboxLandscape",
+          "parameters": {
+            "LandscapeName": this.tile_info.landscapeName,
+            "LandscapeSize": this.tile_info.resolution.toString(),
+            "TileHeightmapFileName": this.tile_info.sixteenFileName,
+            "TileGeojsonFileName": this.tile_info.geoJsonFileName,
+            "TileInfoFileName": this.tile_info.tileInfoFileName,
+            "OriginLng": this.tile_info.originLng.toString(),
+            "OriginLat": this.tile_info.originLat.toString(),
+            "Epsg": this.tile_info.epsg.toString(),
+            "OriginNorthing": this.tile_info.OriginNorthing.toString(),
+            "OriginEasting": this.tile_info.OriginEasting.toString(),
+            "PointNorthing": this.tile_info.pointNorthing.toString(),
+            "PointEasting": this.tile_info.pointEasting.toString()
+          }
+        }
+        response = await mapUtils.unrealRemoteControl(data, host + call)
+        this.qt.loading.hide()
+      }
+    },
+    async unrealTileFeatures() {
+      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
+      let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
+      let strFeatures = JSON.stringify(utmFeatures)
+
+      let jsonTile_info = JSON.stringify(this.tile_info)
+      await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.geoJsonFileName, strFeatures)
+      await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.tileInfoFileName, jsonTile_info)
+    },
     async createSixteenHeightMap() {
+      let translateOptions
+      let buff
+
+      this.tile_info.resolution = this.unrealLandscape.value
       mapboxgl.accessToken = await idbKeyval.get('access_token')
       this.access_token = mapboxgl.accessToken
       // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
-      this.tile_info.resolution = this.unrealLandscape.value
+
 
       this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
       this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
@@ -449,95 +461,96 @@ export default {
       let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
       let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
       this.tile_info.mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
-      let satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
+      this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
 
       if (this.tile_info) {
         this.qt.loading.show()
-        let dirHandle = await idbKeyval.get('dirHandle')
+        this.dirHandle = await idbKeyval.get('dirHandle')
         //Verify user has permission to rea/write from selected directory
-        if (await fileUtils.verifyPermission(dirHandle, true) === false) {
-          console.error(`User did not grant permission to '${dirHandle.name}'`);
+        if (await fileUtils.verifyPermission(this.dirHandle, true) === false) {
+          console.error(`User did not grant permission to '${this.dirHandle.name}'`);
           return;
         }
-        let bExists = fileUtils.fileExists(dirHandle, this.tile_info.thirtytwoFile)
+        let bExists = fileUtils.fileExists(this.dirHandle, this.tile_info.thirtytwoFile)
         if (bExists) {
-          let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
-          let satellite_buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-          let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
 
+          let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
+          let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
           let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let sixteen_img = sixteen_image_info.image
-          // //Flip y for Unreal
+          sixteen_img = await sixteen_img.flipY()
+          if (this.blurRadius >= 1) {
+            sixteen_img = sixteen_img.blurFilter({radius: this.blurRadius})
+            //  sixteen_img = sixteen_img.medianFilter({radius: this.blurRadius})
+            //   sixteen_img = sixteen_img.gaussianFilter({radius: this.blurRadius})
+          }
+          buff = await sixteen_img.toBuffer()
 
-          // img = img.flipY()
-          //   img = img.flipX()
-          //  img = img.rotate(-90)
+          this.img_min = parseInt(sixteen_image_info.minElevation).toString()
+          this.img_max = parseInt(sixteen_image_info.maxElevation).toString()
 
-          let min = parseInt(sixteen_image_info.minElevation).toString()
-          let max = parseInt(sixteen_image_info.maxElevation).toString()
-
-          let sixteen_buff = await sixteen_img.toBuffer()
           this.tile_info.resampleSize = this.unrealLandscape.value.toString()
           this.tile_info.resizeMethod = 'lanczos'
-
-          // let totalX = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
-          //   let totalY = 1 * this.tile_info.resampleSize * this.tile_info.metersPerPixel
-          //  this.tile_info.xTransform = (this.tile_info.originLng + totalX).toFixed(4)
-          //  this.tile_info.yTransform = (this.tile_info.originLat - totalY).toFixed(4)
           this.tile_info.exportType = this.exportType
 
           let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
           this.tile_info.OriginNorthing = convUtm.northing
           this.tile_info.OriginEasting = convUtm.easting
 
-
           // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
-
+          this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth
 
           switch (this.tile_info.exportType) {
             case 'unreal':
-              //sixteen bit height map
-              let translateOptions = [
+              //Download heightmap
+              translateOptions = [
                 '-ot', 'UInt16',
                 '-of', 'PNG',
-                '-scale', min, max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
-                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
               ];
 
+              await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
-              await this.createWorker(sixteen_buff, this.tile_info.sixteenFileName, translateOptions, "png");
+              if (this.otherOptionsModel.includes('satellite')) {
+                //satellite image
+                translateOptions = [
+                  '-of', 'JPEG',
+                  '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                ]
+                let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
+                await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+              }
 
-              //satellite image
-              translateOptions = [
-                '-of', 'JPEG',
-                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
-              ]
-
-              await this.createWorker(satellite_buff, satelliteFileName, translateOptions, "jpg");
+              if (this.otherOptionsModel.includes('features')) {
+                await this.unrealTileFeatures()
+              }
 
               this.qt.loading.hide()
               break;
 
-            case 'normalize':
-              let sixteen_img = sixteen_img.level()
-              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
+            case 'unreal_alpha_brush':
+              if (this.alphaBrushName.length > 0) {
+                this.tile_info.alphaBrushFileName = this.alphaBrushName
+              }
+              //Download heightmap
+              translateOptions = [
+                '-ot', 'UInt16',
+                '-of', 'PNG',
+                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
+              ];
+
+              await this.createWorker(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
+
               this.qt.loading.hide()
               break;
 
             case 'none':
-              await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
+              await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
               this.qt.loading.hide()
               break;
           }
-
-          let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
-          let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
-          let strFeatures = JSON.stringify(utmFeatures)
-
-          let jsonTile_info = JSON.stringify(this.tile_info)
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.geoJsonFileName, strFeatures)
-          await fileUtils.writeFileToDisk(dirHandle, this.tile_info.tileInfoFileName, jsonTile_info)
-
         } else {
           this.alertMsg = 'Please download file first'
           this.alert = true
@@ -549,6 +562,243 @@ export default {
   }
 }
 
+// let img2 = alphaImag_img.median()
+// alphaImag_img = img2.resize({width: 2017, height: 2017})
+//
+
+//
+
+// //  img = img.blur(3)
+//
+//
+//   let buff = await img.getBufferAsync(Jimp.MIME_PNG);
+
+
+//   let im = vips.Image.newFromBuffer(buff)
+// // Output size: 2017x2017
+// im = im.median(3);
+
+
+// let thumbnail = im.resize(2017 / im.width, {
+//   vscale: 2017 / im.height,
+//   kernel: vips.Kernel.lanczos3
+// });
+
+// let outBuffer = new Uint8Array(im.writeToBuffer('.png'))
+
+
+// let alphaImage_Info = mapUtils.createHeightMapImage(buff, 32, "GREY")
+// let alphaImag_img = alphaImage_Info.image
+// let buff2 = await alphaImag_img.toBuffer()
+// console.log(b)
+// let jimp = Jimp.read(rgb_image);
+//             Jimp.read(buff)
+//                .then(image => {
+//                  // Do stuff with the image.
+//                })
+//                .catch(err => {
+//                  // Handle an exception.
+//                });
+//  const image =  Jimp.read(buff);
+//let test =  new Jimp({ data: buff})
+//  image.blur(5);
+
+
+//img = await img.gaussian(10);
+// img = await img.blur(20);
+// console.log(buff)
+// let radius = 16;
+// let data = blur.blurImage(buff,512,512,radius)
+// let t = mapUtils.loadImageFromArray(data)
+// console.log(t)
+// console.log(data)
+// let test = await data.toBuffer()
+
+//
+//
+
+
+// let grey = alphaImag_img
+//   .resize({ width: this.alphaBrushWidth })
+//   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.alphaBrushFileName, alphaImag_img.toBuffer())
+
+//  let img2 = alphaImag_img.median()
+//   alphaImag_img = alphaImag_img.resize({width: 2017, height: 2017})
+//   let buff = await alphaImag_img.toBuffer()
+
+//
+
+// //  img = img.blur(3)
+//
+//
+//   let buff = await img.getBufferAsync(Jimp.MIME_PNG);
+
+
+// let alphaImage_Info = mapUtils.createHeightMapImage(buff, 32, "GREY")
+// let alphaImag_img = alphaImage_Info.image
+// let buff2 = await alphaImag_img.toBuffer()
+// console.log(b)
+// let jimp = Jimp.read(rgb_image);
+//             Jimp.read(buff)
+//                .then(image => {
+//                  // Do stuff with the image.
+//                })
+//                .catch(err => {
+//                  // Handle an exception.
+//                });
+//  const image =  Jimp.read(buff);
+//let test =  new Jimp({ data: buff})
+// resize the image. Jimp.AUTO can be passed as one of the values.
+
+//
+// image.gaussian( r );              // Gaussian blur the image by r pixels (VERY slow)
+// image.blur( r );
+// img = await img.blur(20);
+// console.log(buff)
+// let radius = 16;
+// let data = blur.blurImage(buff,512,512,radius)
+// let t = mapUtils.loadImageFromArray(data)
+// console.log(t)
+// console.log(data)
+// let test = await data.toBuffer()
+
+//
+//
+
+
+// let grey = alphaImag_img
+//   .resize({ width: this.alphaBrushWidth })
+//   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.alphaBrushFileName, alphaImag_img.toBuffer())
+
+
+//image-js
+// if (this.alphaBrushWidth !== '512') {
+//   console.log("resize")
+//   alphaImag_img = alphaImag_img.resize({
+//     width: this.alphaBrushWidth,
+//     height: this.alphaBrushHeight
+//   })
+// }
+//
+// if (this.blurRadius !== 0) {
+//   // alphaImag_img = alphaImag_img.blurFilter({radius: this.blurRadius})
+//   alphaImag_img = alphaImag_img.gaussianFilter({radius: this.blurRadius})
+//   //alphaImag_img = alphaImag_img.medianFilter({radius: this.blurRadius})
+// }
+//
+
+
+//VIPS
+
+// let buffer = await alphaImag_img.toBuffer()
+// im = vips.Image.newFromBuffer(buffer)
+// Output size: 2017x2017
+
+// im = im.resize(parseInt(this.alphaBrushWidth) / im.width, {
+//   vscale: parseInt(this.alphaBrushHeight) / im.height,
+//   kernel: vips.Kernel.lanczos3
+// });
+// im = im.histEqual()
+//   if (this.blurRadius !== 0) {
+//     console.log('blur')
+//     im = im.gaussblur(this.blurRadius);
+//   }
+
+// buff = new Uint8Array(im.writeToBuffer('.png'))
+//  await fileUtils.writeFileToDisk(dirHandle, "test.png", buff)
+
+///JIMP
+// let blob = await alphaImag_img.toBlob()
+// let arryBuffer = await blob.arrayBuffer()
+//
+// img = await Jimp.read(arryBuffer)
+// img = img.normalize()
+// img = await img.resize(parseInt(this.alphaBrushHeight), parseInt(this.alphaBrushWidth))
+// buff = await img.getBufferAsync(Jimp.MIME_PNG);
+// await fileUtils.writeFileToDisk(dirHandle, "test.png", buff)
+
+//
+//
+// if (this.blurRadius !== 0) {
+//   //img =  img.blur(this.blurRadius);
+//   img = img.deflateLevel(0)
+//   //img = await img.gaussian(this.blurRadius);
+// }
+
+
+//    let rgbImageArrayBuffer = await idbKeyval.get('rgbImageArrayBuffer')
+
+// let uint8View = new Uint8ClampedArray(rgbImageArrayBuffer);
+//  new Uint8Array(data)
+//  console.log(uint8View)
+//
+//      const blob = new Blob([rgbImageArrayBuffer]);
+// console.log(blob)
+
+// let img_data = await mapUtils.BlobToImageData(blob)
+//    console.log(img_data)
+//   let img_buff = img_data.data.buffer
+// console.log(img_buff)
+//     let buff = await mapUtils.convertImage2(uint8View)
+//   console.log(buff)
+
+
+//   const buffer = rgbImageArrayBuffer
+// const ui8ca = new Uint8ClampedArray(buffer);
+// const imageData = new ImageData(ui8ca, 100, 100);
+
+// const canvas = document.getElementById('myCanvas');
+// let ctx = document.createElement('canvas').getContext('2d');
+// //ctx.putImageData(imageData, 0, 0);
+//
+// let pixels = new ImageData(
+//   new Uint8ClampedArray( buffer * 4),
+//   512,512
+// );
+// console.log(pixels)
+
+// let arr = new Uint8ClampedArray(buffer);
+// let buff = await mapUtils.convertImage2(arr)
+// let buffer = new Buffer(rgbImageArrayBuffer.byteLength);
+// let view = new Uint8ClampedArray(rgbImageArrayBuffer);
+// for (let i = 0; i < buffer.length; ++i) {
+//   buffer[i] = view[i];
+// }
+// let iData = new ImageData(new Uint8ClampedArray(buffer), 512, 512);
+//
+// console.log(iData)
+
+// await fileUtils.writeFileToDisk(dirHandle, "test.png", buff)
+//
+
+//
+//
+// let width = 512, height = 512;
+// let data = new ImageData(
+//   new Uint8ClampedArray(4 * width * height),
+//   720,
+//   720
+// );
+//
+//
+
+
+//   let buffer = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+// let array = new Uint8ClampedArray(buffer);
+
+// let imagedata = new ImageData(rgbImageArrayBuffer, ctx.canvas.width, ctx.canvas.height);
+// let buff = await mapUtils.convertImage2(imagedata.data)
+//
+//
+
+//
+
+// case 'normalize':
+//   let sixteen_img = sixteen_img.level()
+//   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
+//   this.qt.loading.hide()
+//   break;
 
 </script>
 

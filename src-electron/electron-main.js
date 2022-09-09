@@ -2,6 +2,7 @@ import { app, BrowserWindow, nativeTheme } from 'electron'
 import path from 'path'
 import os from 'os'
 
+app.commandLine.appendSwitch('enable-features', "SharedArrayBuffer")
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
 
@@ -31,14 +32,14 @@ function createWindow () {
   })
 
   mainWindow.loadURL(process.env.APP_URL)
-  mainWindow.webContents.closeDevTools()
+ mainWindow.webContents.openDevTools()
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
-   // mainWindow.webContents.openDevTools()
+   mainWindow.webContents.openDevTools()
   } else {
     // we're on production; no access to devtools pls
     mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
+     mainWindow.webContents.closeDevTools()
     })
   }
 
