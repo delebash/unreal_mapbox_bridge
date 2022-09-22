@@ -19,7 +19,7 @@
   "dependencies": {
     "@jayarjo/utm": "^1.1.3",
     "@mapbox/mapbox-gl-geocoder": "^5.0.1",
-    "@mapbox/mapbox-sdk": "^0.13.4",
+    "@mapbox/mapbox-sdk": "^0.13.5",
     "@mapbox/tilebelt": "^1.0.2",
     "@quasar/extras": "^1.15.3",
     "@turf/turf": "^6.5.0",
@@ -27,16 +27,15 @@
     "image-js": "^0.35.1",
     "mapbox-gl": "^2.10.0",
     "mitt": "^3.0.0",
-    "quasar": "^2.7.7",
+    "quasar": "^2.8.3",
     "utm-zone": "^1.0.1",
     "vue": "^3.2.39",
     "vue-router": "^4.1.5"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^1.0.6",
-    "autoprefixer": "^10.4.8",
-    "electron": "^20.1.3",
-    "electron-builder": "^22.14.13"
+    "@quasar/app-vite": "^1.1.1",
+    "autoprefixer": "^10.4.12",
+    "electron": "^20.2.0"
   },
   "engines": {
     "node": "^18 || ^16 || ^14.19",
