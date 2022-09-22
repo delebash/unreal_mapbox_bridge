@@ -119,7 +119,7 @@ function createWindow() {
   Menu.setApplicationMenu(menu)
 
   mainWindow.loadURL(process.env.APP_URL)
-  mainWindow.webContents.openDevTools()
+ // mainWindow.webContents.openDevTools()
 //  mainWindow.webContents.closeDevTools()
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
