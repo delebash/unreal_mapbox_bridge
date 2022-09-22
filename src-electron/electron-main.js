@@ -1,4 +1,4 @@
-import {app, BrowserWindow, nativeTheme} from 'electron'
+import {app, BrowserWindow, nativeTheme, Menu} from 'electron'
 import path from 'path'
 import os from 'os'
 
@@ -14,7 +14,90 @@ try {
 }
 
 let mainWindow
+const template = [
+  {
+    label: 'File',
+    submenu: [
+      {
+        role: 'quit'
+      }
+    ]
+  },
+  {
+    label: 'Edit',
+    submenu: [
+      {
+        role: 'undo'
+      },
+      {
+        role: 'redo'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        role: 'cut'
+      },
+      {
+        role: 'copy'
+      },
+      {
+        role: 'paste'
+      }
+    ]
+  },
 
+  {
+    label: 'View',
+    submenu: [
+      {
+        role: 'reload'
+      },
+      {
+        role: 'toggledevtools'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        role: 'resetzoom'
+      },
+      {
+        role: 'zoomin'
+      },
+      {
+        role: 'zoomout'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        role: 'togglefullscreen'
+      }
+    ]
+  },
+
+  {
+    role: 'window',
+    submenu: [
+      {
+        role: 'minimize'
+      },
+      {
+        role: 'close'
+      }
+    ]
+  },
+  {
+    role: 'help',
+    submenu: [
+      {
+        label: 'About',
+        role: 'about'
+      },
+    ]
+  }
+]
 function createWindow() {
   /**
    * Initial window options
@@ -23,7 +106,7 @@ function createWindow() {
     width: 1000,
     height: 600,
     useContentSize: true,
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     icon: path.join(__dirname, 'icons/icon.ico'),
     webPreferences: {
       contextIsolation: true,
@@ -32,12 +115,15 @@ function createWindow() {
     }
   })
 
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+
   mainWindow.loadURL(process.env.APP_URL)
-  // mainWindow.webContents.openDevTools()
-  mainWindow.webContents.closeDevTools()
+  mainWindow.webContents.openDevTools()
+//  mainWindow.webContents.closeDevTools()
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
-    mainWindow.webContents.openDevTools()
+    // mainWindow.webContents.closeDevTools()
   } else {
     // we're on production; no access to devtools pls
     mainWindow.webContents.on('devtools-opened', () => {

@@ -60,7 +60,6 @@
                       v-model="otherOptionsModel"
 
       />
-
       <q-select v-show="!isAlphaBrush" dense class="q-pt-none q-mt-xs"
                 label="Landscape Size"
                 transition-show="scale"
@@ -133,7 +132,18 @@
         {{ tile_info.pointNorthing }}
         <div class="text-h6">Mouse Point Easting:</div>
         {{ tile_info.pointEasting }}
-
+        <div class="text-h6">MaximumEasting:</div>
+        {{ tile_info.MaximumEasting }}
+        <div class="text-h6">MaximumNorthing:</div>
+        {{ tile_info.MaximumNorthing }}
+        <div class="text-h6">MinimumEasting:</div>
+        {{ tile_info.MinimumEasting }}
+        <div class="text-h6">MinimumNorthing:</div>
+        {{ tile_info.MinimumNorthing }}
+        <div class="text-h6">XInUU:</div>
+        {{ tile_info.XInUU }}
+        <div class="text-h6">YInUU:</div>
+        {{ tile_info.YInUU }}
 
         <div class="text-h6">Center Northing:</div>
         {{ tile_info.ctNorthing }}
@@ -159,6 +169,7 @@
         {{ tile_info.seNorthing }}
         <div class="text-h6">seEasting:</div>
         {{ tile_info.seEasting }}
+
 
       </q-card-section>
       <q-card-actions align="right">
@@ -260,6 +271,8 @@ export default {
       alertMsg: ref(''),
       otherOptions: [
         {label: 'Zrange-sea level=0', value: 'zrange'},
+        {label: 'Flip X', value: 'flipx'},
+        {label: 'Flip y', value: 'flipy'},
         {label: 'Download Satellite', value: 'satellite'},
         {label: 'Download Geojson Features', value: 'features'},
       ],
@@ -478,7 +491,17 @@ export default {
           let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
           let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
           let sixteen_img = sixteen_image_info.image
-          sixteen_img = await sixteen_img.flipY()
+
+
+          sixteen_img = await sixteen_img.rotate(-90)
+
+          if (this.otherOptionsModel.includes('flipy')) {
+            sixteen_img = await sixteen_img.flipY()
+          }
+          if (this.otherOptionsModel.includes('flipx')) {
+            sixteen_img = await sixteen_img.flipX()
+          }
+
           if (this.blurRadius >= 1) {
             sixteen_img = sixteen_img.blurFilter({radius: this.blurRadius})
             //  sixteen_img = sixteen_img.medianFilter({radius: this.blurRadius})
