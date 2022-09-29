@@ -34,8 +34,13 @@ function getTileInfo(lng, lat, map) {
   tileInfo.bboxNW = llb.getNorthWest()
   tileInfo.bboxSE = llb.getSouthEast()
 
-
-
+  tileInfo.topLeft = tileInfo.bboxNW
+  tileInfo.bottomLeft = tileInfo.bboxSW
+  tileInfo.topRight = tileInfo.bboxNE
+  tileInfo.bottomRight = tileInfo.bboxSE
+  tileInfo.center = tileInfo.bboxCT
+//Calculate UEx +
+//  and UEy
 
 
   //UE4_XY_SCALE = (REAL_WORLD_XY_TILE_LENGHT / (TILE_SIZE - 1)) * 100
@@ -91,9 +96,7 @@ function getTileInfo(lng, lat, map) {
   tileInfo.seEasting = convUtm.easting
 
 
-
   //Calc Unreal x y
-
 
 
   //Mouse click
@@ -101,7 +104,7 @@ function getTileInfo(lng, lat, map) {
   let TerrainSizeInUU = 2017 * 100
 
 
- let utm_point = utm.fromLatLon(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
+  let utm_point = utm.fromLatLon(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
 
   tileInfo.MaximumEasting = utm_point.easting
   tileInfo.MaximumNorthing = utm_point.northing

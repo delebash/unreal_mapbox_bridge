@@ -10,9 +10,27 @@
   max-width: 400px;
   font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
 }
+
+#info {
+  display: table;
+  position: relative;
+  margin: 0px auto;
+  word-wrap: anywhere;
+  white-space: pre-wrap;
+  padding: 0px;
+  border: none;
+  border-radius: 3px;
+  font-size: 12px;
+  text-align: center;
+  color: #222;
+  background: #fff;
+}
+
 </style>
 <template>
+
   <div id="map">
+
     <q-toolbar id="mb-tbar" class="bg-primary text-white q-pa-none q-ma-none">
       <q-btn color="info" label="Map Settings">
         <q-menu>
@@ -21,21 +39,24 @@
               <u><b>Enable Layers</b></u>
 
               <q-option-group
-                  dense
-                  color="green"
-                  checked-icon="check"
-                  unchecked-icon="clear"
-                  :options="layer_type"
-                  type="toggle"
-                  v-model="layers"
-                  @update:model-value="changeLayers"
+                dense
+                color="green"
+                checked-icon="check"
+                unchecked-icon="clear"
+                :options="layer_type"
+                type="toggle"
+                v-model="layers"
+                @update:model-value="changeLayers"
               />
             </div>
           </div>
         </q-menu>
       </q-btn>
+      <pre id="info"></pre>
     </q-toolbar>
+
   </div>
+
 </template>
 
 <script>
@@ -111,9 +132,9 @@ export default {
         if (layers.includes(layertype.value)) {
           if (layertype.value !== '3d') {
             this.map.setLayoutProperty(
-                layertype.value,
-                'visibility',
-                'visible'
+              layertype.value,
+              'visibility',
+              'visible'
             )
           } else {
             this.map.setTerrain({'source': 'mapbox-3d', 'exaggeration': 1.5});
@@ -121,9 +142,9 @@ export default {
         } else {
           if (layertype.value !== '3d') {
             this.map.setLayoutProperty(
-                layertype.value,
-                'visibility',
-                'none'
+              layertype.value,
+              'visibility',
+              'none'
             )
           } else {
             this.map.setTerrain(null)
@@ -241,28 +262,28 @@ export default {
       });
 
       map.addLayer(
-          {
-            'id': '10m-bathymetry-81bsvj',
-            'type': 'fill',
-            'source': '10m-bathymetry-81bsvj',
-            'source-layer': '10m-bathymetry-81bsvj',
-            'layout': {},
-            'paint': {
-              'fill-outline-color': 'hsla(337, 82%, 62%, 0)',
-              // cubic bezier is a four point curve for smooth and precise styling
-              // adjust the points to change the rate and intensity of interpolation
-              'fill-color': [
-                'interpolate',
-                ['cubic-bezier', 0, 0.5, 1, 0.5],
-                ['get', 'DEPTH'],
-                200,
-                '#78bced',
-                9000,
-                '#15659f'
-              ]
-            }
-          },
-          'land-structure-polygon'
+        {
+          'id': '10m-bathymetry-81bsvj',
+          'type': 'fill',
+          'source': '10m-bathymetry-81bsvj',
+          'source-layer': '10m-bathymetry-81bsvj',
+          'layout': {},
+          'paint': {
+            'fill-outline-color': 'hsla(337, 82%, 62%, 0)',
+            // cubic bezier is a four point curve for smooth and precise styling
+            // adjust the points to change the rate and intensity of interpolation
+            'fill-color': [
+              'interpolate',
+              ['cubic-bezier', 0, 0.5, 1, 0.5],
+              ['get', 'DEPTH'],
+              200,
+              '#78bced',
+              9000,
+              '#15659f'
+            ]
+          }
+        },
+        'land-structure-polygon'
       );
 
     },
@@ -296,7 +317,7 @@ export default {
         // Match anything which looks like
         // decimal degrees coordinate pair.
         const matches = query.match(
-            /^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i
+          /^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i
         );
         if (!matches) {
           return null;
@@ -383,41 +404,49 @@ export default {
         map.getCanvas().focus();
 
         map.getCanvas().addEventListener(
-            'keydown',
-            (e) => {
-              e.preventDefault();
-              if (e.which === 87) {
+          'keydown',
+          (e) => {
+            e.preventDefault();
+            if (e.which === 87) {
 // w
-                map.panBy([0, -deltaDistance], {
-                  easing: easing
-                });
-              } else if (e.which === 83) {
+              map.panBy([0, -deltaDistance], {
+                easing: easing
+              });
+            } else if (e.which === 83) {
 // s
-                map.panBy([0, deltaDistance], {
-                  easing: easing
-                });
-              } else if (e.which === 65) {
+              map.panBy([0, deltaDistance], {
+                easing: easing
+              });
+            } else if (e.which === 65) {
 // a
-                map.easeTo({
-                  bearing: map.getBearing() - deltaDegrees,
-                  easing: easing
-                });
-              } else if (e.which === 68) {
+              map.easeTo({
+                bearing: map.getBearing() - deltaDegrees,
+                easing: easing
+              });
+            } else if (e.which === 68) {
 // d
-                map.easeTo({
-                  bearing: map.getBearing() + deltaDegrees,
-                  easing: easing
-                });
-              }
-            },
-            true
+              map.easeTo({
+                bearing: map.getBearing() + deltaDegrees,
+                easing: easing
+              });
+            }
+          },
+          true
         );
 
       });
       map.on('error', e => {
         console.error(e);
       });
-
+      map.on('mousemove', (e) => {
+        document.getElementById('info').innerHTML =
+        // `e.point` is the x, y coordinates of the `mousemove` event
+        // relative to the top-left corner of the map.
+          JSON.stringify(e.point) +
+          '<br />' +
+          // `e.lngLat` is the longitude, latitude geographical position of the event.
+          JSON.stringify(e.lngLat.wrap());
+      });
       map.on('click', async function (e) {
 
         let dirHandle = await idbKeyval.get('dirHandle')
@@ -520,40 +549,40 @@ export default {
       geocodingClient.reverseGeocode({
         query: [tile_info.pointLng, tile_info.pointLat]
       })
-          .send()
-          .then(function (response) {
-            if (response && response.body && response.body.features) {
-              tile_info.address = response.body.features[0].place_name
-              let context = response.body.features[0].context
-              for (let feature of context) {
-                let id = feature.id
-                const type = id.substring(0, id.indexOf('.'))
-                switch (type) {
-                  case "neighborhood":
-                    tile_info.neighborhood = feature.text
-                    break;
-                  case "postcode":
-                    tile_info.postcode = feature.text
-                    break;
-                  case "locality":
-                    tile_info.locality = feature.text
-                    break;
-                  case "place":
-                    tile_info.place = feature.text
-                    break;
-                  case "district":
-                    tile_info.district = feature.text
-                    break;
-                  case "region":
-                    tile_info.region = feature.text
-                    break;
-                  case "country":
-                    tile_info.country = feature.text
-                    break;
-                }
+        .send()
+        .then(function (response) {
+          if (response && response.body && response.body.features) {
+            tile_info.address = response.body.features[0].place_name
+            let context = response.body.features[0].context
+            for (let feature of context) {
+              let id = feature.id
+              const type = id.substring(0, id.indexOf('.'))
+              switch (type) {
+                case "neighborhood":
+                  tile_info.neighborhood = feature.text
+                  break;
+                case "postcode":
+                  tile_info.postcode = feature.text
+                  break;
+                case "locality":
+                  tile_info.locality = feature.text
+                  break;
+                case "place":
+                  tile_info.place = feature.text
+                  break;
+                case "district":
+                  tile_info.district = feature.text
+                  break;
+                case "region":
+                  tile_info.region = feature.text
+                  break;
+                case "country":
+                  tile_info.country = feature.text
+                  break;
               }
             }
-          });
+          }
+        });
     }
   }
 }

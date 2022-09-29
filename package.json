@@ -1,6 +1,6 @@
 {
   "name": "unreal-mapbox-bridge",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Import real world locations into Unreal using Mapbox",
   "productName": "Unreal Mapbox Bridge",
   "author": "daniel <danelebash@hotmail.com>",
@@ -27,15 +27,15 @@
     "image-js": "^0.35.1",
     "mapbox-gl": "^2.10.0",
     "mitt": "^3.0.0",
-    "quasar": "^2.8.3",
+    "quasar": "^2.8.4",
     "utm-zone": "^1.0.1",
-    "vue": "^3.2.39",
+    "vue": "^3.2.40",
     "vue-router": "^4.1.5"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^1.1.1",
+    "@quasar/app-vite": "^1.1.2",
     "autoprefixer": "^10.4.12",
-    "electron": "^20.2.0"
+    "electron": "^21.0.1"
   },
   "engines": {
     "node": "^18 || ^16 || ^14.19",

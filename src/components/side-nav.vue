@@ -114,61 +114,85 @@
 
       <q-card-section class="q-pt-none">
 
-        <div class="text-h6">Max Latitude:</div>
-        {{ tile_info.bbox[3] }}
-        <div class="text-h6">Max Longitude:</div>
-        {{ this.tile_info.bbox[0] }}
-        <div class="text-h6"> Min Latitude:</div>
-        {{ tile_info.bbox[1] }}
-        <div class="text-h6"> Min Longitude:</div>
-        {{ tile_info.bbox[2] }}
+        <!--        <div class="text-h6">Max Latitude:</div>-->
+        <!--        {{ tile_info.bbox[3] }}-->
+        <!--        <div class="text-h6">Max Longitude:</div>-->
+        <!--        {{ this.tile_info.bbox[0] }}-->
+        <!--        <div class="text-h6"> Min Latitude:</div>-->
+        <!--        {{ tile_info.bbox[1] }}-->
+        <!--        <div class="text-h6"> Min Longitude:</div>-->
+        <!--        {{ tile_info.bbox[2] }}-->
         <div class="text-h6">Zoom:</div>
         {{ tile_info.z }}
-        <div class="text-h6">Mouse Point Lat:</div>
-        {{ tile_info.pointLat }}
-        <div class="text-h6">Mouse Point Lng:</div>
-        {{ tile_info.pointLng }}
-        <div class="text-h6">Mouse Point Northing:</div>
-        {{ tile_info.pointNorthing }}
-        <div class="text-h6">Mouse Point Easting:</div>
-        {{ tile_info.pointEasting }}
-        <div class="text-h6">MaximumEasting:</div>
-        {{ tile_info.MaximumEasting }}
-        <div class="text-h6">MaximumNorthing:</div>
-        {{ tile_info.MaximumNorthing }}
-        <div class="text-h6">MinimumEasting:</div>
-        {{ tile_info.MinimumEasting }}
-        <div class="text-h6">MinimumNorthing:</div>
-        {{ tile_info.MinimumNorthing }}
-        <div class="text-h6">XInUU:</div>
-        {{ tile_info.XInUU }}
-        <div class="text-h6">YInUU:</div>
-        {{ tile_info.YInUU }}
+        <div class="text-h6">Mouse Point Lat/Lng:</div>
+        Lat: {{ tile_info.pointLat }} Lng: {{ tile_info.pointLng }}
 
-        <div class="text-h6">Center Northing:</div>
-        {{ tile_info.ctNorthing }}
-        <div class="text-h6">Center Easting:</div>
-        {{ tile_info.ctEasting }}
+        <div class="text-h6"><u>Bounding Box Corners Lat/Lng:</u></div>
 
-        <div class="text-h6">swNorthing:</div>
-        {{ tile_info.swNorthing }}
-        <div class="text-h6">swEasting:</div>
-        {{ tile_info.swEasting }}
+        <div class="text-h6">Top Left:</div>
+        Lat: {{ tile_info.topLeft.lat }} Lng: {{ tile_info.topLeft.lng }}
 
-        <div class="text-h6">neNorthing:</div>
-        {{ tile_info.neNorthing }}
-        <div class="text-h6">neEasting:</div>
-        {{ tile_info.neEasting }}
+        <div class="text-h6">Bottom Left:</div>
+        Lat: {{ tile_info.bottomLeft.lat }} Lng: {{ tile_info.bottomLeft.lng }}
 
-        <div class="text-h6">nwNorthing:</div>
-        {{ tile_info.nwNorthing }}
-        <div class="text-h6">nwEasting:</div>
-        {{ tile_info.nwEasting }}
+        <div class="text-h6">Top Right:</div>
+        Lat: {{ tile_info.topRight.lat }} Lng: {{ tile_info.topRight.lng }}
 
-        <div class="text-h6">seNorthing:</div>
-        {{ tile_info.seNorthing }}
-        <div class="text-h6">seEasting:</div>
-        {{ tile_info.seEasting }}
+        <div class="text-h6">Bottom Right:</div>
+        Lat: {{ tile_info.bottomRight.lat }} Lng: {{ tile_info.bottomRight.lng }}
+
+        <div class="text-h6"><u>Transform Lng/Lat Point to Unreal XY</u></div>
+
+        <div class="text-h6">MiddelX/Y</div>
+        MiddleX: {{ tile_info.middleX }} MiddleY: {{ tile_info.middleY }}
+
+        <div class="text-h6">Translated MiddelX/Y</div>
+        Translated_MiddleX: {{ tile_info.translatedXm }} Translated_MiddleY: {{ tile_info.translatedYm }}
+
+        <div class="text-h6">Unreal X/Y:</div>
+        UEx: {{ tile_info.UEx }} UEy: {{ tile_info.UEy }}
+
+        <!--        <div class="text-h6">Mouse Point Northing:</div>-->
+        <!--        {{ tile_info.pointNorthing }}-->
+        <!--        <div class="text-h6">Mouse Point Easting:</div>-->
+        <!--        {{ tile_info.pointEasting }}-->
+        <!--        <div class="text-h6">MaximumEasting:</div>-->
+        <!--        {{ tile_info.MaximumEasting }}-->
+        <!--        <div class="text-h6">MaximumNorthing:</div>-->
+        <!--        {{ tile_info.MaximumNorthing }}-->
+        <!--        <div class="text-h6">MinimumEasting:</div>-->
+        <!--        {{ tile_info.MinimumEasting }}-->
+        <!--        <div class="text-h6">MinimumNorthing:</div>-->
+        <!--        {{ tile_info.MinimumNorthing }}-->
+        <!--        <div class="text-h6">XInUU:</div>-->
+        <!--        {{ tile_info.XInUU }}-->
+        <!--        <div class="text-h6">YInUU:</div>-->
+        <!--        {{ tile_info.YInUU }}-->
+
+        <!--        <div class="text-h6">Center Northing:</div>-->
+        <!--        {{ tile_info.ctNorthing }}-->
+        <!--        <div class="text-h6">Center Easting:</div>-->
+        <!--        {{ tile_info.ctEasting }}-->
+
+        <!--        <div class="text-h6">swNorthing:</div>-->
+        <!--        {{ tile_info.swNorthing }}-->
+        <!--        <div class="text-h6">swEasting:</div>-->
+        <!--        {{ tile_info.swEasting }}-->
+
+        <!--        <div class="text-h6">neNorthing:</div>-->
+        <!--        {{ tile_info.neNorthing }}-->
+        <!--        <div class="text-h6">neEasting:</div>-->
+        <!--        {{ tile_info.neEasting }}-->
+
+        <!--        <div class="text-h6">nwNorthing:</div>-->
+        <!--        {{ tile_info.nwNorthing }}-->
+        <!--        <div class="text-h6">nwEasting:</div>-->
+        <!--        {{ tile_info.nwEasting }}-->
+
+        <!--        <div class="text-h6">seNorthing:</div>-->
+        <!--        {{ tile_info.seNorthing }}-->
+        <!--        <div class="text-h6">seEasting:</div>-->
+        <!--        {{ tile_info.seEasting }}-->
 
 
       </q-card-section>
@@ -323,12 +347,73 @@ export default {
     },
     showBBInfo() {
       if (this.tile_info) {
+        // this.calculateUEXY()
         this.bbinfoalert = true
       } else {
         this.alert = false
       }
     },
+    calculateUEXY() {
+      // let landscapeSize = this.unrealLandscape.value
+      //
+      // //Range
+      // this.tile_info.rangeX = this.tile_info.bottomRight.lng - this.tile_info.bottomLeft.lng
+      // this.tile_info.rangeY = this.tile_info.topLeft.lat - this.tile_info.bottomLeft.lat
+      //
+      // // //Middle point
+      // this.tile_info.middleX = (this.tile_info.bottomLeft.lng + this.tile_info.bottomRight.lng) / 2
+      // this.tile_info.middleY = (this.tile_info.bottomLeft.lat + this.tile_info.topLeft.lat) / 2
+      //
+      // //Translated
+      // this.tile_info.translatedXm = (landscapeSize / this.tile_info.rangeX) * this.tile_info.middleX
+      // this.tile_info.translatedYm = (landscapeSize / this.tile_info.rangeY) * this.tile_info.middleY
+      //
+      //
+      // //UE XY
+      // this.tile_info.UEx = (landscapeSize / this.tile_info.rangeX) * (this.tile_info.pointLng - this.tile_info.translatedXm)
+      // this.tile_info.UEy = (landscapeSize / this.tile_info.rangeY) * (this.tile_info.pointLat - this.tile_info.translatedYm)
+      // // //Middle point
+      // this.tile_info.middleX = (this.tile_info.bottomLeft.lng + this.tile_info.bottomRight.lng) / 2
+      // this.tile_info.middleY = (this.tile_info.bottomLeft.lat + this.tile_info.topLeft.lat) / 2
+      //
+      // //Translated
+      // this.tile_info.translatedXm = (MapSizeUE - 1 / this.tile_info.rangeX) * this.tile_info.middleX
+      // this.tile_info.translatedYm = (MapSizeUE - 1 / this.tile_info.rangeY) * this.tile_info.middleY
 
+//
+//       let MapOriginXUE = 0
+//       let MapOriginYUE = 0
+//       let Scale = 100
+//       let MapSizeUE = this.unrealLandscape.value
+//
+//       //Offset XY
+//       let XOffset = MapOriginXUE + (((MapSizeUE - 1) * Scale) / 2)
+//       let YOffset = MapOriginYUE + (((MapSizeUE - 1) * Scale) / 2)
+//
+//       //Real world range XY
+//       let MapRangeX = this.tile_info.bottomRight.lng - this.tile_info.bottomLeft.lng
+//       let MapRangeY = this.tile_info.topLeft.lat - this.tile_info.bottomLeft.lat
+//
+//       //  Lat/Lng Center of Bounding Box
+//       let MapXm = this.tile_info.center.lat
+//       let MapYm = this.tile_info.center.lng
+// console.log(MapXm)
+//       //Middle of Landscape plane
+//       let Xm = (((MapSizeUE - 1) * Scale) / MapRangeX) * MapXm - XOffset
+//       let Ym = (((MapSizeUE - 1) * Scale) / MapRangeY) * MapYm + YOffset
+//
+//       //Points to translate
+//       let Lat = this.tile_info.pointLat
+//       let Long = this.tile_info.pointLng
+//
+//       //Lng/Lat Points converted to UE XY
+//       let Xnew = ((((MapSizeUE - 1) * Scale) / MapRangeX) * Long) - Xm
+//       let Ynew = (((((MapSizeUE - 1) * Scale) / MapRangeY) * Lat) - Ym) * -1
+//
+//       this.tile_info.UEx = Xnew
+//       this.tile_info.UEy = Ynew
+
+    },
     updateStats() {
       if (this.preview_image_info.maxElevation !== '') {
         this.tile_info.MaxElevation = this.preview_image_info.maxElevation
@@ -435,13 +520,14 @@ export default {
             "TileHeightmapFileName": this.tile_info.sixteenFileName,
             "TileGeojsonFileName": this.tile_info.geoJsonFileName,
             "TileInfoFileName": this.tile_info.tileInfoFileName,
-            "OriginLng": this.tile_info.originLng.toString(),
-            "OriginLat": this.tile_info.originLat.toString(),
-            "Epsg": this.tile_info.epsg.toString(),
-            "OriginNorthing": this.tile_info.OriginNorthing.toString(),
-            "OriginEasting": this.tile_info.OriginEasting.toString(),
-            "PointNorthing": this.tile_info.pointNorthing.toString(),
-            "PointEasting": this.tile_info.pointEasting.toString()
+            "MapPointLng": this.tile_info.pointLng,
+            "MapPointLat": this.tile_info.pointLat,
+            "MapMiddleLngX": this.tile_info.center.lng,
+            "MapMiddleLatY": this.tile_info.center.lat,
+            "MapBtmRLng": this.tile_info.bottomRight.lng,
+            "MapBtmLLng": this.tile_info.bottomLeft.lng,
+            "MapTopLLat": this.tile_info.topLeft.lat,
+            "MapBtmLLat": this.tile_info.bottomLeft.lat
           }
         }
         response = await mapUtils.unrealRemoteControl(data, host + call)
@@ -493,7 +579,7 @@ export default {
           let sixteen_img = sixteen_image_info.image
 
 
-          sixteen_img = await sixteen_img.rotate(-90)
+          // sixteen_img = await sixteen_img.rotate(-90)
 
           if (this.otherOptionsModel.includes('flipy')) {
             sixteen_img = await sixteen_img.flipY()
