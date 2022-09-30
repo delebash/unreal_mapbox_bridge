@@ -475,7 +475,7 @@ export default {
     },
     async sendToUnreal() {
       let host = 'http://localhost:30010/'
-      let search = 'remote/search/assets'
+      //let search = 'remote/search/assets'
       let call = 'remote/object/call'
       let data = {}
       let response
@@ -558,7 +558,7 @@ export default {
       this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
 
       let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
-      let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
+      //let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
       this.tile_info.mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
       this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
 
