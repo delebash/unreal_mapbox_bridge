@@ -141,16 +141,16 @@
         <div class="text-h6">Bottom Right:</div>
         Lat: {{ tile_info.bottomRight.lat }} Lng: {{ tile_info.bottomRight.lng }}
 
-        <div class="text-h6"><u>Transform Lng/Lat Point to Unreal XY</u></div>
+<!--        <div class="text-h6"><u>Transform Lng/Lat Point to Unreal XY</u></div>-->
 
-        <div class="text-h6">MiddelX/Y</div>
-        MiddleX: {{ tile_info.middleX }} MiddleY: {{ tile_info.middleY }}
+<!--        <div class="text-h6">MiddelX/Y</div>-->
+<!--        MiddleX: {{ tile_info.middleX }} MiddleY: {{ tile_info.middleY }}-->
 
-        <div class="text-h6">Translated MiddelX/Y</div>
-        Translated_MiddleX: {{ tile_info.translatedXm }} Translated_MiddleY: {{ tile_info.translatedYm }}
+<!--        <div class="text-h6">Translated MiddelX/Y</div>-->
+<!--        Translated_MiddleX: {{ tile_info.translatedXm }} Translated_MiddleY: {{ tile_info.translatedYm }}-->
 
-        <div class="text-h6">Unreal X/Y:</div>
-        UEx: {{ tile_info.UEx }} UEy: {{ tile_info.UEy }}
+<!--        <div class="text-h6">Unreal X/Y:</div>-->
+<!--        UEx: {{ tile_info.UEx }} UEy: {{ tile_info.UEy }}-->
 
         <!--        <div class="text-h6">Mouse Point Northing:</div>-->
         <!--        {{ tile_info.pointNorthing }}-->
