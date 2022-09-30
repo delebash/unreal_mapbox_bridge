@@ -11,20 +11,20 @@
   font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
 }
 
-#info {
-  display: table;
-  position: relative;
-  margin: 0px auto;
-  word-wrap: anywhere;
-  white-space: pre-wrap;
-  padding: 0px;
-  border: none;
-  border-radius: 3px;
-  font-size: 12px;
-  text-align: center;
-  color: #222;
-  background: #fff;
-}
+/*#info {*/
+/*  display: table;*/
+/*  position: relative;*/
+/*  margin: 0px auto;*/
+/*  word-wrap: anywhere;*/
+/*  white-space: pre-wrap;*/
+/*  padding: 0px;*/
+/*  border: none;*/
+/*  border-radius: 3px;*/
+/*  font-size: 12px;*/
+/*  text-align: center;*/
+/*  color: #222;*/
+/*  background: #fff;*/
+/*}*/
 
 </style>
 <template>
@@ -52,7 +52,6 @@
           </div>
         </q-menu>
       </q-btn>
-      <pre id="info"></pre>
     </q-toolbar>
 
   </div>
@@ -367,6 +366,9 @@ export default {
         placeholder: 'Try: -40, 170 or  Name',
         reverseGeocode: true
       })
+      // geocoder.on('result', function(e) {
+      //   console.log(e.result.center)
+      // })
       map.addControl(geocoder)
 
       map.addControl(new mapboxgl.FullscreenControl({}))
@@ -438,15 +440,15 @@ export default {
       map.on('error', e => {
         console.error(e);
       });
-      map.on('mousemove', (e) => {
-        document.getElementById('info').innerHTML =
-        // `e.point` is the x, y coordinates of the `mousemove` event
-        // relative to the top-left corner of the map.
-          JSON.stringify(e.point) +
-          '<br />' +
-          // `e.lngLat` is the longitude, latitude geographical position of the event.
-          JSON.stringify(e.lngLat.wrap());
-      });
+      // map.on('mousemove', (e) => {
+      //   document.getElementById('info').innerHTML =
+      //   // `e.point` is the x, y coordinates of the `mousemove` event
+      //   // relative to the top-left corner of the map.
+      //     JSON.stringify(e.point) +
+      //     '<br />' +
+      //     // `e.lngLat` is the longitude, latitude geographical position of the event.
+      //     JSON.stringify(e.lngLat.wrap());
+      // });
       map.on('click', async function (e) {
 
         let dirHandle = await idbKeyval.get('dirHandle')

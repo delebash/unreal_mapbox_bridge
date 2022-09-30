@@ -536,8 +536,8 @@ export default {
     },
     async unrealTileFeatures() {
       let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
-      let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
-      let strFeatures = JSON.stringify(utmFeatures)
+   //   let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
+      let strFeatures = JSON.stringify(features)
 
       let jsonTile_info = JSON.stringify(this.tile_info)
       await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.geoJsonFileName, strFeatures)
@@ -602,9 +602,9 @@ export default {
           this.tile_info.resizeMethod = 'lanczos'
           this.tile_info.exportType = this.exportType
 
-          let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
-          this.tile_info.OriginNorthing = convUtm.northing
-          this.tile_info.OriginEasting = convUtm.easting
+          // let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
+          // this.tile_info.OriginNorthing = convUtm.northing
+          // this.tile_info.OriginEasting = convUtm.easting
 
           // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
           this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth

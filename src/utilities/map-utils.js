@@ -4,7 +4,7 @@ import * as turf from '@turf/turf'
 import {Image} from "image-js";
 import fileUtils from './fs-helpers'
 import idbKeyval from "../utilities/idb-keyval-iife";
-import * as utm from '@jayarjo/utm'
+
 
 function getTileInfo(lng, lat, map) {
   let tileInfo = {}
@@ -26,8 +26,6 @@ function getTileInfo(lng, lat, map) {
   tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
 
   const llb = new mapboxgl.LngLatBounds(tileInfo.bbox);
-  // const coord = mapboxgl.MercatorCoordinate.fromLngLat({lng: 0, lat: 0}, 0);
-  //  console.log(coord); // MercatorCoordinate(0.5, 0.5, 0)
   tileInfo.bboxCT = llb.getCenter();
   tileInfo.bboxSW = llb.getSouthWest()
   tileInfo.bboxNE = llb.getNorthEast()
@@ -39,138 +37,126 @@ function getTileInfo(lng, lat, map) {
   tileInfo.topRight = tileInfo.bboxNE
   tileInfo.bottomRight = tileInfo.bboxSE
   tileInfo.center = tileInfo.bboxCT
-//Calculate UEx +
-//  and UEy
 
 
-  //UE4_XY_SCALE = (REAL_WORLD_XY_TILE_LENGHT / (TILE_SIZE - 1)) * 100
+ // tileInfo.originCoordinates = tileInfo.bboxNW  //NW corner usually considered Origin coordinates
 
-  //NW
-  //NE
-  //
+  // let convUtm = converLatLngTotUtm(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
+  // tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
+  // tileInfo.epsg = getEpsg(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
+  // tileInfo.OriginEasting = convUtm.easting
+  // tileInfo.OriginNorthing = convUtm.northing
+  // tileInfo.zoneLetter = convUtm.zoneLetter
+  // tileInfo.zoneNum = convUtm.zoneNum
+  // tileInfo.originLng = tileInfo.originCoordinates.lng
+  // tileInfo.originLat = tileInfo.originCoordinates.lat
 
-  //Changeo geojson coord from lng lat to projected
-  // xx = (float(coord[0]) - UTMx) * 100.0
-  // yy = (UTMy - float(coord[1])) * 100.0
-
-
-  tileInfo.originCoordinates = tileInfo.bboxNW  //NW corner usually considered Origin coordinates
-
-  let convUtm = converLatLngTotUtm(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
-  tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
-  tileInfo.epsg = getEpsg(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
-  tileInfo.OriginEasting = convUtm.easting
-  tileInfo.OriginNorthing = convUtm.northing
-  tileInfo.zoneLetter = convUtm.zoneLetter
-  tileInfo.zoneNum = convUtm.zoneNum
-  tileInfo.originLng = tileInfo.originCoordinates.lng
-  tileInfo.originLat = tileInfo.originCoordinates.lat
   tileInfo.maxPngValue = 65535
   tileInfo.rgbFileName = 'terrain-rgb' + '-' + tileInfo.mapboxTileName + '.png'
   tileInfo.thirtyTwoFileName = 'thirtytwo' + '-' + tileInfo.mapboxTileName + '.png'
   tileInfo.tileInfoFileName = 'tile-info' + '-' + tileInfo.mapboxTileName + '.json'
   tileInfo.geoJsonFileName = 'geojson' + '-' + tileInfo.mapboxTileName + '.json'
 
-  convUtm = converLatLngTotUtm(tileInfo.pointLat, tileInfo.pointLng)
-  tileInfo.pointNorthing = convUtm.northing
-  tileInfo.pointEasting = convUtm.easting
-
-  convUtm = converLatLngTotUtm(tileInfo.bboxCT.lat, tileInfo.bboxCT.lng)
-  tileInfo.ctNorthing = convUtm.northing
-  tileInfo.ctEasting = convUtm.easting
-
-  convUtm = converLatLngTotUtm(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
-  tileInfo.swNorthing = convUtm.northing
-  tileInfo.swEasting = convUtm.easting
-
-  convUtm = converLatLngTotUtm(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
-  tileInfo.neNorthing = convUtm.northing
-  tileInfo.neEasting = convUtm.easting
-
-  convUtm = converLatLngTotUtm(tileInfo.bboxNW.lat, tileInfo.bboxNW.lng)
-  tileInfo.nwNorthing = convUtm.northing
-  tileInfo.nwEasting = convUtm.easting
-
-  convUtm = converLatLngTotUtm(tileInfo.bboxSE.lat, tileInfo.bboxSE.lng)
-  tileInfo.seNorthing = convUtm.northing
-  tileInfo.seEasting = convUtm.easting
+  // convUtm = converLatLngTotUtm(tileInfo.pointLat, tileInfo.pointLng)
+  // tileInfo.pointNorthing = convUtm.northing
+  // tileInfo.pointEasting = convUtm.easting
+  //
+  // convUtm = converLatLngTotUtm(tileInfo.bboxCT.lat, tileInfo.bboxCT.lng)
+  // tileInfo.ctNorthing = convUtm.northing
+  // tileInfo.ctEasting = convUtm.easting
+  //
+  // convUtm = converLatLngTotUtm(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
+  // tileInfo.swNorthing = convUtm.northing
+  // tileInfo.swEasting = convUtm.easting
+  //
+  // convUtm = converLatLngTotUtm(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
+  // tileInfo.neNorthing = convUtm.northing
+  // tileInfo.neEasting = convUtm.easting
+  //
+  // convUtm = converLatLngTotUtm(tileInfo.bboxNW.lat, tileInfo.bboxNW.lng)
+  // tileInfo.nwNorthing = convUtm.northing
+  // tileInfo.nwEasting = convUtm.easting
+  //
+  // convUtm = converLatLngTotUtm(tileInfo.bboxSE.lat, tileInfo.bboxSE.lng)
+  // tileInfo.seNorthing = convUtm.northing
+  // tileInfo.seEasting = convUtm.easting
 
 
   //Calc Unreal x y
 
 
   //Mouse click
-
-  let TerrainSizeInUU = 2017 * 100
-
-
-  let utm_point = utm.fromLatLon(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
-
-  tileInfo.MaximumEasting = utm_point.easting
-  tileInfo.MaximumNorthing = utm_point.northing
-
-
-  utm_point = utm.fromLatLon(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
-
-  tileInfo.MinimumEasting = utm_point.easting
-  tileInfo.MinimumNorthing = utm_point.northing
-
-
-  tileInfo.XInUU = (((tileInfo.pointEasting - tileInfo.MinimumEasting) / (tileInfo.MaximumEasting - tileInfo.MinimumEasting)) * TerrainSizeInUU) - (TerrainSizeInUU * 0.5)
-  tileInfo.YInUU = -1. * ((((tileInfo.pointNorthing - tileInfo.MinimumNorthing) / (tileInfo.MaximumNorthing - tileInfo.MinimumNorthing)) * TerrainSizeInUU) - (TerrainSizeInUU * 0.5))
-
+  //
+  // let TerrainSizeInUU = 2017 * 100
+  //
+  //
+  // let utm_point = utm.fromLatLon(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
+  //
+  // tileInfo.MaximumEasting = utm_point.easting
+  // tileInfo.MaximumNorthing = utm_point.northing
+  //
+  //
+  // utm_point = utm.fromLatLon(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
+  //
+  // tileInfo.MinimumEasting = utm_point.easting
+  // tileInfo.MinimumNorthing = utm_point.northing
+  //
+  //
+  // tileInfo.XInUU = (((tileInfo.pointEasting - tileInfo.MinimumEasting) / (tileInfo.MaximumEasting - tileInfo.MinimumEasting)) * TerrainSizeInUU) - (TerrainSizeInUU * 0.5)
+  // tileInfo.YInUU = -1. * ((((tileInfo.pointNorthing - tileInfo.MinimumNorthing) / (tileInfo.MaximumNorthing - tileInfo.MinimumNorthing)) * TerrainSizeInUU) - (TerrainSizeInUU * 0.5))
+  //
 
   return tileInfo
 }
 
-function getEpsg(lat, lng) {
-  let offset = Math.round((183 + lng) / 6)
-  let epsg = 0
-  if (lat > 0) {
-    epsg = 32600 + offset
-  } else {
-    epsg = 32700 + offset
-  }
-  return epsg
-}
+// function getEpsg(lat, lng) {
+//   let offset = Math.round((183 + lng) / 6)
+//   let epsg = 0
+//   if (lat > 0) {
+//     epsg = 32600 + offset
+//   } else {
+//     epsg = 32700 + offset
+//   }
+//   return epsg
+// }
 
-function converLatLngTotUtm(lat, lng) {
-  return utm.fromLatLon(lat, lng)
-}
+// function converLatLngTotUtm(lat, lng) {
+//   return utm.fromLatLon(lat, lng)
+// }
 
-function convertGeoJsonCoordinatesToUTM(features) {
-  features.forEach(geojson => {
-    let coordinates = geojson.geometry.coordinates
-    traverseArray(coordinates)
-  });
-  return features
-}
+// function convertGeoJsonCoordinatesToUTM(features) {
+//   features.forEach(geojson => {
+//     let coordinates = geojson.geometry.coordinates
+//     traverseArray(coordinates)
+//   });
+//   return features
+// }
 
-function traverseArray(arr) {
-  let i = 0
-  let lng
-  let lat
-
-  arr.forEach((element, index) => {
-    if (Array.isArray(element)) {
-      traverseArray(element);
-    } else {
-      if (i === 0) {
-        lng = element
-      }
-      if (i === 1) {
-        lat = element
-        let convUtm = converLatLngTotUtm(lat, lng)
-        arr[0] = convUtm.northing
-        arr[1] = convUtm.easting
-      }
-      i = i + 1
-      if (i === 2) {
-        i = 0
-      }
-    }
-  });
-}
+// function traverseArray(arr) {
+//   let i = 0
+//   let lng
+//   let lat
+//
+//   arr.forEach((element, index) => {
+//     if (Array.isArray(element)) {
+//       traverseArray(element);
+//     } else {
+//       if (i === 0) {
+//         lng = element
+//       }
+//       if (i === 1) {
+//         lat = element
+//         let convUtm = converLatLngTotUtm(lat, lng)
+//         arr[0] = convUtm.northing
+//         arr[1] = convUtm.easting
+//       }
+//       i = i + 1
+//       if (i === 2) {
+//         i = 0
+//       }
+//     }
+//   });
+// }
 
 
 function getTileGeoJsonBB(bbox) {
@@ -354,13 +340,11 @@ function createHeightMapImage(image, bitDepth, colorModel) {
 }
 
 export default {
-  converLatLngTotUtm,
   getTileInfo,
   getFeaturesFromBB,
   getMapboxTerrainRgb,
   createHeightMapImage,
   loadImageFromArray,
   unrealRemoteControl,
-  convertGeoJsonCoordinatesToUTM,
   downloadTerrainRgb
 }

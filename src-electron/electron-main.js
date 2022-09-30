@@ -120,14 +120,14 @@ function createWindow() {
 
   mainWindow.loadURL(process.env.APP_URL)
  // mainWindow.webContents.openDevTools()
-//  mainWindow.webContents.closeDevTools()
+ mainWindow.webContents.closeDevTools()
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
     // mainWindow.webContents.closeDevTools()
   } else {
     // we're on production; no access to devtools pls
     mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
+      //mainWindow.webContents.closeDevTools()
     })
   }
 
