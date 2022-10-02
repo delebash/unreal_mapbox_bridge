@@ -609,6 +609,10 @@ export default {
           // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
           this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth
 
+          if (this.otherOptionsModel.includes('features')) {
+            await this.unrealTileFeatures()
+          }
+
           switch (this.tile_info.exportType) {
             case 'unreal':
               //Download heightmap
@@ -631,9 +635,7 @@ export default {
                 await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
               }
 
-              if (this.otherOptionsModel.includes('features')) {
-                await this.unrealTileFeatures()
-              }
+
 
               this.qt.loading.hide()
               break;

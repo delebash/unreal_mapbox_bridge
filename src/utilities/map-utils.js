@@ -175,11 +175,38 @@ function getFeaturesFromBB(map, tile_info) {
   tile_info.nePt = map.project(tile_info.bboxNE)
   tile_info.nwPt = map.project(tile_info.bboxNW)
   tile_info.sePt = map.project(tile_info.bboxSE)
-  const features = map.queryRenderedFeatures([tile_info.swPt, tile_info.nePt])
+   let features = map.queryRenderedFeatures([tile_info.swPt, tile_info.nePt])
 
   return features
 }
+//function showLayerID(map) {
+  //let compositeSource = map.getLayer(mapLayerId.toString()).source;
+//  const sourceId = map.getLayer('park').source;
+//  map.getSource('id_of_your_source');
+//   let test = map.getStyle().sourceCaches
+//   console.log(test)
+// }
+  // map.querySourceFeatures('composite', {sourceLayer: 'road'})
+  //map.querySourceFeatures('composite', {sourceLayer: 'source-name', filter: [filters]})
+  //let features = map.querySourceFeatures('composite')
+  // const sourceId = Object.keys(map.getStyle().sources)
+  // const sourceId = Object.keys(map.getStyle().sources)
+  //let compositeSource=map.getSource('composite').vectorLayerIds
+  // let compositeSource = map.getLayer("road").source;
+ // console.log(compositeSource)
 
+  // let test = map.getStyle().sources
+  // console.log(test)
+  // console.log(map.getLayer('road'));
+  // let test = map.style.getLayer('park');
+  // let test = map.getStyle();
+  // "road-motorway-trunk"
+  // console.log(test)
+ // let test = map.querySourceFeatures('composite', {sourceLayer: 'road'})
+  //
+ // console.log(test)
+  // console.log(map.getSource("composite").vectorLayers);
+//}
 /**
  * Load image-js image from array
  *
@@ -346,5 +373,6 @@ export default {
   createHeightMapImage,
   loadImageFromArray,
   unrealRemoteControl,
-  downloadTerrainRgb
+  downloadTerrainRgb,
+  showLayerID
 }

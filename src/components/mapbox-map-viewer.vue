@@ -450,7 +450,7 @@ export default {
       //     JSON.stringify(e.lngLat.wrap());
       // });
       map.on('click', async function (e) {
-
+   //   mapUtils.showLayerID(map)
         let dirHandle = await idbKeyval.get('dirHandle')
 
         //Verify user has permission to rea/write from selected directory
