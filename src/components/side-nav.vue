@@ -14,22 +14,6 @@
           </div>
         </template>
       </q-field>
-      <!--      <q-field dense label="Elevation Range" stack-label>-->
-      <!--        <template v-slot:control>-->
-      <!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
-      <!--              elevation_range-->
-      <!--            }}-->
-      <!--          </div>-->
-      <!--        </template>-->
-      <!--      </q-field>-->
-      <!--      <q-field class="q-pt-none q-mt-xs" dense label="Tile width in meters" stack-label>-->
-      <!--        <template v-slot:control>-->
-      <!--          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{-->
-      <!--              this.tile_info.tileWidthInMeters-->
-      <!--            }}-->
-      <!--          </div>-->
-      <!--        </template>-->
-      <!--      </q-field>-->
 
       <q-field class="q-pt-none q-mt-xs" dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale"
                stack-label>
@@ -114,14 +98,6 @@
 
       <q-card-section class="q-pt-none">
 
-        <!--        <div class="text-h6">Max Latitude:</div>-->
-        <!--        {{ tile_info.bbox[3] }}-->
-        <!--        <div class="text-h6">Max Longitude:</div>-->
-        <!--        {{ this.tile_info.bbox[0] }}-->
-        <!--        <div class="text-h6"> Min Latitude:</div>-->
-        <!--        {{ tile_info.bbox[1] }}-->
-        <!--        <div class="text-h6"> Min Longitude:</div>-->
-        <!--        {{ tile_info.bbox[2] }}-->
         <div class="text-h6">Zoom:</div>
         {{ tile_info.z }}
         <div class="text-h6">Mouse Point Lat/Lng:</div>
@@ -140,60 +116,6 @@
 
         <div class="text-h6">Bottom Right:</div>
         Lat: {{ tile_info.bottomRight.lat }} Lng: {{ tile_info.bottomRight.lng }}
-
-<!--        <div class="text-h6"><u>Transform Lng/Lat Point to Unreal XY</u></div>-->
-
-<!--        <div class="text-h6">MiddelX/Y</div>-->
-<!--        MiddleX: {{ tile_info.middleX }} MiddleY: {{ tile_info.middleY }}-->
-
-<!--        <div class="text-h6">Translated MiddelX/Y</div>-->
-<!--        Translated_MiddleX: {{ tile_info.translatedXm }} Translated_MiddleY: {{ tile_info.translatedYm }}-->
-
-<!--        <div class="text-h6">Unreal X/Y:</div>-->
-<!--        UEx: {{ tile_info.UEx }} UEy: {{ tile_info.UEy }}-->
-
-        <!--        <div class="text-h6">Mouse Point Northing:</div>-->
-        <!--        {{ tile_info.pointNorthing }}-->
-        <!--        <div class="text-h6">Mouse Point Easting:</div>-->
-        <!--        {{ tile_info.pointEasting }}-->
-        <!--        <div class="text-h6">MaximumEasting:</div>-->
-        <!--        {{ tile_info.MaximumEasting }}-->
-        <!--        <div class="text-h6">MaximumNorthing:</div>-->
-        <!--        {{ tile_info.MaximumNorthing }}-->
-        <!--        <div class="text-h6">MinimumEasting:</div>-->
-        <!--        {{ tile_info.MinimumEasting }}-->
-        <!--        <div class="text-h6">MinimumNorthing:</div>-->
-        <!--        {{ tile_info.MinimumNorthing }}-->
-        <!--        <div class="text-h6">XInUU:</div>-->
-        <!--        {{ tile_info.XInUU }}-->
-        <!--        <div class="text-h6">YInUU:</div>-->
-        <!--        {{ tile_info.YInUU }}-->
-
-        <!--        <div class="text-h6">Center Northing:</div>-->
-        <!--        {{ tile_info.ctNorthing }}-->
-        <!--        <div class="text-h6">Center Easting:</div>-->
-        <!--        {{ tile_info.ctEasting }}-->
-
-        <!--        <div class="text-h6">swNorthing:</div>-->
-        <!--        {{ tile_info.swNorthing }}-->
-        <!--        <div class="text-h6">swEasting:</div>-->
-        <!--        {{ tile_info.swEasting }}-->
-
-        <!--        <div class="text-h6">neNorthing:</div>-->
-        <!--        {{ tile_info.neNorthing }}-->
-        <!--        <div class="text-h6">neEasting:</div>-->
-        <!--        {{ tile_info.neEasting }}-->
-
-        <!--        <div class="text-h6">nwNorthing:</div>-->
-        <!--        {{ tile_info.nwNorthing }}-->
-        <!--        <div class="text-h6">nwEasting:</div>-->
-        <!--        {{ tile_info.nwEasting }}-->
-
-        <!--        <div class="text-h6">seNorthing:</div>-->
-        <!--        {{ tile_info.seNorthing }}-->
-        <!--        <div class="text-h6">seEasting:</div>-->
-        <!--        {{ tile_info.seEasting }}-->
-
 
       </q-card-section>
       <q-card-actions align="right">
@@ -232,7 +154,6 @@ import mapboxgl from "mapbox-gl";
 
 const gdalWorker = new Worker('gdalWorker.js');
 
-// const vips = await Vips();
 
 let ZrangeSeaLevel = 32767
 
@@ -291,7 +212,7 @@ export default {
       alphaBrushWidth: ref(505),
       unrealMapPath: ref(''),
       qt: $q,
-      otherOptionsModel: ref(['zrange']),
+      otherOptionsModel: ref(['zrange', 'combine_features']),
       alertMsg: ref(''),
       otherOptions: [
         {label: 'Zrange-sea level=0', value: 'zrange'},
@@ -299,9 +220,11 @@ export default {
         {label: 'Flip y', value: 'flipy'},
         {label: 'Download Satellite', value: 'satellite'},
         {label: 'Download Geojson Features', value: 'features'},
+        {label: 'Combine Unique Features', value: 'combine_features'},
       ],
       exportOptions: [
         {label: 'Unreal Heightmap', value: 'unreal'},
+        {label: 'Geojson Only', value: 'geojson_only'},
         {label: 'Unreal Alpha Brush', value: 'unreal_alpha_brush'},
         {label: 'None', value: 'none'}
       ]
@@ -344,76 +267,23 @@ export default {
         this.isAlphaBrush = false
         this.btnDownloadText = "Download "
       }
+
+      if (e === "geojson_only") {
+        if (!this.otherOptionsModel.includes('features')) {
+          this.otherOptionsModel.push('features')
+        }
+      } else {
+        this.otherOptionsModel.splice(this.otherOptionsModel.indexOf('features'), 1);
+      }
     },
     showBBInfo() {
       if (this.tile_info) {
-        // this.calculateUEXY()
         this.bbinfoalert = true
       } else {
         this.alert = false
       }
     },
-    calculateUEXY() {
-      // let landscapeSize = this.unrealLandscape.value
-      //
-      // //Range
-      // this.tile_info.rangeX = this.tile_info.bottomRight.lng - this.tile_info.bottomLeft.lng
-      // this.tile_info.rangeY = this.tile_info.topLeft.lat - this.tile_info.bottomLeft.lat
-      //
-      // // //Middle point
-      // this.tile_info.middleX = (this.tile_info.bottomLeft.lng + this.tile_info.bottomRight.lng) / 2
-      // this.tile_info.middleY = (this.tile_info.bottomLeft.lat + this.tile_info.topLeft.lat) / 2
-      //
-      // //Translated
-      // this.tile_info.translatedXm = (landscapeSize / this.tile_info.rangeX) * this.tile_info.middleX
-      // this.tile_info.translatedYm = (landscapeSize / this.tile_info.rangeY) * this.tile_info.middleY
-      //
-      //
-      // //UE XY
-      // this.tile_info.UEx = (landscapeSize / this.tile_info.rangeX) * (this.tile_info.pointLng - this.tile_info.translatedXm)
-      // this.tile_info.UEy = (landscapeSize / this.tile_info.rangeY) * (this.tile_info.pointLat - this.tile_info.translatedYm)
-      // // //Middle point
-      // this.tile_info.middleX = (this.tile_info.bottomLeft.lng + this.tile_info.bottomRight.lng) / 2
-      // this.tile_info.middleY = (this.tile_info.bottomLeft.lat + this.tile_info.topLeft.lat) / 2
-      //
-      // //Translated
-      // this.tile_info.translatedXm = (MapSizeUE - 1 / this.tile_info.rangeX) * this.tile_info.middleX
-      // this.tile_info.translatedYm = (MapSizeUE - 1 / this.tile_info.rangeY) * this.tile_info.middleY
 
-//
-//       let MapOriginXUE = 0
-//       let MapOriginYUE = 0
-//       let Scale = 100
-//       let MapSizeUE = this.unrealLandscape.value
-//
-//       //Offset XY
-//       let XOffset = MapOriginXUE + (((MapSizeUE - 1) * Scale) / 2)
-//       let YOffset = MapOriginYUE + (((MapSizeUE - 1) * Scale) / 2)
-//
-//       //Real world range XY
-//       let MapRangeX = this.tile_info.bottomRight.lng - this.tile_info.bottomLeft.lng
-//       let MapRangeY = this.tile_info.topLeft.lat - this.tile_info.bottomLeft.lat
-//
-//       //  Lat/Lng Center of Bounding Box
-//       let MapXm = this.tile_info.center.lat
-//       let MapYm = this.tile_info.center.lng
-// console.log(MapXm)
-//       //Middle of Landscape plane
-//       let Xm = (((MapSizeUE - 1) * Scale) / MapRangeX) * MapXm - XOffset
-//       let Ym = (((MapSizeUE - 1) * Scale) / MapRangeY) * MapYm + YOffset
-//
-//       //Points to translate
-//       let Lat = this.tile_info.pointLat
-//       let Long = this.tile_info.pointLng
-//
-//       //Lng/Lat Points converted to UE XY
-//       let Xnew = ((((MapSizeUE - 1) * Scale) / MapRangeX) * Long) - Xm
-//       let Ynew = (((((MapSizeUE - 1) * Scale) / MapRangeY) * Lat) - Ym) * -1
-//
-//       this.tile_info.UEx = Xnew
-//       this.tile_info.UEy = Ynew
-
-    },
     updateStats() {
       if (this.preview_image_info.maxElevation !== '') {
         this.tile_info.MaxElevation = this.preview_image_info.maxElevation
@@ -534,9 +404,9 @@ export default {
         this.qt.loading.hide()
       }
     },
-    async unrealTileFeatures() {
-      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info)
-   //   let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
+    async unrealTileFeatures(combine) {
+      let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info, combine)
+      //   let utmFeatures = mapUtils.convertGeoJsonCoordinatesToUTM(features)
       let strFeatures = JSON.stringify(features)
 
       let jsonTile_info = JSON.stringify(this.tile_info)
@@ -602,15 +472,16 @@ export default {
           this.tile_info.resizeMethod = 'lanczos'
           this.tile_info.exportType = this.exportType
 
-          // let convUtm = mapUtils.converLatLngTotUtm(this.tile_info.originLat, this.tile_info.originLng)
-          // this.tile_info.OriginNorthing = convUtm.northing
-          // this.tile_info.OriginEasting = convUtm.easting
 
           // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
           this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth
 
           if (this.otherOptionsModel.includes('features')) {
-            await this.unrealTileFeatures()
+            let combine = false
+            if (this.otherOptionsModel.includes('combine_features')) {
+              combine = true
+            }
+            await this.unrealTileFeatures(combine)
           }
 
           switch (this.tile_info.exportType) {
@@ -636,9 +507,18 @@ export default {
               }
 
 
+              this.qt.loading.hide()
+              break;
+
+            case 'geojson_only':
 
               this.qt.loading.hide()
               break;
+            // case 'normalize':
+            //   let sixteen_img = sixteen_img.level()
+            //   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
+            //   this.qt.loading.hide()
+            //   break;
 
             case 'unreal_alpha_brush':
               if (this.alphaBrushName.length > 0) {
@@ -673,243 +553,6 @@ export default {
   }
 }
 
-// let img2 = alphaImag_img.median()
-// alphaImag_img = img2.resize({width: 2017, height: 2017})
-//
-
-//
-
-// //  img = img.blur(3)
-//
-//
-//   let buff = await img.getBufferAsync(Jimp.MIME_PNG);
-
-
-//   let im = vips.Image.newFromBuffer(buff)
-// // Output size: 2017x2017
-// im = im.median(3);
-
-
-// let thumbnail = im.resize(2017 / im.width, {
-//   vscale: 2017 / im.height,
-//   kernel: vips.Kernel.lanczos3
-// });
-
-// let outBuffer = new Uint8Array(im.writeToBuffer('.png'))
-
-
-// let alphaImage_Info = mapUtils.createHeightMapImage(buff, 32, "GREY")
-// let alphaImag_img = alphaImage_Info.image
-// let buff2 = await alphaImag_img.toBuffer()
-// console.log(b)
-// let jimp = Jimp.read(rgb_image);
-//             Jimp.read(buff)
-//                .then(image => {
-//                  // Do stuff with the image.
-//                })
-//                .catch(err => {
-//                  // Handle an exception.
-//                });
-//  const image =  Jimp.read(buff);
-//let test =  new Jimp({ data: buff})
-//  image.blur(5);
-
-
-//img = await img.gaussian(10);
-// img = await img.blur(20);
-// console.log(buff)
-// let radius = 16;
-// let data = blur.blurImage(buff,512,512,radius)
-// let t = mapUtils.loadImageFromArray(data)
-// console.log(t)
-// console.log(data)
-// let test = await data.toBuffer()
-
-//
-//
-
-
-// let grey = alphaImag_img
-//   .resize({ width: this.alphaBrushWidth })
-//   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.alphaBrushFileName, alphaImag_img.toBuffer())
-
-//  let img2 = alphaImag_img.median()
-//   alphaImag_img = alphaImag_img.resize({width: 2017, height: 2017})
-//   let buff = await alphaImag_img.toBuffer()
-
-//
-
-// //  img = img.blur(3)
-//
-//
-//   let buff = await img.getBufferAsync(Jimp.MIME_PNG);
-
-
-// let alphaImage_Info = mapUtils.createHeightMapImage(buff, 32, "GREY")
-// let alphaImag_img = alphaImage_Info.image
-// let buff2 = await alphaImag_img.toBuffer()
-// console.log(b)
-// let jimp = Jimp.read(rgb_image);
-//             Jimp.read(buff)
-//                .then(image => {
-//                  // Do stuff with the image.
-//                })
-//                .catch(err => {
-//                  // Handle an exception.
-//                });
-//  const image =  Jimp.read(buff);
-//let test =  new Jimp({ data: buff})
-// resize the image. Jimp.AUTO can be passed as one of the values.
-
-//
-// image.gaussian( r );              // Gaussian blur the image by r pixels (VERY slow)
-// image.blur( r );
-// img = await img.blur(20);
-// console.log(buff)
-// let radius = 16;
-// let data = blur.blurImage(buff,512,512,radius)
-// let t = mapUtils.loadImageFromArray(data)
-// console.log(t)
-// console.log(data)
-// let test = await data.toBuffer()
-
-//
-//
-
-
-// let grey = alphaImag_img
-//   .resize({ width: this.alphaBrushWidth })
-//   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.alphaBrushFileName, alphaImag_img.toBuffer())
-
-
-//image-js
-// if (this.alphaBrushWidth !== '512') {
-//   console.log("resize")
-//   alphaImag_img = alphaImag_img.resize({
-//     width: this.alphaBrushWidth,
-//     height: this.alphaBrushHeight
-//   })
-// }
-//
-// if (this.blurRadius !== 0) {
-//   // alphaImag_img = alphaImag_img.blurFilter({radius: this.blurRadius})
-//   alphaImag_img = alphaImag_img.gaussianFilter({radius: this.blurRadius})
-//   //alphaImag_img = alphaImag_img.medianFilter({radius: this.blurRadius})
-// }
-//
-
-
-//VIPS
-
-// let buffer = await alphaImag_img.toBuffer()
-// im = vips.Image.newFromBuffer(buffer)
-// Output size: 2017x2017
-
-// im = im.resize(parseInt(this.alphaBrushWidth) / im.width, {
-//   vscale: parseInt(this.alphaBrushHeight) / im.height,
-//   kernel: vips.Kernel.lanczos3
-// });
-// im = im.histEqual()
-//   if (this.blurRadius !== 0) {
-//     console.log('blur')
-//     im = im.gaussblur(this.blurRadius);
-//   }
-
-// buff = new Uint8Array(im.writeToBuffer('.png'))
-//  await fileUtils.writeFileToDisk(dirHandle, "test.png", buff)
-
-///JIMP
-// let blob = await alphaImag_img.toBlob()
-// let arryBuffer = await blob.arrayBuffer()
-//
-// img = await Jimp.read(arryBuffer)
-// img = img.normalize()
-// img = await img.resize(parseInt(this.alphaBrushHeight), parseInt(this.alphaBrushWidth))
-// buff = await img.getBufferAsync(Jimp.MIME_PNG);
-// await fileUtils.writeFileToDisk(dirHandle, "test.png", buff)
-
-//
-//
-// if (this.blurRadius !== 0) {
-//   //img =  img.blur(this.blurRadius);
-//   img = img.deflateLevel(0)
-//   //img = await img.gaussian(this.blurRadius);
-// }
-
-
-//    let rgbImageArrayBuffer = await idbKeyval.get('rgbImageArrayBuffer')
-
-// let uint8View = new Uint8ClampedArray(rgbImageArrayBuffer);
-//  new Uint8Array(data)
-//  console.log(uint8View)
-//
-//      const blob = new Blob([rgbImageArrayBuffer]);
-// console.log(blob)
-
-// let img_data = await mapUtils.BlobToImageData(blob)
-//    console.log(img_data)
-//   let img_buff = img_data.data.buffer
-// console.log(img_buff)
-//     let buff = await mapUtils.convertImage2(uint8View)
-//   console.log(buff)
-
-
-//   const buffer = rgbImageArrayBuffer
-// const ui8ca = new Uint8ClampedArray(buffer);
-// const imageData = new ImageData(ui8ca, 100, 100);
-
-// const canvas = document.getElementById('myCanvas');
-// let ctx = document.createElement('canvas').getContext('2d');
-// //ctx.putImageData(imageData, 0, 0);
-//
-// let pixels = new ImageData(
-//   new Uint8ClampedArray( buffer * 4),
-//   512,512
-// );
-// console.log(pixels)
-
-// let arr = new Uint8ClampedArray(buffer);
-// let buff = await mapUtils.convertImage2(arr)
-// let buffer = new Buffer(rgbImageArrayBuffer.byteLength);
-// let view = new Uint8ClampedArray(rgbImageArrayBuffer);
-// for (let i = 0; i < buffer.length; ++i) {
-//   buffer[i] = view[i];
-// }
-// let iData = new ImageData(new Uint8ClampedArray(buffer), 512, 512);
-//
-// console.log(iData)
-
-// await fileUtils.writeFileToDisk(dirHandle, "test.png", buff)
-//
-
-//
-//
-// let width = 512, height = 512;
-// let data = new ImageData(
-//   new Uint8ClampedArray(4 * width * height),
-//   720,
-//   720
-// );
-//
-//
-
-
-//   let buffer = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-// let array = new Uint8ClampedArray(buffer);
-
-// let imagedata = new ImageData(rgbImageArrayBuffer, ctx.canvas.width, ctx.canvas.height);
-// let buff = await mapUtils.convertImage2(imagedata.data)
-//
-//
-
-//
-
-// case 'normalize':
-//   let sixteen_img = sixteen_img.level()
-//   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
-//   this.qt.loading.hide()
-//   break;
 
 </script>
 

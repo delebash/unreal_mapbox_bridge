@@ -38,99 +38,14 @@ function getTileInfo(lng, lat, map) {
   tileInfo.bottomRight = tileInfo.bboxSE
   tileInfo.center = tileInfo.bboxCT
 
-
- // tileInfo.originCoordinates = tileInfo.bboxNW  //NW corner usually considered Origin coordinates
-
-  // let convUtm = converLatLngTotUtm(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
-  // tileInfo.projected = new mapboxgl.LngLat(tileInfo.originCoordinates.lng, tileInfo.originCoordinates.lat);
-  // tileInfo.epsg = getEpsg(tileInfo.originCoordinates.lat, tileInfo.originCoordinates.lng)
-  // tileInfo.OriginEasting = convUtm.easting
-  // tileInfo.OriginNorthing = convUtm.northing
-  // tileInfo.zoneLetter = convUtm.zoneLetter
-  // tileInfo.zoneNum = convUtm.zoneNum
-  // tileInfo.originLng = tileInfo.originCoordinates.lng
-  // tileInfo.originLat = tileInfo.originCoordinates.lat
-
   tileInfo.maxPngValue = 65535
   tileInfo.rgbFileName = 'terrain-rgb' + '-' + tileInfo.mapboxTileName + '.png'
   tileInfo.thirtyTwoFileName = 'thirtytwo' + '-' + tileInfo.mapboxTileName + '.png'
   tileInfo.tileInfoFileName = 'tile-info' + '-' + tileInfo.mapboxTileName + '.json'
   tileInfo.geoJsonFileName = 'geojson' + '-' + tileInfo.mapboxTileName + '.json'
 
-  // convUtm = converLatLngTotUtm(tileInfo.pointLat, tileInfo.pointLng)
-  // tileInfo.pointNorthing = convUtm.northing
-  // tileInfo.pointEasting = convUtm.easting
-  //
-  // convUtm = converLatLngTotUtm(tileInfo.bboxCT.lat, tileInfo.bboxCT.lng)
-  // tileInfo.ctNorthing = convUtm.northing
-  // tileInfo.ctEasting = convUtm.easting
-  //
-  // convUtm = converLatLngTotUtm(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
-  // tileInfo.swNorthing = convUtm.northing
-  // tileInfo.swEasting = convUtm.easting
-  //
-  // convUtm = converLatLngTotUtm(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
-  // tileInfo.neNorthing = convUtm.northing
-  // tileInfo.neEasting = convUtm.easting
-  //
-  // convUtm = converLatLngTotUtm(tileInfo.bboxNW.lat, tileInfo.bboxNW.lng)
-  // tileInfo.nwNorthing = convUtm.northing
-  // tileInfo.nwEasting = convUtm.easting
-  //
-  // convUtm = converLatLngTotUtm(tileInfo.bboxSE.lat, tileInfo.bboxSE.lng)
-  // tileInfo.seNorthing = convUtm.northing
-  // tileInfo.seEasting = convUtm.easting
-
-
-  //Calc Unreal x y
-
-
-  //Mouse click
-  //
-  // let TerrainSizeInUU = 2017 * 100
-  //
-  //
-  // let utm_point = utm.fromLatLon(tileInfo.bboxNE.lat, tileInfo.bboxNE.lng)
-  //
-  // tileInfo.MaximumEasting = utm_point.easting
-  // tileInfo.MaximumNorthing = utm_point.northing
-  //
-  //
-  // utm_point = utm.fromLatLon(tileInfo.bboxSW.lat, tileInfo.bboxSW.lng)
-  //
-  // tileInfo.MinimumEasting = utm_point.easting
-  // tileInfo.MinimumNorthing = utm_point.northing
-  //
-  //
-  // tileInfo.XInUU = (((tileInfo.pointEasting - tileInfo.MinimumEasting) / (tileInfo.MaximumEasting - tileInfo.MinimumEasting)) * TerrainSizeInUU) - (TerrainSizeInUU * 0.5)
-  // tileInfo.YInUU = -1. * ((((tileInfo.pointNorthing - tileInfo.MinimumNorthing) / (tileInfo.MaximumNorthing - tileInfo.MinimumNorthing)) * TerrainSizeInUU) - (TerrainSizeInUU * 0.5))
-  //
-
   return tileInfo
 }
-
-// function getEpsg(lat, lng) {
-//   let offset = Math.round((183 + lng) / 6)
-//   let epsg = 0
-//   if (lat > 0) {
-//     epsg = 32600 + offset
-//   } else {
-//     epsg = 32700 + offset
-//   }
-//   return epsg
-// }
-
-// function converLatLngTotUtm(lat, lng) {
-//   return utm.fromLatLon(lat, lng)
-// }
-
-// function convertGeoJsonCoordinatesToUTM(features) {
-//   features.forEach(geojson => {
-//     let coordinates = geojson.geometry.coordinates
-//     traverseArray(coordinates)
-//   });
-//   return features
-// }
 
 // function traverseArray(arr) {
 //   let i = 0
@@ -166,47 +81,44 @@ function getTileGeoJsonBB(bbox) {
       'type': poly.geometry.type, 'coordinates': poly.geometry.coordinates
     }
   };
-
   return geoJson;
 }
 
-function getFeaturesFromBB(map, tile_info) {
+function getFeaturesFromBB(map, tile_info, combine) {
   tile_info.swPt = map.project(tile_info.bboxSW)
   tile_info.nePt = map.project(tile_info.bboxNE)
   tile_info.nwPt = map.project(tile_info.bboxNW)
   tile_info.sePt = map.project(tile_info.bboxSE)
-   let features = map.queryRenderedFeatures([tile_info.swPt, tile_info.nePt])
+  let features = map.queryRenderedFeatures([tile_info.swPt, tile_info.nePt])
 
+  if (combine === true) {
+    features = getUniqueFeatures(features)
+  }
   return features
-}
-//function showLayerID(map) {
-  //let compositeSource = map.getLayer(mapLayerId.toString()).source;
-//  const sourceId = map.getLayer('park').source;
-//  map.getSource('id_of_your_source');
-//   let test = map.getStyle().sourceCaches
-//   console.log(test)
-// }
-  // map.querySourceFeatures('composite', {sourceLayer: 'road'})
-  //map.querySourceFeatures('composite', {sourceLayer: 'source-name', filter: [filters]})
-  //let features = map.querySourceFeatures('composite')
-  // const sourceId = Object.keys(map.getStyle().sources)
-  // const sourceId = Object.keys(map.getStyle().sources)
-  //let compositeSource=map.getSource('composite').vectorLayerIds
-  // let compositeSource = map.getLayer("road").source;
- // console.log(compositeSource)
 
-  // let test = map.getStyle().sources
-  // console.log(test)
-  // console.log(map.getLayer('road'));
-  // let test = map.style.getLayer('park');
-  // let test = map.getStyle();
-  // "road-motorway-trunk"
-  // console.log(test)
- // let test = map.querySourceFeatures('composite', {sourceLayer: 'road'})
-  //
- // console.log(test)
-  // console.log(map.getSource("composite").vectorLayers);
-//}
+}
+
+// Because features come from tiled vector data,
+// feature geometries may be split
+// or duplicated across tile boundaries.
+// As a result, features may appear
+// multiple times in query results.
+function getUniqueFeatures(features) {
+  const uniqueIds = new Set();
+  const uniqueFeatures = [];
+  for (const feature of features) {
+    const name = feature.properties["name"];
+    const type = feature.geometry["type"];
+    let id = name + '-' + type
+    if (!uniqueIds.has(id)) {
+      uniqueIds.add(id);
+      uniqueFeatures.push(feature);
+    }
+  }
+  return uniqueFeatures;
+}
+
+
 /**
  * Load image-js image from array
  *
@@ -215,7 +127,6 @@ function getFeaturesFromBB(map, tile_info) {
  */
 async function loadImageFromArray(imageArray) {
   let image = await Image.load(imageArray)
-
   return image
 }
 
@@ -228,7 +139,6 @@ async function loadImageFromArray(imageArray) {
  * @return {height} New height value.
  */
 function getHeightFromRgb(r, g, b) {
-
   return -10000 + ((r * 256 * 256 + g * 256 + b) * 0.1);
 }
 
@@ -249,14 +159,6 @@ function getHeightArray(image) {
     height = parseFloat(height)
     decodedHeightArray.push(height)
   }
-
-  //Get center elevations range and add that to height values to set Unreal Landscape at sea level
-  // let median = getMedianArray(decodedHeightArray)
-  // let adjustedHeightArray = decodedHeightArray.map(x => x + median);
-
-
-  // stats.unrealZscale = ((stats.maxElevation/512) * 100)
-  // console.log(stats.unrealZscale)
 
   return decodedHeightArray
 }
