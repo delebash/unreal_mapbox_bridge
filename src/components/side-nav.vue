@@ -345,47 +345,9 @@ export default {
       });
     },
     async sendToTerrainMagic() {
-      let host = 'http://localhost:30010/'
-      let call = 'remote/object/call'
-      let data = {}
-      let response
-
-      data = {
-        "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
-        "functionName": "GetAllLevelActors"
-      }
-
-      let bpPath = ''
-      let bluePrintName = "TestMapImport"
-      let result
-      let objArray = await mapUtils.unrealRemoteControl(data, host + call)
-      for (let obj of objArray.ReturnValue) {
-        result = obj.includes(bluePrintName)
-        if (result === true) {
-          bpPath = obj
-        }
-      }
-      console.log(result)
-
-      let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
-      data = {
-        "objectPath": bpPath,
-        "functionName": "ImportTile",
-        "parameters": {
-          "MapTileString": mapTileString.trim(),
-          "MapMiddleLngX": this.tile_info.center.lng,
-          "MapMiddleLatY": this.tile_info.center.lat,
-          "MapBtmRLng": this.tile_info.bottomRight.lng,
-          "MapBtmLLng": this.tile_info.bottomLeft.lng,
-          "MapTopLLat": this.tile_info.topLeft.lat,
-          "MapBtmLLat": this.tile_info.bottomLeft.lat
-        }
-      }
-      response = await mapUtils.unrealRemoteControl(data, host + call)
-      console.log(response)
-      this.qt.loading.hide()
+      await this.sendToUnreal(true)
     },
-    async sendToUnreal() {
+    async sendToUnreal(useTerrainMagic = false) {
       let host = 'http://localhost:30010/'
       let call = 'remote/object/call'
       let data = {}
@@ -422,6 +384,7 @@ export default {
       } else {
         this.unrealMapPath = await idbKeyval.get('mappath')
         this.tile_info.landscapeName = this.landscapeName
+        let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
         data = {
           "objectPath": bpPath,
           "functionName": "GenerateMapboxLandscape",
@@ -436,7 +399,9 @@ export default {
             "MapBtmRLng": this.tile_info.bottomRight.lng,
             "MapBtmLLng": this.tile_info.bottomLeft.lng,
             "MapTopLLat": this.tile_info.topLeft.lat,
-            "MapBtmLLat": this.tile_info.bottomLeft.lat
+            "MapBtmLLat": this.tile_info.bottomLeft.lat,
+            "UseTerrainMagic": useTerrainMagic,
+            "SlippyMapTileString": mapTileString.trim()
           }
         }
         response = await mapUtils.unrealRemoteControl(data, host + call)
