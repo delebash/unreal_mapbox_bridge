@@ -88,7 +88,8 @@
   <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
          label="Send To Unreal"/>
 
-
+  <q-btn @click="sendToTerrainMagic" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
+         label="Send To TerrainMagic"/>
   <q-dialog v-model="bbinfoalert">
     <q-card>
       <q-card-section>
@@ -343,9 +344,49 @@ export default {
         };
       });
     },
+    async sendToTerrainMagic() {
+      let host = 'http://localhost:30010/'
+      let call = 'remote/object/call'
+      let data = {}
+      let response
+
+      data = {
+        "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
+        "functionName": "GetAllLevelActors"
+      }
+
+      let bpPath = ''
+      let bluePrintName = "TestMapImport"
+      let result
+      let objArray = await mapUtils.unrealRemoteControl(data, host + call)
+      for (let obj of objArray.ReturnValue) {
+        result = obj.includes(bluePrintName)
+        if (result === true) {
+          bpPath = obj
+        }
+      }
+      console.log(result)
+
+      let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
+      data = {
+        "objectPath": bpPath,
+        "functionName": "ImportTile",
+        "parameters": {
+          "MapTileString": mapTileString.trim(),
+          "MapMiddleLngX": this.tile_info.center.lng,
+          "MapMiddleLatY": this.tile_info.center.lat,
+          "MapBtmRLng": this.tile_info.bottomRight.lng,
+          "MapBtmLLng": this.tile_info.bottomLeft.lng,
+          "MapTopLLat": this.tile_info.topLeft.lat,
+          "MapBtmLLat": this.tile_info.bottomLeft.lat
+        }
+      }
+      response = await mapUtils.unrealRemoteControl(data, host + call)
+      console.log(response)
+      this.qt.loading.hide()
+    },
     async sendToUnreal() {
       let host = 'http://localhost:30010/'
-      //let search = 'remote/search/assets'
       let call = 'remote/object/call'
       let data = {}
       let response
@@ -357,15 +398,15 @@ export default {
 
       let bpPath = ''
       let bluePrintName = "Mapbox_BP"
-
+      let result
       let objArray = await mapUtils.unrealRemoteControl(data, host + call)
       for (let obj of objArray.ReturnValue) {
-        let result = obj.includes(bluePrintName)
+        result = obj.includes(bluePrintName)
         if (result === true) {
           bpPath = obj
         }
       }
-
+      console.log(result)
       await this.createSixteenHeightMap()
 
       if (this.isAlphaBrush === true) {
@@ -390,8 +431,6 @@ export default {
             "TileHeightmapFileName": this.tile_info.sixteenFileName,
             "TileGeojsonFileName": this.tile_info.geoJsonFileName,
             "TileInfoFileName": this.tile_info.tileInfoFileName,
-            "MapPointLng": this.tile_info.pointLng,
-            "MapPointLat": this.tile_info.pointLat,
             "MapMiddleLngX": this.tile_info.center.lng,
             "MapMiddleLatY": this.tile_info.center.lat,
             "MapBtmRLng": this.tile_info.bottomRight.lng,
