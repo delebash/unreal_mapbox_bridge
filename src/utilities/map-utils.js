@@ -24,6 +24,7 @@ function getTileInfo(lng, lat, map) {
   tileInfo.tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
   tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
   tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
+  tileInfo.area_bb = getAreaBB(tileInfo.bbox)
 
   const llb = new mapboxgl.LngLatBounds(tileInfo.bbox);
   tileInfo.bboxCT = llb.getCenter();
@@ -37,6 +38,15 @@ function getTileInfo(lng, lat, map) {
   tileInfo.topRight = tileInfo.bboxNE
   tileInfo.bottomRight = tileInfo.bboxSE
   tileInfo.center = tileInfo.bboxCT
+
+
+  const topLeft = turf.point([tileInfo.bboxNE.lng,  tileInfo.bboxNE.lat]);
+  const topRight = turf.point([tileInfo.bboxSW.lng, tileInfo.bboxNE.lat]);
+  const bottomLeft = turf.point([tileInfo.bboxNE.lng,  tileInfo.bboxSW.lat]);
+  const bottomRight = turf.point([tileInfo.bboxSW.lng,  tileInfo.bboxSW.lat]);
+  const middleLeft = turf.midpoint(  topLeft ,  bottomLeft);
+  const middleRight = turf.midpoint(  topRight ,   bottomRight);
+  tileInfo.distance = turf.distance(middleLeft, middleRight, 'kilometers').toFixed(2);
 
   tileInfo.maxPngValue = 65535
   tileInfo.rgbFileName = 'terrain-rgb' + '-' + tileInfo.mapboxTileName + '.png'
@@ -73,7 +83,12 @@ function getTileInfo(lng, lat, map) {
 //   });
 // }
 
+function getAreaBB(bbox){
 
+  let poly = turf.bboxPolygon(bbox);
+  let area = turf.area(poly);
+  return area
+}
 function getTileGeoJsonBB(bbox) {
   let poly = turf.bboxPolygon(bbox);
   let geoJson = {

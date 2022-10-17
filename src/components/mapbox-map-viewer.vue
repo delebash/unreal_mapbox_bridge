@@ -52,6 +52,7 @@
           </div>
         </q-menu>
       </q-btn>
+      &nbsp; &nbsp; &nbsp; {{ this.tileInfoString }}
     </q-toolbar>
 
   </div>
@@ -68,13 +69,20 @@ import emitter from "../utilities/emitter";
 import mapboxgl from 'mapbox-gl'
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'
 import mbxGeocoding from '@mapbox/mapbox-sdk/services/geocoding'
+import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
+//import DrawRectangle from 'mapbox-gl-draw-rectangle-mode';
+//import MapboxGLButtonControl from '@delebash/mapbox-gl-button-control'
+//import '../css/styles.css'
 
+let draw
 let geocoder
 
 export default {
   name: 'mapbox-map-viewer',
   setup() {
     return {
+      tileInfoString: ref(''),
       dirHandle: ref(''),
       style_url: ref(''),
       access_token: ref(''),
@@ -376,6 +384,38 @@ export default {
       // Add zoom and rotation controls to the map.
       map.addControl(new mapboxgl.NavigationControl());
 
+      // let modes = MapboxDraw.modes;
+      // modes.draw_rectangle = DrawRectangle;
+      //
+      // let drawOptions = {
+      //   displayControlsDefault: false,
+      //   controls: {
+      //     trash: true, combine_features: true,
+      //     uncombine_features: true
+      //   },
+      //   modes: modes
+      // }
+      //
+      // draw = new MapboxDraw(drawOptions);
+      //
+      // map.addControl(draw)
+      //
+      // const rectangle = new MapboxGLButtonControl({
+      //   className: "mapbox-gl-draw_polygon",
+      //   title: "Draw Rectangle",
+      //   eventHandler: changeDrawMode
+      // });
+      //
+      // map.addControl(rectangle);
+      //
+      // function changeDrawMode(event) {
+      //   let baseClass = 'mapboxgl-ctrl-icon'
+      //
+      //   if (event.target.className === baseClass + ' ' + 'mapbox-gl-draw_polygon') {
+      //     draw.changeMode('draw_rectangle');
+      //   }
+      // }
+
       //Game Navigation Controls
       // pixels the map pans when the up or down arrow is clicked
       const deltaDistance = 100;
@@ -450,7 +490,7 @@ export default {
       //     JSON.stringify(e.lngLat.wrap());
       // });
       map.on('click', async function (e) {
-   //   mapUtils.showLayerID(map)
+        //   mapUtils.showLayerID(map)
         let dirHandle = await idbKeyval.get('dirHandle')
 
         //Verify user has permission to rea/write from selected directory
@@ -464,6 +504,7 @@ export default {
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
 
         idbKeyval.set('tile_info', tile_info)
+        that.tileInfoString = 'Tile Info: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Area in KM: ' + (tile_info.distance)
 
         //Reverse Geocoding
         await that.geoCodeReverse(tile_info)
@@ -525,14 +566,12 @@ export default {
           }
         }
       })
-    }
-    ,
+    },
 
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
-    }
-    ,
+    },
     // async changeStyle() {
     //   if (this.map.getSource("mapbox-3d")) {
     //     this.map.setTerrain(null)
