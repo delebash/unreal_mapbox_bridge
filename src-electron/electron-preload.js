@@ -15,3 +15,21 @@
  *     doAThing: () => {}
  *   })
  */
+import {contextBridge, ipcRenderer} from 'electron';
+
+
+contextBridge.exposeInMainWorld('myNodeApi', {
+  send: (channel, data) => {
+    let validChannels = ["toMain"]
+    if (validChannels.includes(channel)) {
+      ipcRenderer.send(channel, data);
+    }
+  },
+  receive: (channel, func) => {
+    let validChannels = ["fromMain"];
+    if (validChannels.includes(channel)) {
+      // Strip event as it includes `sender` and is a security risk
+      ipcRenderer.on(channel, (event, ...args) => func(...args));
+    }
+  }
+})

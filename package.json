@@ -1,6 +1,6 @@
 {
   "name": "unreal-mapbox-bridge",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "Import real world locations into Unreal using Mapbox",
   "productName": "Unreal Mapbox Bridge",
   "author": "daniel <danelebash@hotmail.com>",
@@ -24,6 +24,8 @@
     "@mapbox/tilebelt": "^1.0.2",
     "@quasar/extras": "^1.15.4",
     "@turf/turf": "^6.5.0",
+    "electron-log": "^4.4.8",
+    "electron-updater": "^5.3.0",
     "idb-keyval": "^6.2.0",
     "image-js": "^0.35.2",
     "mapbox-gl": "^2.10.0",
