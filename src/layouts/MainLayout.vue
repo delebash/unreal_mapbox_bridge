@@ -141,7 +141,6 @@ export default {
           // console.log('Called on OK or Cancel')
         })
       },
-      qt: $q,
       data_path: '',
       selectedTab: ref('map'),
       dirHandle: ref(''),
@@ -159,19 +158,7 @@ export default {
   },
 
   mounted: async function () {
-    window.myNodeApi.receive("fromMain", (data) => {
-      if (data.event === 'update-downloaded') {
-        let actions = [
-          {
-            label: 'Restart Now?', color: 'white', handler: () => {
-              window.myNodeApi.send("toMain", {event: 'restart', msg: ''});
-            }
-          }
-        ]
-        this.showNotify('Update downloaded, ready to restart and install.',
-          'info', 'top', 'announcement', actions, 'white')
-      }
-    });
+
 
     //Load user data
     await this.loadUserData();
@@ -184,16 +171,6 @@ export default {
   },
   methods: {
 
-    showNotify(msg, color, position, icon, actions,textColor) {
-      this.qt.notify({
-        message: msg,
-        color: color,
-        position: position,
-        icon: icon,
-        textColor: textColor,
-        actions: actions
-      })
-    },
 
     resizeMap() {
       this.$refs.mapBoxViewer.resizeMap()
@@ -217,8 +194,13 @@ export default {
     },
     redirectToSettings() {
       this.selectedTab = "settings"
-      this.showNotify('Please fill out the required fields!', 'negative',
-        'top', 'announcement', 'report_problem','white')
+      Notify.create({
+        color: 'negative',
+        textColor: 'white',
+        icon: 'report_problem',
+        message: 'Please fill out the required fields!',
+        position: 'top'
+      })
     },
     async openDirectory() {
       let dirHandle

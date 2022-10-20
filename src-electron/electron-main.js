@@ -1,15 +1,11 @@
-import {app, BrowserWindow, nativeTheme, Menu, ipcMain} from 'electron'
+import {app, BrowserWindow, Menu} from 'electron'
 import path from 'path'
 import os from 'os'
-const {autoUpdater} = require('electron-updater');
-const log = require('electron-log');
+
 app.commandLine.appendSwitch('enable-features', "SharedArrayBuffer")
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
 
-autoUpdater.logger = log;
-autoUpdater.logger.transports.file.level = 'info';
-log.info('App starting...');
 
 try {
   if (platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -157,38 +153,3 @@ app.on('activate', () => {
   }
 })
 
-
-ipcMain.on("toMain", (event, data) => {
-  // Send result back to renderer process
-  if (data.event === 'restart') {
-    autoUpdater.quitAndInstall();
-  }
-})
-
-//Auto Updater
-autoUpdater.on('checking-for-update', () => {
-  sendStatusToWindow({event: 'checking-for-update', msg: 'Checking for update...'});
-})
-autoUpdater.on('update-available', (info) => {
-  sendStatusToWindow({event: 'update-available', msg: 'update-available'});
-})
-autoUpdater.on('update-not-available', (info) => {
-  sendStatusToWindow({event: 'update-not-available', msg: 'update-not-available'});
-})
-autoUpdater.on('error', (err) => {
-  sendStatusToWindow({event: 'error', msg: 'Error in auto-updater. ' + err});
-})
-autoUpdater.on('download-progress', (progressObj) => {
-  let log_message = "Download speed: " + progressObj.bytesPerSecond;
-  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-  sendStatusToWindow({event: 'download-progress', msg: log_message});
-})
-autoUpdater.on('update-downloaded', (info) => {
-  sendStatusToWindow({event: 'update-downloaded', msg: 'Update downloaded'});
-})
-
-function sendStatusToWindow(data) {
-  log.info(data.msg);
-  mainWindow.webContents.send('fromMain', data);
-}
