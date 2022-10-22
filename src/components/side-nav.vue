@@ -345,67 +345,84 @@ export default {
       });
     },
     async sendToTerrainMagic() {
-      await this.sendToUnreal(true)
+      if (this.tile_info) {
+        await this.sendToUnreal(true)
+      } else {
+        this.alertMsg = 'Please select a location on the map first.'
+        this.alert = true
+      }
     },
     async sendToUnreal(useTerrainMagic = false) {
-      let host = 'http://localhost:30010/'
-      let call = 'remote/object/call'
-      let data = {}
-      let response
+      if (this.tile_info) {
+        let host = 'http://localhost:30010/'
+        let call = 'remote/object/call'
+        let data = {}
+        let response
 
-      data = {
-        "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
-        "functionName": "GetAllLevelActors"
-      }
-
-      let bpPath = ''
-      let bluePrintName = "Mapbox_BP"
-      let result
-      let objArray = await mapUtils.unrealRemoteControl(data, host + call)
-      for (let obj of objArray.ReturnValue) {
-        result = obj.includes(bluePrintName)
-        if (result === true) {
-          bpPath = obj
-        }
-      }
-      console.log(result)
-      await this.createSixteenHeightMap()
-
-      if (this.isAlphaBrush === true) {
         data = {
-          "objectPath": bpPath,
-          "functionName": "MakeLandscapeStamp",
-          "parameters": {
-            "AlphaBrushName": this.tile_info.alphaBrushFileName
+          "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
+          "functionName": "GetAllLevelActors"
+        }
+
+        let bpPath = ''
+        let bluePrintName = "Mapbox_BP"
+        let result
+        try {
+          let objArray = await mapUtils.unrealRemoteControl(data, host + call)
+          for (let obj of objArray.ReturnValue) {
+            result = obj.includes(bluePrintName)
+            if (result === true) {
+              bpPath = obj
+            }
+          }
+          // console.log(result)
+          await this.createSixteenHeightMap()
+
+          if (this.isAlphaBrush === true) {
+            data = {
+              "objectPath": bpPath,
+              "functionName": "MakeLandscapeStamp",
+              "parameters": {
+                "AlphaBrushName": this.tile_info.alphaBrushFileName
+              }
+            }
+            response = await mapUtils.unrealRemoteControl(data, host + call)
+            this.qt.loading.hide()
+          } else {
+            this.unrealMapPath = await idbKeyval.get('mappath')
+            this.tile_info.landscapeName = this.landscapeName
+            let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
+            data = {
+              "objectPath": bpPath,
+              "functionName": "GenerateMapboxLandscape",
+              "parameters": {
+                "LandscapeName": this.tile_info.landscapeName,
+                "LandscapeSize": this.tile_info.resolution.toString(),
+                "TileHeightmapFileName": this.tile_info.sixteenFileName,
+                "TileGeojsonFileName": this.tile_info.geoJsonFileName,
+                "TileInfoFileName": this.tile_info.tileInfoFileName,
+                "MapMiddleLngX": this.tile_info.center.lng,
+                "MapMiddleLatY": this.tile_info.center.lat,
+                "MapBtmRLng": this.tile_info.bottomRight.lng,
+                "MapBtmLLng": this.tile_info.bottomLeft.lng,
+                "MapTopLLat": this.tile_info.topLeft.lat,
+                "MapBtmLLat": this.tile_info.bottomLeft.lat,
+                "UseTerrainMagic": useTerrainMagic,
+                "SlippyMapTileString": mapTileString.trim()
+              }
+            }
+            response = await mapUtils.unrealRemoteControl(data, host + call)
+            this.qt.loading.hide()
+          }
+        } catch (e) {
+          if (e.message === "Failed to fetch"){
+            this.alertMsg = 'Cannot connect to Unreal please make sure Unreal is running and the Mapbox_BP is in your scene.'
+            this.alert = true
           }
         }
-        response = await mapUtils.unrealRemoteControl(data, host + call)
-        this.qt.loading.hide()
       } else {
-        this.unrealMapPath = await idbKeyval.get('mappath')
-        this.tile_info.landscapeName = this.landscapeName
-        let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
-        data = {
-          "objectPath": bpPath,
-          "functionName": "GenerateMapboxLandscape",
-          "parameters": {
-            "LandscapeName": this.tile_info.landscapeName,
-            "LandscapeSize": this.tile_info.resolution.toString(),
-            "TileHeightmapFileName": this.tile_info.sixteenFileName,
-            "TileGeojsonFileName": this.tile_info.geoJsonFileName,
-            "TileInfoFileName": this.tile_info.tileInfoFileName,
-            "MapMiddleLngX": this.tile_info.center.lng,
-            "MapMiddleLatY": this.tile_info.center.lat,
-            "MapBtmRLng": this.tile_info.bottomRight.lng,
-            "MapBtmLLng": this.tile_info.bottomLeft.lng,
-            "MapTopLLat": this.tile_info.topLeft.lat,
-            "MapBtmLLat": this.tile_info.bottomLeft.lat,
-            "UseTerrainMagic": useTerrainMagic,
-            "SlippyMapTileString": mapTileString.trim()
-          }
-        }
-        response = await mapUtils.unrealRemoteControl(data, host + call)
-        this.qt.loading.hide()
+        this.alertMsg = 'Please select a location on the map first.'
+        this.alert = true
       }
     },
     async unrealTileFeatures(combine) {
@@ -418,25 +435,26 @@ export default {
       await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.tileInfoFileName, jsonTile_info)
     },
     async createSixteenHeightMap() {
-      let translateOptions
-      let buff
-
-      this.tile_info.resolution = this.unrealLandscape.value
-      mapboxgl.accessToken = await idbKeyval.get('access_token')
-      this.access_token = mapboxgl.accessToken
-      // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
-
-
-      this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
-      this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
-      this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
-
-      let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
-      //let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
-      this.tile_info.mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
-      this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
 
       if (this.tile_info) {
+        let translateOptions
+        let buff
+
+        this.tile_info.resolution = this.unrealLandscape.value
+        mapboxgl.accessToken = await idbKeyval.get('access_token')
+        this.access_token = mapboxgl.accessToken
+        // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
+
+
+        this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
+        this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
+        this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+
+        let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
+        //let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
+        this.tile_info.mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
+        this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
+
         this.qt.loading.show()
         this.dirHandle = await idbKeyval.get('dirHandle')
         //Verify user has permission to rea/write from selected directory
@@ -547,10 +565,11 @@ export default {
               break;
           }
         } else {
-          this.alertMsg = 'Please download file first'
+          this.alertMsg = 'Please select a location on the map first.'
           this.alert = true
         }
       } else {
+        this.alertMsg = 'Please select a location on the map first.'
         this.alert = true
       }
     }

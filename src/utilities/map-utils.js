@@ -40,12 +40,12 @@ function getTileInfo(lng, lat, map) {
   tileInfo.center = tileInfo.bboxCT
 
 
-  const topLeft = turf.point([tileInfo.bboxNE.lng,  tileInfo.bboxNE.lat]);
+  const topLeft = turf.point([tileInfo.bboxNE.lng, tileInfo.bboxNE.lat]);
   const topRight = turf.point([tileInfo.bboxSW.lng, tileInfo.bboxNE.lat]);
-  const bottomLeft = turf.point([tileInfo.bboxNE.lng,  tileInfo.bboxSW.lat]);
-  const bottomRight = turf.point([tileInfo.bboxSW.lng,  tileInfo.bboxSW.lat]);
-  const middleLeft = turf.midpoint(  topLeft ,  bottomLeft);
-  const middleRight = turf.midpoint(  topRight ,   bottomRight);
+  const bottomLeft = turf.point([tileInfo.bboxNE.lng, tileInfo.bboxSW.lat]);
+  const bottomRight = turf.point([tileInfo.bboxSW.lng, tileInfo.bboxSW.lat]);
+  const middleLeft = turf.midpoint(topLeft, bottomLeft);
+  const middleRight = turf.midpoint(topRight, bottomRight);
   tileInfo.distance = turf.distance(middleLeft, middleRight, 'kilometers').toFixed(2);
 
   tileInfo.maxPngValue = 65535
@@ -83,12 +83,13 @@ function getTileInfo(lng, lat, map) {
 //   });
 // }
 
-function getAreaBB(bbox){
+function getAreaBB(bbox) {
 
   let poly = turf.bboxPolygon(bbox);
   let area = turf.area(poly);
   return area
 }
+
 function getTileGeoJsonBB(bbox) {
   let poly = turf.bboxPolygon(bbox);
   let geoJson = {
@@ -212,13 +213,13 @@ async function downloadTerrainRgb(mapbox_rgb_image_url) {
 }
 
 async function unrealRemoteControl(data, url) {
+  let response, dataJson
   const requestOptions = {
     method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
   };
-  const response = await fetch(url, requestOptions);
 
-  const dataJson = await response.json();
-
+  response = await fetch(url, requestOptions);
+  dataJson = await response.json();
   return dataJson
 }
 
