@@ -190,25 +190,27 @@ module.exports = configure(function (/* ctx */) {
       },
       builder: {
         // https://www.electron.build/configuration/configuration
-
         appId: 'unreal-mapbox-bridge',
         files: [
-          "!node_modules"
+          "!**/node_modules/*"
         ],
         publish: {
           'provider': 'github'
         },
         win: {// configuration parameters of installation software under Windows
           target: [
-            "Zip" // package as the installation file zip
+            "portable" // single exe
           ]
         },
-        nsis: {// NSIS configuration parameters
-          oneClick: false, // click to open
-          deleteAppDataOnUninstall: true,
-          allowToChangeInstallationDirectory: true, // allows the user to choose the installation location
-          perMachine: true
+        portable: {
+          "artifactName": "Unreal Mapbox Bridge.exe"
         }
+        // nsis: {// NSIS configuration parameters
+        //   oneClick: false, // click to open
+        //   deleteAppDataOnUninstall: true,
+        //   allowToChangeInstallationDirectory: true, // allows the user to choose the installation location
+        //   perMachine: true
+        // }
       }
     },
 

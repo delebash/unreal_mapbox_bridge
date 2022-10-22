@@ -1,11 +1,10 @@
-import {app, BrowserWindow, Menu} from 'electron'
+import {app, BrowserWindow, nativeTheme, Menu} from 'electron'
 import path from 'path'
 import os from 'os'
 
 app.commandLine.appendSwitch('enable-features', "SharedArrayBuffer")
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
-
 
 try {
   if (platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -152,4 +151,3 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
