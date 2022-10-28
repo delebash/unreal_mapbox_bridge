@@ -27,11 +27,19 @@ function getTileInfo(lng, lat, map) {
   tileInfo.area_bb = getAreaBB(tileInfo.bbox)
 
   const llb = new mapboxgl.LngLatBounds(tileInfo.bbox);
+
+  //Corners of bbox
   tileInfo.bboxCT = llb.getCenter();
   tileInfo.bboxSW = llb.getSouthWest()
   tileInfo.bboxNE = llb.getNorthEast()
   tileInfo.bboxNW = llb.getNorthWest()
   tileInfo.bboxSE = llb.getSouthEast()
+
+  //Edge of bbox
+  tileInfo.bboxW = llb.getWest().toFixed(5)
+  tileInfo.bboxS = llb.getSouth().toFixed(5)
+  tileInfo.bboxE = llb.getEast().toFixed(5)
+  tileInfo.bboxN = llb.getNorth().toFixed(5)
 
   tileInfo.topLeft = tileInfo.bboxNW
   tileInfo.bottomLeft = tileInfo.bboxSW

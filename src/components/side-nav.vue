@@ -88,8 +88,15 @@
   <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
          label="Send To Unreal"/>
 
-  <q-btn @click="sendToTerrainMagic" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
+  <q-btn @click="sendToTerrainMagic" :disabled="isDisabled" dense color="deep-orange" class="q-ml-xs" no-caps
          label="Send To TerrainMagic"/>
+
+  <q-btn @click="copyExtents" :disabled="isDisabled" dense color="purple" class="q-ml-xs" no-caps
+         label="Copy Bounds for Blender Osm"/>
+
+  <q-btn @click="copyTileInfoString" :disabled="isDisabled" dense color="cyan" class="q-ml-xs" no-caps
+         label="Copy Slippy Tile Info String"/>
+
   <q-dialog v-model="bbinfoalert">
     <q-card>
       <q-card-section>
@@ -117,6 +124,10 @@
 
         <div class="text-h6">Bottom Right:</div>
         Lat: {{ tile_info.bottomRight.lat }} Lng: {{ tile_info.bottomRight.lng }}
+
+        <div class="text-h6">Lng/Lat Max/Min:</div>
+        Lng/Lat-Min: {{ tile_info.bboxW }} , {{ tile_info.bboxS }}
+        Lng/Lat-Max: {{ tile_info.bboxE }} , {{ tile_info.bboxN }}
 
       </q-card-section>
       <q-card-actions align="right">
@@ -239,6 +250,54 @@ export default {
     })
   },
   methods: {
+    showNotify(msg, color, position, icon, textColor) {
+      this.qt.notify({
+        message: msg,
+        color: color,
+        position: position,
+        icon: icon,
+        textColor: textColor
+      })
+    },
+    copyTileInfoString() {
+      if (this.tile_info) {
+        navigator.permissions.query({name: "clipboard-write"}).then((result) => {
+          if (result.state === "granted" || result.state === "prompt") {
+            let tileInfoString = this.tile_info.x + ',' + this.tile_info.y + ',' + this.tile_info.z
+            navigator.clipboard.writeText(tileInfoString).then(() => {
+              this.showNotify('Tile info string copied   ' + tileInfoString, 'info', 'top', 'announcement', 'white')
+              /* clipboard successfully set */
+            }, () => {
+              /* clipboard write failed */
+            });
+          }
+        });
+      } else {
+        this.alertMsg = 'Please select a location on the map first.'
+        this.alert = true
+      }
+    },
+    copyExtents() {
+      if (this.tile_info) {
+        navigator.permissions.query({name: "clipboard-write"}).then((result) => {
+          if (result.state === "granted" || result.state === "prompt") {
+
+            let bboxCoords = this.tile_info.bboxW + ',' + this.tile_info.bboxS + ',' + this.tile_info.bboxE + ',' + this.tile_info.bboxN
+
+            navigator.clipboard.writeText(bboxCoords).then(() => {
+              this.showNotify('Bounding box coordinates copied   ' + bboxCoords, 'info', 'top', 'announcement', 'white')
+
+              /* clipboard successfully set */
+            }, () => {
+              /* clipboard write failed */
+            });
+          }
+        });
+      } else {
+        this.alertMsg = 'Please select a location on the map first.'
+        this.alert = true
+      }
+    },
     adjustedZscale() {
       let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
 
@@ -415,7 +474,7 @@ export default {
             this.qt.loading.hide()
           }
         } catch (e) {
-          if (e.message === "Failed to fetch"){
+          if (e.message === "Failed to fetch") {
             this.alertMsg = 'Cannot connect to Unreal please make sure Unreal is running and the Mapbox_BP is in your scene.'
             this.alert = true
           }
