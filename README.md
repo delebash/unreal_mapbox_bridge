@@ -16,12 +16,30 @@ Other free Unreal projects
 https://github.com/delebash/unreal_vault_organizer
 
 
+# Updates: 10/28/2022
+
+## Added:
+
+**Blur Radius** --  This will apply a blur to the heightmap.  It can be useful to reduce sharp edges and artifacts.  The greater the number the greater the blur.
+
+## Added Buttons:
+
+**Send to Terrain Magic** -- (only works with custom Terrain Magic code -- pm me on my discord channel if you want it).  If you use the Terrain Magic plugin from the UE market place then this will load your landscape into Terrain Magic.
+
+**Copy Bounds for Blender Osm** -- If you use the Blender Osm plugin to generate real world landscapes, this will copy the coordinates you need to paste into the Blender Osm Plugin.  Osm has it's own map app but if you use this map app you can still have that capability.
+
+**Copy Slippy Tile String** -- This will copy the Slippy Tile String Info.  Slippy Tile is a format for identifying Tile Information.  It is in the format x,y,z where z = zoom level.  Terrain Magic uses the Slippy Tile String, so until Send To Terrain Magic is fixed you can use this to copy and paste into Terrain Magic.
+
+**Dist folder** -- contains compiled web app.  You should be able to run it from any web server.
+
+
 ## Install the dependencies
 ```bash
 npm install
 ```
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
+
 ```bash
 npm start
 ```

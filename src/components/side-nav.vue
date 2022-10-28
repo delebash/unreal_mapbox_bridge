@@ -340,7 +340,9 @@ export default {
       if (this.tile_info) {
         this.bbinfoalert = true
       } else {
-        this.alert = false
+        this.bbinfoalert = false
+        this.alertMsg = 'Please select a location on the map first.'
+        this.alert = true
       }
     },
 
@@ -427,7 +429,9 @@ export default {
         let bluePrintName = "Mapbox_BP"
         let result
         try {
-          let objArray = await mapUtils.unrealRemoteControl(data, host + call)
+          response = await mapUtils.unrealRemoteControl(data, host + call)
+          console.log("Blueprint Name Response " + response)
+          let objArray = response.toJSON()
           for (let obj of objArray.ReturnValue) {
             result = obj.includes(bluePrintName)
             if (result === true) {
@@ -446,6 +450,7 @@ export default {
               }
             }
             response = await mapUtils.unrealRemoteControl(data, host + call)
+            console.log("AlphaBrush Stamp Response " + response)
             this.qt.loading.hide()
           } else {
             this.unrealMapPath = await idbKeyval.get('mappath')
@@ -471,11 +476,16 @@ export default {
               }
             }
             response = await mapUtils.unrealRemoteControl(data, host + call)
+            console.log("Send To Unreal Response " + response)
             this.qt.loading.hide()
           }
         } catch (e) {
           if (e.message === "Failed to fetch") {
             this.alertMsg = 'Cannot connect to Unreal please make sure Unreal is running and the Mapbox_BP is in your scene.'
+            this.alert = true
+          }else{
+            console.log(e)
+            this.alertMsg = e.message
             this.alert = true
           }
         }

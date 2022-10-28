@@ -221,14 +221,18 @@ async function downloadTerrainRgb(mapbox_rgb_image_url) {
 }
 
 async function unrealRemoteControl(data, url) {
+  try {
   let response, dataJson
   const requestOptions = {
     method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
   };
 
   response = await fetch(url, requestOptions);
-  dataJson = await response.json();
-  return dataJson
+  // dataJson = await response.json();
+  return response
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 /**
