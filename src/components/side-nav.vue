@@ -430,8 +430,8 @@ export default {
         let result
         try {
           response = await mapUtils.unrealRemoteControl(data, host + call)
-          console.log("Blueprint Name Response " + response)
-          let objArray = response.toJSON()
+          console.log("Blueprint Name Response " + response.body)
+          let objArray = await response.json()
           for (let obj of objArray.ReturnValue) {
             result = obj.includes(bluePrintName)
             if (result === true) {
@@ -450,7 +450,7 @@ export default {
               }
             }
             response = await mapUtils.unrealRemoteControl(data, host + call)
-            console.log("AlphaBrush Stamp Response " + response)
+            console.log("AlphaBrush Stamp Response " + response.body)
             this.qt.loading.hide()
           } else {
             this.unrealMapPath = await idbKeyval.get('mappath')
@@ -476,7 +476,7 @@ export default {
               }
             }
             response = await mapUtils.unrealRemoteControl(data, host + call)
-            console.log("Send To Unreal Response " + response)
+            console.log("Send To Unreal Response " + response.body)
             this.qt.loading.hide()
           }
         } catch (e) {
