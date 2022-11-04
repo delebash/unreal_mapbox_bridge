@@ -24,27 +24,34 @@
           </div>
         </template>
       </q-field>
-      <q-item-label class="q-pt-none q-mt-xs">Export Type:</q-item-label>
-      <q-option-group
+
+      <q-item-label class="q-pt-none q-mt-xs"><b><u>Export Type:</u></b></q-item-label>
+      <q-select
         class="q-mt-none q-pt-none"
+        bg-color="blue-2"
+        outlined
+        filled
         dense
-        inline
-        :options="exportOptions"
-        @update:model-value="exportType_Change"
-        type="radio"
         v-model="exportType"
+        :options="exportTyprOptions"
+        option-disable="cannotSelect"
+        :option-disable="(item) => item === null ? true : item.cannotSelect"
+        @update:model-value="exportType_Change"
       />
-      <q-option-group v-show="!isAlphaBrush"
+
+      <q-item-label v-show="isExportOptions" class="q-pt-none q-mt-xs"><b><u>Export Options:</u></b></q-item-label>
+      <q-option-group v-show="isExportOptions"
                       class="q-mt-none q-pt-none"
                       dense
                       inline
-                      :options="otherOptions"
-                      @update:model-value="otherOptionsModelChange"
+                      :options="exportOptions"
+                      @update:model-value="exportOptionsModelChange"
                       type="checkbox"
-                      v-model="otherOptionsModel"
+                      v-model="exportOptionsModel"
 
       />
-      <q-select v-show="!isAlphaBrush" dense class="q-pt-none q-mt-xs"
+
+      <q-select v-show="isLandscape" dense class="q-pt-none q-mt-xs"
                 label="Landscape Size"
                 transition-show="scale"
                 transition-hide="scale"
@@ -54,48 +61,52 @@
                 :options="landscapeSize"
       />
 
+
+      <q-field v-show="isAlphaBrush" class="q-pt-none q-mt-xs" label="Brush Size"
+      >
+        <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushHeight" label="Height"/>
+        <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushWidth" label="Width"/>
+        <q-input
+          ref="alphaBrushNameRef"
+          filled
+          v-model="alphaBrushName"
+          label="Brush Name"
+        />
+      </q-field>
+
+
+      <q-field v-show="isLandscape" class="q-pt-none q-mt-xs" dense label="Landscape Name (Optional)"
+               hint="Enter Unique Landscape Name"
+      >
+        <q-input v-model="landscapeName"/>
+      </q-field>
+
+      <q-field v-show="isBlurRadius" class="q-pt-none q-mt-xs" label="Blur Radius"
+      >
+        <q-input class="q-pt-none q-mt-xs" filled v-model="blurRadius" label="Blur Radius"/>
+      </q-field>
+
+
     </div>
-    <q-field v-show="isAlphaBrush" class="q-pt-none q-mt-xs" label="Alpha Brush Size"
-    >
-      <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushHeight" label="Height"/>
-      <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushWidth" label="Width"/>
-    </q-field>
-    <q-field class="q-pt-none q-mt-xs" label="Blur Radius"
-    >
-      <q-input class="q-pt-none q-mt-xs" filled v-model="blurRadius" label="Blur Radius"/>
-    </q-field>
-    <q-field v-show="isAlphaBrush" class="q-pt-none q-mt-xs">
-      <q-input
-        ref="alphaBrushNameRef"
-        filled
-        v-model="alphaBrushName"
-        label="Alpha Brush Name"
-      />
-    </q-field>
-    <q-field v-show="!isAlphaBrush" class="q-pt-none q-mt-xs" dense label="Landscape Name (Optional)"
-             hint="Enter Unique Landscape Name"
-    >
-      <q-input v-model="landscapeName"/>
-    </q-field>
   </div>
 
-  <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
 
-  <q-btn @click="createSixteenHeightMap" ref="btnDownload" dense color="primary" no-caps
+  <q-btn v-show="isDownload" @click="createSixteenHeightMap" ref="btnDownload" dense color="primary" no-caps
          label="Download HeightMap"/>
 
 
-  <q-btn @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs" no-caps
+  <q-btn v-show="isSendToUnreal" @click="sendToUnreal" :disabled="isDisabled" dense color="green" class="q-ml-xs"
+         no-caps
          label="Send To Unreal"/>
 
-  <q-btn @click="sendToTerrainMagic" :disabled="isDisabled" dense color="deep-orange" class="q-ml-xs" no-caps
-         label="Send To TerrainMagic"/>
 
   <q-btn @click="copyExtents" :disabled="isDisabled" dense color="purple" class="q-ml-xs" no-caps
          label="Copy Bounds for Blender Osm"/>
 
   <q-btn @click="copyTileInfoString" :disabled="isDisabled" dense color="cyan" class="q-ml-xs" no-caps
          label="Copy Slippy Tile Info String"/>
+
+  <q-btn @click="showBBInfo" dense color="orange" no-caps label="Show Bounding Box Info"/>
 
   <q-dialog v-model="bbinfoalert">
     <q-card>
@@ -179,6 +190,11 @@ export default {
       blurRadius: ref(0),
       access_token: ref(''),
       isDisabled: ref(false),
+      isDownload: ref(true),
+      isLandscape: ref(true),
+      isExportOptions: ref(true),
+      isBlurRadius: ref(true),
+      isSendToUnreal: ref(true),
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
         {
@@ -217,16 +233,16 @@ export default {
       map: null,
       data: null,
       bbinfoalert: ref(false),
-      exportType: ref('unreal'),
+      exportType: ref('Unreal Heightmap'),
       landscapeName: ref(''),
       alphaBrushName: ref(''),
       alphaBrushHeight: ref(505),
       alphaBrushWidth: ref(505),
       unrealMapPath: ref(''),
       qt: $q,
-      otherOptionsModel: ref(['zrange', 'combine_features']),
+      exportOptionsModel: ref(['zrange', 'combine_features']),
       alertMsg: ref(''),
-      otherOptions: [
+      exportOptions: [
         {label: 'Zrange-sea level=0', value: 'zrange'},
         {label: 'Flip X', value: 'flipx'},
         {label: 'Flip y', value: 'flipy'},
@@ -234,11 +250,13 @@ export default {
         {label: 'Download Geojson Features', value: 'features'},
         {label: 'Combine Unique Features', value: 'combine_features'},
       ],
-      exportOptions: [
-        {label: 'Unreal Heightmap', value: 'unreal'},
-        {label: 'Geojson Only', value: 'geojson_only'},
-        {label: 'Unreal Alpha Brush', value: 'unreal_alpha_brush'},
-        {label: 'None', value: 'none'}
+      exportTyprOptions: [
+        {label: 'Unreal Heightmap', value: 'Unreal Heightmap'},
+        {label: 'Unreal Terrain Magic Plugin', value: 'Unreal Terrain Magic Plugin'},
+        {label: 'Unreal Stamp Brush Plugin', value: 'Unreal Stamp Brush Plugin'},
+        {label: 'Unreal Landmass Effect Brush Plugin -- Coming Soon', value: 'Unreal Landmass Effect Brush Plugin', cannotSelect:true},
+        {label: 'None', value: 'none'},
+        {label: 'Geojson Only', value: 'geojson_only'}
       ]
     }
   },
@@ -304,7 +322,7 @@ export default {
       // Use only positive range ( 0 to 255.992)
       //Use entire UE4 Z range (-256 to 255.992)
 
-      if (this.otherOptionsModel.includes('zrange')) {
+      if (this.exportOptionsModel.includes('zrange')) {
         this.tile_info.startZRange = ZrangeSeaLevel
         this.tile_info.zscale = (ZrangeSeaLevel / zScale).toFixed(3)
       } else {
@@ -313,27 +331,39 @@ export default {
       }
       return this.tile_info.zscale
     },
-    otherOptionsModelChange(e) {
-      this.otherOptionsModel = e
+    exportOptionsModelChange(e) {
+      this.exportOptionsModel = e
       this.adjustedZscale()
     },
     exportType_Change(e) {
-
-      if (e === "unreal_alpha_brush") {
-        this.isAlphaBrush = true
-        this.btnDownloadText = "Download Alpha Brush"
-
-      } else {
+      if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None") {
+        this.isDownload = true
+        this.isSendToUnreal = true
         this.isAlphaBrush = false
-        this.btnDownloadText = "Download "
-      }
-
-      if (e === "geojson_only") {
-        if (!this.otherOptionsModel.includes('features')) {
-          this.otherOptionsModel.push('features')
-        }
-      } else {
-        this.otherOptionsModel.splice(this.otherOptionsModel.indexOf('features'), 1);
+        this.isLandscape = true
+        this.isExportOptions = true
+        this.isBlurRadius = true
+      } else if (this.exportType.label === "Unreal Stamp Brush Plugin" || this.exportType.label === "Unreal Landmass Effect Brush Plugin") {
+        this.isDownload = false
+        this.isSendToUnreal = true
+        this.isAlphaBrush = true
+        this.isLandscape = false
+        this.isExportOptions = false
+        this.isBlurRadius = true
+      } else if (this.exportType.label === "Geojson Only") {
+        this.isDownload = true
+        this.isSendToUnreal = false
+        this.isAlphaBrush = false
+        this.isLandscape = false
+        this.isExportOptions = false
+        this.isBlurRadius = false
+      } else if (this.exportType.label === "Unreal Terrain Magic Plugin") {
+        this.isDownload = false
+        this.isSendToUnreal = true
+        this.isAlphaBrush = false
+        this.isLandscape = false
+        this.isExportOptions = false
+        this.isBlurRadius = false
       }
     },
     showBBInfo() {
@@ -405,94 +435,127 @@ export default {
         };
       });
     },
-    async sendToTerrainMagic() {
-      if (this.tile_info) {
-        await this.sendToUnreal(true)
-      } else {
-        this.alertMsg = 'Please select a location on the map first.'
-        this.alert = true
-      }
-    },
-    async sendToUnreal(useTerrainMagic = false) {
-      if (this.tile_info) {
-        let host = 'http://localhost:30010/'
-        let call = 'remote/object/call'
-        let data = {}
-        let response
 
+    async sendToUnreal() {
+
+      let host = 'http://localhost:30010/', call = 'remote/object/call', data = {}, dataJson, result,
+        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushPath,
+        AlphaBrushTemplatePath, AlphaBrushTexturesPath, useTerrainMagic, HeightmapProperty
+
+      //
+      if (this.tile_info) {
+
+        //Find name of Mapbox_BP in scene
         data = {
           "objectPath": "/Script/UnrealEd.Default__EditorActorSubsystem",
           "functionName": "GetAllLevelActors"
         }
 
-        let bpPath = ''
-        let bluePrintName = "Mapbox_BP"
-        let result
-        try {
-          response = await mapUtils.unrealRemoteControl(data, host + call)
-          console.log("Blueprint Name Response " + response.body)
-          let objArray = await response.json()
+        dataJson = await mapUtils.unrealRemoteControl(data, host + call)
+       // console.log(dataJson.error)
+        if (dataJson.error) {
+        if (dataJson.error.message === "Failed to fetch") {
+          this.alertMsg = "Cannot connect to Unreal server. Please make sure your project is open and Mapbox_BP is in the scene.  " +
+            "Also make sure you launched the Map using the Select Map button as this starts the Unreal Web Server"
+        }else{
+          this.alertMsg = dataJson.error.message
+        }
+          this.alert = true
+        } else {
+          let objArray = await dataJson.response.json()
           for (let obj of objArray.ReturnValue) {
             result = obj.includes(bluePrintName)
             if (result === true) {
               bpPath = obj
+            } else {
+              bpPath = null
             }
           }
-          // console.log(result)
-          await this.createSixteenHeightMap()
 
-          if (this.isAlphaBrush === true) {
-            data = {
-              "objectPath": bpPath,
-              "functionName": "MakeLandscapeStamp",
-              "parameters": {
-                "AlphaBrushName": this.tile_info.alphaBrushFileName
+          if (bpPath) {
+            //Mapbox_BP is in scene and we can continue
+
+            if (this.exportType.label !== "Unreal Terrain Magic Plugin") {
+              await this.createSixteenHeightMap()
+            } else {
+              useTerrainMagic = true
+            }
+
+            if (this.isAlphaBrush === true) {
+              if (this.exportType.label === "Unreal Stamp Brush Plugin") {
+                AlphaBrushPath = '/Game/Brushes/CustomBrushes/'
+                AlphaBrushTemplatePath = '/Game/Brushes/PEAKS/Peak_10_brush.Peak_10_brush'
+                AlphaBrushTexturesPath = 'Textures/'
+                HeightmapProperty = 'HeightMap'
+              }
+
+              if (this.exportType.label === "Unreal Landmass Effect Brush Plugin") {
+                AlphaBrushPath = '/Game/Editor/Landscape/LandmassEffectBrush/CustomBrushes/'
+                AlphaBrushTemplatePath = '/Game/Editor/Landscape/LandmassEffectBrush/Effects/Variants/Map/HeightMapEffect.HeightMapEffect'
+                AlphaBrushTexturesPath = 'Textures/'
+                HeightmapProperty = '"Elevation"'
+                HeightmapProperty = '"Heightmap (Greyscale / White is High)"'
+              }
+
+              data = {
+                "objectPath": bpPath,
+                "functionName": "MakeLandscapeStamp",
+                "parameters": {
+                  "AlphaBrushName": this.tile_info.alphaBrushFileName,
+                  "AlphaBrushPath": AlphaBrushPath,
+                  "AlphaBrushTemplatePath": AlphaBrushTemplatePath,
+                  "AlphaBrushTexturesPath": AlphaBrushTexturesPath,
+                  "HeightmapProperty": HeightmapProperty
+                }
+              }
+            } else {
+              this.unrealMapPath = await idbKeyval.get('mappath')
+              this.tile_info.landscapeName = this.landscapeName
+              let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
+
+              data = {
+                "objectPath": bpPath,
+                "functionName": "GenerateMapboxLandscape",
+                "parameters": {
+                  "LandscapeName": this.tile_info.landscapeName,
+                  "LandscapeSize": this.tile_info.resolution.toString(),
+                  "TileHeightmapFileName": this.tile_info.sixteenFileName,
+                  "TileGeojsonFileName": this.tile_info.geoJsonFileName,
+                  "TileInfoFileName": this.tile_info.tileInfoFileName,
+                  "MapMiddleLngX": this.tile_info.center.lng,
+                  "MapMiddleLatY": this.tile_info.center.lat,
+                  "MapBtmRLng": this.tile_info.bottomRight.lng,
+                  "MapBtmLLng": this.tile_info.bottomLeft.lng,
+                  "MapTopLLat": this.tile_info.topLeft.lat,
+                  "MapBtmLLat": this.tile_info.bottomLeft.lat,
+                  "UseTerrainMagic": useTerrainMagic,
+                  "SlippyMapTileString": mapTileString.trim()
+                }
               }
             }
-            response = await mapUtils.unrealRemoteControl(data, host + call)
-            console.log("AlphaBrush Stamp Response " + response.body)
-            this.qt.loading.hide()
+
+            //Call method on Mapbox_BP
+            dataJson = await mapUtils.unrealRemoteControl(data, host + call)
+            if (dataJson.error) {
+              console.log(dataJson.error)
+              this.alertMsg = dataJson.error.message
+              this.alert = true
+            } else {
+              //Success
+              console.log(await dataJson.response.json())
+            }
           } else {
-            this.unrealMapPath = await idbKeyval.get('mappath')
-            this.tile_info.landscapeName = this.landscapeName
-            let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
-            data = {
-              "objectPath": bpPath,
-              "functionName": "GenerateMapboxLandscape",
-              "parameters": {
-                "LandscapeName": this.tile_info.landscapeName,
-                "LandscapeSize": this.tile_info.resolution.toString(),
-                "TileHeightmapFileName": this.tile_info.sixteenFileName,
-                "TileGeojsonFileName": this.tile_info.geoJsonFileName,
-                "TileInfoFileName": this.tile_info.tileInfoFileName,
-                "MapMiddleLngX": this.tile_info.center.lng,
-                "MapMiddleLatY": this.tile_info.center.lat,
-                "MapBtmRLng": this.tile_info.bottomRight.lng,
-                "MapBtmLLng": this.tile_info.bottomLeft.lng,
-                "MapTopLLat": this.tile_info.topLeft.lat,
-                "MapBtmLLat": this.tile_info.bottomLeft.lat,
-                "UseTerrainMagic": useTerrainMagic,
-                "SlippyMapTileString": mapTileString.trim()
-              }
-            }
-            response = await mapUtils.unrealRemoteControl(data, host + call)
-            console.log("Send To Unreal Response " + response.body)
-            this.qt.loading.hide()
-          }
-        } catch (e) {
-          if (e.message === "Failed to fetch") {
-            this.alertMsg = 'Cannot connect to Unreal please make sure Unreal is running and the Mapbox_BP is in your scene.'
-            this.alert = true
-          }else{
-            console.log(e)
-            this.alertMsg = e.message
+            this.alertMsg = 'Could not find Mapbox_BP in scene'
             this.alert = true
           }
         }
       } else {
-        this.alertMsg = 'Please select a location on the map first.'
+        this.alertMsg = 'Please select a map location'
         this.alert = true
       }
+
+      this.qt.loading.hide()
+
     },
     async unrealTileFeatures(combine) {
       let features = mapUtils.getFeaturesFromBB(this.map, this.tile_info, combine)
@@ -542,10 +605,10 @@ export default {
 
           // sixteen_img = await sixteen_img.rotate(-90)
 
-          if (this.otherOptionsModel.includes('flipy')) {
+          if (this.exportOptionsModel.includes('flipy')) {
             sixteen_img = await sixteen_img.flipY()
           }
-          if (this.otherOptionsModel.includes('flipx')) {
+          if (this.exportOptionsModel.includes('flipx')) {
             sixteen_img = await sixteen_img.flipX()
           }
 
@@ -561,22 +624,24 @@ export default {
 
           this.tile_info.resampleSize = this.unrealLandscape.value.toString()
           this.tile_info.resizeMethod = 'lanczos'
-          this.tile_info.exportType = this.exportType
+          this.tile_info.exportTypeLabel = this.exportType.label
 
 
           // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
           this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth
 
-          if (this.otherOptionsModel.includes('features')) {
+          if (this.exportOptionsModel.includes('features')) {
             let combine = false
-            if (this.otherOptionsModel.includes('combine_features')) {
+            if (this.exportOptionsModel.includes('combine_features')) {
               combine = true
             }
             await this.unrealTileFeatures(combine)
           }
 
-          switch (this.tile_info.exportType) {
-            case 'unreal':
+
+          switch (this.tile_info.exportTypeLabel) {
+
+            case 'Unreal Heightmap':
               //Download heightmap
               translateOptions = [
                 '-ot', 'UInt16',
@@ -587,7 +652,7 @@ export default {
 
               await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
-              if (this.otherOptionsModel.includes('satellite')) {
+              if (this.exportOptionsModel.includes('satellite')) {
                 //satellite image
                 translateOptions = [
                   '-of', 'JPEG',
@@ -596,22 +661,15 @@ export default {
                 let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
                 await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
               }
+              this.qt.loading.hide()
+              break;
 
+            case 'Geojson Only':
 
               this.qt.loading.hide()
               break;
 
-            case 'geojson_only':
-
-              this.qt.loading.hide()
-              break;
-            // case 'normalize':
-            //   let sixteen_img = sixteen_img.level()
-            //   await fileUtils.writeFileToDisk(dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
-            //   this.qt.loading.hide()
-            //   break;
-
-            case 'unreal_alpha_brush':
+            case 'Unreal Stamp Brush Plugin':
               if (this.alphaBrushName.length > 0) {
                 this.tile_info.alphaBrushFileName = this.alphaBrushName
               }
@@ -628,7 +686,24 @@ export default {
               this.qt.loading.hide()
               break;
 
-            case 'none':
+            case 'Unreal Landmass Effect Brush Plugin':
+              if (this.alphaBrushName.length > 0) {
+                this.tile_info.alphaBrushFileName = this.alphaBrushName
+              }
+              //Download heightmap
+              translateOptions = [
+                '-ot', 'UInt16',
+                '-of', 'PNG',
+                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
+              ];
+
+              await this.createWorker(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
+
+              this.qt.loading.hide()
+              break;
+
+            case 'None':
               await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
               this.qt.loading.hide()
               break;
