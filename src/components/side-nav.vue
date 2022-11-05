@@ -669,7 +669,7 @@ export default {
               break;
 
             case 'Geojson Only':
-
+              await this.unrealTileFeatures(true)
               this.qt.loading.hide()
               break;
 
