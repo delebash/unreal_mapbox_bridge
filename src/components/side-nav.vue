@@ -233,7 +233,7 @@ export default {
       map: null,
       data: null,
       bbinfoalert: ref(false),
-      exportType: ref('Unreal Heightmap'),
+      exportType: ref({label: 'Unreal Heightmap', value: 'Unreal Heightmap'}),
       landscapeName: ref(''),
       alphaBrushName: ref(''),
       alphaBrushHeight: ref(505),
@@ -637,7 +637,6 @@ export default {
             }
             await this.unrealTileFeatures(combine)
           }
-
 
           switch (this.tile_info.exportTypeLabel) {
 
