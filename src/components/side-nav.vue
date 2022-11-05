@@ -254,7 +254,11 @@ export default {
         {label: 'Unreal Heightmap', value: 'Unreal Heightmap'},
         {label: 'Unreal Terrain Magic Plugin', value: 'Unreal Terrain Magic Plugin'},
         {label: 'Unreal Stamp Brush Plugin', value: 'Unreal Stamp Brush Plugin'},
-        {label: 'Unreal Landmass Effect Brush Plugin -- Coming Soon', value: 'Unreal Landmass Effect Brush Plugin', cannotSelect:true},
+        {
+          label: 'Unreal Landmass Effect Brush Plugin -- Coming Soon',
+          value: 'Unreal Landmass Effect Brush Plugin',
+          cannotSelect: true
+        },
         {label: 'None', value: 'none'},
         {label: 'Geojson Only', value: 'geojson_only'}
       ]
@@ -452,21 +456,25 @@ export default {
         }
 
         dataJson = await mapUtils.unrealRemoteControl(data, host + call)
-       // console.log(dataJson.error)
+        // console.log(dataJson.error)
         if (dataJson.error) {
-        if (dataJson.error.message === "Failed to fetch") {
-          this.alertMsg = "Cannot connect to Unreal server. Please make sure your project is open and Mapbox_BP is in the scene.  " +
-            "Also make sure you launched the Map using the Select Map button as this starts the Unreal Web Server"
-        }else{
-          this.alertMsg = dataJson.error.message
-        }
+          if (dataJson.error.message === "Failed to fetch") {
+            this.alertMsg = "Cannot connect to Unreal server. Please make sure your project is open and Mapbox_BP is in the scene.  " +
+              "Also make sure you launched the Map using the Select Map button as this starts the Unreal Web Server"
+          } else {
+            this.alertMsg = dataJson.error.message
+          }
           this.alert = true
         } else {
           let objArray = await dataJson.response.json()
+          console.log(objArray)
           for (let obj of objArray.ReturnValue) {
+            console.log(obj)
             result = obj.includes(bluePrintName)
+            console.log(result)
             if (result === true) {
               bpPath = obj
+              break;
             } else {
               bpPath = null
             }
