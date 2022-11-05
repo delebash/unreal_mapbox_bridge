@@ -255,9 +255,9 @@ export default {
         {label: 'Unreal Terrain Magic Plugin', value: 'Unreal Terrain Magic Plugin'},
         {label: 'Unreal Stamp Brush Plugin', value: 'Unreal Stamp Brush Plugin'},
         {
-          label: 'Unreal Landmass Effect Brush Plugin -- Coming Soon',
+          label: 'Unreal Landmass Effect Brush Plugin',
           value: 'Unreal Landmass Effect Brush Plugin',
-          cannotSelect: true
+          cannotSelect: false
         },
         {label: 'None', value: 'none'},
         {label: 'Geojson Only', value: 'geojson_only'}
@@ -443,7 +443,7 @@ export default {
     async sendToUnreal() {
 
       let host = 'http://localhost:30010/', call = 'remote/object/call', data = {}, dataJson, result,
-        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushPath,
+        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushPath,StampTool,
         AlphaBrushTemplatePath, AlphaBrushTexturesPath, useTerrainMagic, HeightmapProperty
 
       //
@@ -492,14 +492,15 @@ export default {
                 AlphaBrushTemplatePath = '/Game/Brushes/PEAKS/Peak_10_brush.Peak_10_brush'
                 AlphaBrushTexturesPath = 'Textures/'
                 HeightmapProperty = 'HeightMap'
+                StampTool = '"Unreal Stamp Brush Plugin"'
               }
 
               if (this.exportType.label === "Unreal Landmass Effect Brush Plugin") {
                 AlphaBrushPath = '/Game/Editor/Landscape/LandmassEffectBrush/CustomBrushes/'
                 AlphaBrushTemplatePath = '/Game/Editor/Landscape/LandmassEffectBrush/Effects/Variants/Map/HeightMapEffect.HeightMapEffect'
                 AlphaBrushTexturesPath = 'Textures/'
-                HeightmapProperty = '"Elevation"'
                 HeightmapProperty = '"Heightmap (Greyscale / White is High)"'
+                StampTool = '"Unreal Landmass Effect Brush Plugin"'
               }
 
               data = {
@@ -510,7 +511,8 @@ export default {
                   "AlphaBrushPath": AlphaBrushPath,
                   "AlphaBrushTemplatePath": AlphaBrushTemplatePath,
                   "AlphaBrushTexturesPath": AlphaBrushTexturesPath,
-                  "HeightmapProperty": HeightmapProperty
+                  "HeightmapProperty": HeightmapProperty,
+                  "StampTool": StampTool
                 }
               }
             } else {
