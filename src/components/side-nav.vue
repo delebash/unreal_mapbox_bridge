@@ -467,11 +467,8 @@ export default {
           this.alert = true
         } else {
           let objArray = await dataJson.response.json()
-          console.log(objArray)
           for (let obj of objArray.ReturnValue) {
-            console.log(obj)
             result = obj.includes(bluePrintName)
-            console.log(result)
             if (result === true) {
               bpPath = obj
               break;
