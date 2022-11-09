@@ -253,6 +253,7 @@ export default {
       exportTyprOptions: [
         {label: 'Unreal Heightmap', value: 'Unreal Heightmap'},
         {label: 'Unreal Terrain Magic Plugin', value: 'Unreal Terrain Magic Plugin'},
+        {label: 'Unreal Terrain Magic Plugin -- Manual', value: 'Unreal Terrain Magic Plugin -- Manual'},
         {label: 'Unreal Stamp Brush Plugin', value: 'Unreal Stamp Brush Plugin'},
         {
           label: 'Unreal Landmass Effect Brush Plugin',
@@ -340,7 +341,7 @@ export default {
       this.adjustedZscale()
     },
     exportType_Change(e) {
-      if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None") {
+      if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None" || this.exportType.label === "Unreal Terrain Magic Plugin -- Manual") {
         this.isDownload = true
         this.isSendToUnreal = true
         this.isAlphaBrush = false
@@ -479,11 +480,14 @@ export default {
 
           if (bpPath) {
             //Mapbox_BP is in scene and we can continue
-
             if (this.exportType.label !== "Unreal Terrain Magic Plugin") {
               await this.createSixteenHeightMap()
             } else {
-              useTerrainMagic = true
+              useTerrainMagic = 'Automatic'
+            }
+
+            if (this.exportType.label === 'Unreal Terrain Magic Plugin -- Manual') {
+              useTerrainMagic = 'Manual'
             }
 
             if (this.isAlphaBrush === true) {
@@ -647,6 +651,29 @@ export default {
 
           switch (this.tile_info.exportTypeLabel) {
 
+            case 'Unreal Terrain Magic Plugin -- Manual':
+              //Download heightmap
+              translateOptions = [
+                '-ot', 'UInt16',
+                '-of', 'PNG',
+                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
+              ];
+
+              await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
+
+              if (this.exportOptionsModel.includes('satellite')) {
+                //satellite image
+                translateOptions = [
+                  '-of', 'JPEG',
+                  '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                ]
+                let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
+                await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+              }
+              this.qt.loading.hide()
+              break;
+
             case 'Unreal Heightmap':
               //Download heightmap
               translateOptions = [
@@ -669,6 +696,7 @@ export default {
               }
               this.qt.loading.hide()
               break;
+
 
             case 'Geojson Only':
               await this.unrealTileFeatures(true)

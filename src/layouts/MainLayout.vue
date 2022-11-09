@@ -130,7 +130,7 @@ export default {
 
           // props forwarded to your custom component
           componentProps: {
-            text: 'something',
+            text: '',
             // ...more..props...
           }
         }).onOk(() => {
