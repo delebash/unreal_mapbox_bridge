@@ -444,7 +444,7 @@ export default {
     async sendToUnreal() {
 
       let host = 'http://localhost:30010/', call = 'remote/object/call', data = {}, dataJson, result,
-        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushPath,StampTool,
+        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushDestinationPath, StampTool,
         AlphaBrushTemplatePath, AlphaBrushTexturesPath, useTerrainMagic, HeightmapProperty
 
       //
@@ -484,66 +484,60 @@ export default {
               await this.createSixteenHeightMap()
             } else {
               useTerrainMagic = 'Automatic'
+              this.tile_info.resolution = '505'
             }
 
             if (this.exportType.label === 'Unreal Terrain Magic Plugin -- Manual') {
               useTerrainMagic = 'Manual'
             }
 
-            if (this.isAlphaBrush === true) {
-              if (this.exportType.label === "Unreal Stamp Brush Plugin") {
-                AlphaBrushPath = '/Game/Brushes/CustomBrushes/'
-                AlphaBrushTemplatePath = '/Game/Brushes/PEAKS/Peak_10_brush.Peak_10_brush'
-                AlphaBrushTexturesPath = 'Textures/'
-                HeightmapProperty = 'HeightMap'
-                StampTool = '"Unreal Stamp Brush Plugin"'
-              }
+            if (this.exportType.label === "Unreal Stamp Brush Plugin") {
+              AlphaBrushDestinationPath = '/Game/Brushes/CustomBrushes/'
+              AlphaBrushTemplatePath = '/Game/Brushes/PEAKS/Peak_10_brush.Peak_10_brush'
+              AlphaBrushTexturesPath = 'Textures/'
+              HeightmapProperty = 'HeightMap'
+              StampTool = 'Unreal Stamp Brush Plugin'
+            }
 
-              if (this.exportType.label === "Unreal Landmass Effect Brush Plugin") {
-                AlphaBrushPath = '/Game/Editor/Landscape/LandmassEffectBrush/CustomBrushes/'
-                AlphaBrushTemplatePath = '/Game/Editor/Landscape/LandmassEffectBrush/Effects/Variants/Map/HeightMapEffect.HeightMapEffect'
-                AlphaBrushTexturesPath = 'Textures/'
-                HeightmapProperty = '"Heightmap (Greyscale / White is High)"'
-                StampTool = '"Unreal Landmass Effect Brush Plugin"'
-              }
+            if (this.exportType.label === "Unreal Landmass Effect Brush Plugin") {
+              AlphaBrushDestinationPath = '/Game/Editor/Landscape/LandmassEffectBrush/CustomBrushes/'
+              AlphaBrushTemplatePath = '/Game/Editor/Landscape/LandmassEffectBrush/Effects/Variants/Map/HeightMapEffect.HeightMapEffect'
+              AlphaBrushTexturesPath = 'Textures/'
+              HeightmapProperty = 'Heightmap (Greyscale / White is High)'
+              StampTool = 'Unreal Landmass Effect Brush Plugins'
+            }
 
-              data = {
-                "objectPath": bpPath,
-                "functionName": "MakeLandscapeStamp",
-                "parameters": {
-                  "AlphaBrushName": this.tile_info.alphaBrushFileName,
-                  "AlphaBrushPath": AlphaBrushPath,
-                  "AlphaBrushTemplatePath": AlphaBrushTemplatePath,
-                  "AlphaBrushTexturesPath": AlphaBrushTexturesPath,
-                  "HeightmapProperty": HeightmapProperty,
-                  "StampTool": StampTool
-                }
-              }
-            } else {
-              this.unrealMapPath = await idbKeyval.get('mappath')
-              this.tile_info.landscapeName = this.landscapeName
-              let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
 
-              data = {
-                "objectPath": bpPath,
-                "functionName": "GenerateMapboxLandscape",
-                "parameters": {
-                  "LandscapeName": this.tile_info.landscapeName,
-                  "LandscapeSize": this.tile_info.resolution.toString(),
-                  "TileHeightmapFileName": this.tile_info.sixteenFileName,
-                  "TileGeojsonFileName": this.tile_info.geoJsonFileName,
-                  "TileInfoFileName": this.tile_info.tileInfoFileName,
-                  "MapMiddleLngX": this.tile_info.center.lng,
-                  "MapMiddleLatY": this.tile_info.center.lat,
-                  "MapBtmRLng": this.tile_info.bottomRight.lng,
-                  "MapBtmLLng": this.tile_info.bottomLeft.lng,
-                  "MapTopLLat": this.tile_info.topLeft.lat,
-                  "MapBtmLLat": this.tile_info.bottomLeft.lat,
-                  "UseTerrainMagic": useTerrainMagic,
-                  "SlippyMapTileString": mapTileString.trim()
-                }
+            this.unrealMapPath = await idbKeyval.get('mappath')
+            this.tile_info.landscapeName = this.landscapeName
+            let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
+
+            data = {
+              "objectPath": bpPath,
+              "functionName": "Init_MapboxBridge",
+              "parameters": {
+                "LandscapeName": this.tile_info.landscapeName,
+                "LandscapeSize": this.tile_info.resolution.toString(),
+                "TileHeightmapFileName": this.tile_info.sixteenFileName,
+                "TileGeojsonFileName": this.tile_info.geoJsonFileName,
+                "TileInfoFileName": this.tile_info.tileInfoFileName,
+                "MapMiddleLngX": this.tile_info.center.lng,
+                "MapMiddleLatY": this.tile_info.center.lat,
+                "MapBtmRLng": this.tile_info.bottomRight.lng,
+                "MapBtmLLng": this.tile_info.bottomLeft.lng,
+                "MapTopLLat": this.tile_info.topLeft.lat,
+                "MapBtmLLat": this.tile_info.bottomLeft.lat,
+                "RunFunction": 'Landscape_Stamp_Tool_Plugin',
+                "SlippyMapTileString": mapTileString.trim(),
+                "HeightMapTexturesPath": '/Game/ImportedHeightMaps/',
+                "AlphaBrushName": this.tile_info.alphaBrushFileName,
+                "AlphaBrushDestinationPath": AlphaBrushDestinationPath,
+                "AlphaBrushTemplatePath": AlphaBrushTemplatePath,
+                "AlphaBrushTexturesPath": AlphaBrushTexturesPath,
+                "HeightmapProperty": HeightmapProperty
               }
             }
+
 
             //Call method on Mapbox_BP
             dataJson = await mapUtils.unrealRemoteControl(data, host + call)
