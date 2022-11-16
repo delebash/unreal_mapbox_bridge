@@ -15,12 +15,11 @@
         </template>
       </q-field>
 
-      <q-field class="q-pt-none q-mt-xs" dense label="Unreal Z-Scale" hint="Input into Unreal Landscape Z scale"
+      <q-field class="q-pt-none q-mt-xs" dense label="Unreal X,Y and Z-Scale" hint="Input into Unreal Landscape Z scale"
                stack-label>
         <template v-slot:control>
-          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
-              this.tile_info.zscale
-            }}
+          <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">
+            {{this.tile_info.xyscale}}, {{this.tile_info.xyscale}}, {{this.tile_info.zscale}}
           </div>
         </template>
       </q-field>
@@ -322,19 +321,21 @@ export default {
         this.alert = true
       }
     },
-    landscapeSizeChange(){
+    landscapeSizeChange() {
       this.tile_info.resolution = this.unrealLandscape.value
       this.adjustedZscale()
     },
     adjustedZscale() {
       let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
+      let xyscale = this.getUnrealXYScale()
+      this.tile_info.xyscale = xyscale.toFixed(3)
 
       // Use only positive range ( 0 to 255.992)
       //Use entire UE4 Z range (-256 to 255.992)
 
       if (this.exportOptionsModel.includes('zrange')) {
         this.tile_info.startZRange = ZrangeSeaLevel
-        this.tile_info.zscale =  zScale.toFixed(3)
+        this.tile_info.zscale = zScale.toFixed(3)
       } else {
         this.tile_info.startZRange = 0
         this.tile_info.zscale = zScale.toFixed(3)
@@ -405,7 +406,14 @@ export default {
       let zscale = cm * 0.001953125
       return zscale
     },
+    getUnrealXYScale() {
+      //Xy Scale
+      let km = this.tile_info.distance * 100
+      let sq = Math.sqrt(km) * 100
 
+      let xyscale = ( sq / this.unrealLandscape.value) * 100
+      return xyscale
+    },
     async updatePreviewImage() {
 
       this.preview_image_info = await this.data.preview_image_info
@@ -450,7 +458,7 @@ export default {
     async sendToUnreal() {
 
       let host = 'http://localhost:30010/', call = 'remote/object/call', data = {}, dataJson, result,
-        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushDestinationPath ,
+        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushDestinationPath,
         AlphaBrushTemplatePath, AlphaBrushTexturesPath, HeightmapProperty
 
       //
