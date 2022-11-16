@@ -59,6 +59,7 @@
                 outlined
                 v-model="unrealLandscape"
                 :options="landscapeSize"
+                @update:model-value="landscapeSizeChange"
       />
 
 
@@ -321,6 +322,10 @@ export default {
         this.alert = true
       }
     },
+    landscapeSizeChange(){
+      this.tile_info.resolution = this.unrealLandscape.value
+      this.adjustedZscale()
+    },
     adjustedZscale() {
       let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
 
@@ -329,7 +334,7 @@ export default {
 
       if (this.exportOptionsModel.includes('zrange')) {
         this.tile_info.startZRange = ZrangeSeaLevel
-        this.tile_info.zscale = (ZrangeSeaLevel / zScale).toFixed(3)
+        this.tile_info.zscale =  zScale.toFixed(3)
       } else {
         this.tile_info.startZRange = 0
         this.tile_info.zscale = zScale.toFixed(3)
@@ -338,6 +343,7 @@ export default {
     },
     exportOptionsModelChange(e) {
       this.exportOptionsModel = e
+      this.tile_info.resolution = this.unrealLandscape.value
       this.adjustedZscale()
     },
     exportType_Change(e) {
@@ -396,7 +402,7 @@ export default {
     },
     getUnrealZScale(maxElevation) {
       let cm = (maxElevation * 100)
-      let zscale = (cm * 0.001953125)
+      let zscale = cm * 0.001953125
       return zscale
     },
 
@@ -444,8 +450,8 @@ export default {
     async sendToUnreal() {
 
       let host = 'http://localhost:30010/', call = 'remote/object/call', data = {}, dataJson, result,
-        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushDestinationPath, StampTool,
-        AlphaBrushTemplatePath, AlphaBrushTexturesPath, useTerrainMagic, HeightmapProperty
+        bpPath, bluePrintName = 'Mapbox_BP', AlphaBrushDestinationPath ,
+        AlphaBrushTemplatePath, AlphaBrushTexturesPath, HeightmapProperty
 
       //
       if (this.tile_info) {
@@ -483,20 +489,15 @@ export default {
             if (this.exportType.label !== "Unreal Terrain Magic Plugin") {
               await this.createSixteenHeightMap()
             } else {
-              useTerrainMagic = 'Automatic'
               this.tile_info.resolution = '505'
             }
 
-            if (this.exportType.label === 'Unreal Terrain Magic Plugin -- Manual') {
-              useTerrainMagic = 'Manual'
-            }
 
             if (this.exportType.label === "Unreal Stamp Brush Plugin") {
               AlphaBrushDestinationPath = '/Game/Brushes/CustomBrushes/'
               AlphaBrushTemplatePath = '/Game/Brushes/PEAKS/Peak_10_brush.Peak_10_brush'
               AlphaBrushTexturesPath = 'Textures/'
               HeightmapProperty = 'HeightMap'
-              StampTool = 'Unreal Stamp Brush Plugin'
             }
 
             if (this.exportType.label === "Unreal Landmass Effect Brush Plugin") {
@@ -504,7 +505,6 @@ export default {
               AlphaBrushTemplatePath = '/Game/Editor/Landscape/LandmassEffectBrush/Effects/Variants/Map/HeightMapEffect.HeightMapEffect'
               AlphaBrushTexturesPath = 'Textures/'
               HeightmapProperty = 'Heightmap (Greyscale / White is High)'
-              StampTool = 'Unreal Landmass Effect Brush Plugins'
             }
 
 
@@ -514,7 +514,7 @@ export default {
 
             data = {
               "objectPath": bpPath,
-              "functionName": "Init_MapboxBridge",
+              "functionName": "GenerateMapboxLandscape",
               "parameters": {
                 "LandscapeName": this.tile_info.landscapeName,
                 "LandscapeSize": this.tile_info.resolution.toString(),
@@ -527,7 +527,7 @@ export default {
                 "MapBtmLLng": this.tile_info.bottomLeft.lng,
                 "MapTopLLat": this.tile_info.topLeft.lat,
                 "MapBtmLLat": this.tile_info.bottomLeft.lat,
-                "RunFunction": 'Landscape_Stamp_Tool_Plugin',
+                "RunFunction": this.exportType.label,
                 "SlippyMapTileString": mapTileString.trim(),
                 "HeightMapTexturesPath": '/Game/ImportedHeightMaps/',
                 "AlphaBrushName": this.tile_info.alphaBrushFileName,

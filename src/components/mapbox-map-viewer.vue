@@ -505,7 +505,7 @@ export default {
 
         idbKeyval.set('tile_info', tile_info)
         that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Area in KM: ' + (tile_info.distance)
-
+        //this.tile_info.resolution = this.unrealLandscape.value
         //Reverse Geocoding
         await that.geoCodeReverse(tile_info)
 
