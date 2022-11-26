@@ -2,7 +2,7 @@
   <q-layout view="lHr lpr lfr">
     <q-header dense elevated class="bg-primary text-white" height-hint="98">
     </q-header>
-<!--    <ReloadPrompt/>-->
+    <!--    <ReloadPrompt/>-->
     <q-drawer dense show-if-above v-model="drawerLeft" side="left" @hide='resizeMap' class="no-margin no-padding">
       <div class="row  q-pa-xs full-height">
         <q-card class="col q-pl-xs">
@@ -15,13 +15,13 @@
       <q-page class="row no-margin q-pa-sm">
         <q-card class="col">
           <q-tabs
-              dense
-              v-model="selectedTab"
-              class="text-grey"
-              active-color="primary"
-              indicator-color="primary"
-              align="justify"
-              narrow-indicator
+            dense
+            v-model="selectedTab"
+            class="text-grey"
+            active-color="primary"
+            indicator-color="primary"
+            align="justify"
+            narrow-indicator
           >
             <q-btn dense flat @click="changeDrawer" round icon="menu"/>
             <q-tab dense name="map" label="Map"/>
@@ -70,7 +70,8 @@
                        hint=""
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
-              <q-input dense class="q-pb-lg" v-model="mapbox_satellite_endpoint" label="Mapbox Satellite Endpoint *" filled
+              <q-input dense class="q-pb-lg" v-model="mapbox_satellite_endpoint" label="Mapbox Satellite Endpoint *"
+                       filled
                        lazy-rules
                        hint=""
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
@@ -90,16 +91,33 @@
               </div>
               <!--              <q-checkbox v-model="createFolder" label="Creat a folder for each tile information downloaded" />-->
               <br>
-<!--              <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"-->
-<!--              >-->
-<!--                <q-input v-model="unrealMapPath"/>-->
-<!--              </q-field>-->
-<!--              <br>-->
+              <!--              <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"-->
+              <!--              >-->
+              <!--                <q-input v-model="unrealMapPath"/>-->
+              <!--              </q-field>-->
+              <!--              <br>-->
               <q-btn class="q-pt-none" dense @click="saveUserSettings()" color="secondary"
                      label="Save settings"></q-btn>
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+
+        <q-dialog v-model="alert">
+          <q-card>
+            <q-card-section>
+              <div class="text-h6">Alert</div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-none">
+              {{ alertMsg }}
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="OK" color="primary" v-close-popup/>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
       </q-page>
     </q-page-container>
 
@@ -143,6 +161,8 @@ export default {
       },
       data_path: '',
       selectedTab: ref('map'),
+      alert: ref(false),
+      alertMsg: ref(''),
       dirHandle: ref(''),
       dirName: ref(''),
       style_url: ref(''),
@@ -150,7 +170,7 @@ export default {
       mapbox_api_url: ref(''),
       mapbox_raster_png_dem: ref(''),
       mapbox_satellite_endpoint: ref(''),
-     // unrealMapPath: ref(''),
+      // unrealMapPath: ref(''),
       isPwd: ref(true),
       drawerLeft: ref(false),
       createFolder: ref(false)
@@ -158,7 +178,7 @@ export default {
   },
 
   mounted: async function () {
-
+    this.checkFileApiSupport()
 
     //Load user data
     await this.loadUserData();
@@ -171,7 +191,13 @@ export default {
   },
   methods: {
 
-
+     checkFileApiSupport() {
+      let bEnabled = fileUtils.checkFileApiSupport()
+      if(bEnabled === false){
+        this.alertMsg = 'This browser does not support File System Access API.  Try Edge or Chrome.'
+        this.alert = true
+      }
+    },
     resizeMap() {
       this.$refs.mapBoxViewer.resizeMap()
     },
@@ -227,7 +253,7 @@ export default {
       idbKeyval.set('mapbox_satellite_endpoint', this.mapbox_satellite_endpoint);
       idbKeyval.set('mapbox_raster_png_dem', this.mapbox_raster_png_dem);
       idbKeyval.set('create_folder', this.createFolder);
-    //  idbKeyval.set('mappath', this.unrealMapPath );
+      //  idbKeyval.set('mappath', this.unrealMapPath );
 
       if (this.isRequiredSettings() === true) {
         this.loadMap()
