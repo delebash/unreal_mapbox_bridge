@@ -136,6 +136,12 @@
               <u>Landscape Size</u> -- Resamples the size of the image to recommended Unreal Landscape sizes.
             </li>
             <li>
+              <u>Enable World Partition</u> -- If you have a World Partition project and want a World Partition landscape with proxies, enable this..
+            </li>
+            <li>
+              <u>World Partition Grid Size</u> -- Grid size setting.
+            </li>
+            <li>
               <u>Landscape Name</u> -- Name of the landscape to be imported. (Optional
             </li>
             <li>
