@@ -4,7 +4,7 @@
     :src=url
     height=150px
   />
-  <div class="row justify-start q-pa-none q-ma-none">
+  <div class="row justify-start q-pa-none q-mb-md">
     <div style="width: 100%">
       <q-field dense class="text-weight-bolder q-pt-none q-mt-xs" label="Min/Max Elevation" stack-label>
         <template v-slot:control>
@@ -19,12 +19,12 @@
                stack-label>
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">
-            {{this.tile_info.xyscale}}, {{this.tile_info.xyscale}}, {{this.tile_info.zscale}}
+            {{ this.tile_info.xyscale }}, {{ this.tile_info.xyscale }}, {{ this.tile_info.zscale }}
           </div>
         </template>
       </q-field>
 
-      <q-item-label class="q-pt-none q-mt-xs"><b><u>Export Type:</u></b></q-item-label>
+      <q-item-label dense class="q-pt-none q-mt-xs"><b><u>Export Type:</u></b></q-item-label>
       <q-select
         class="q-mt-none q-pt-none"
         bg-color="blue-2"
@@ -38,7 +38,8 @@
         @update:model-value="exportType_Change"
       />
 
-      <q-item-label v-show="isExportOptions" class="q-pt-none q-mt-xs"><b><u>Export Options:</u></b></q-item-label>
+      <q-item-label dense v-show="isExportOptions" class="q-pt-none q-mt-xs"><b><u>Export Options:</u></b>
+      </q-item-label>
       <q-option-group v-show="isExportOptions"
                       class="q-mt-none q-pt-none"
                       dense
@@ -60,32 +61,38 @@
                 :options="landscapeSize"
                 @update:model-value="landscapeSizeChange"
       />
-
-
-      <q-field v-show="isAlphaBrush" class="q-pt-none q-mt-xs" label="Brush Size"
+      <q-field dense v-show="isLandscape" class="q-pt-none q-mt-xs">
+        <q-checkbox v-model="isWorldPartition" label="Enable World Partition" />
+      </q-field>
+      <q-field dense v-show="isLandscape" class="q-pt-none q-mt-xs" label="World Partition Grid Size"
       >
-        <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushHeight" label="Height"/>
-        <q-input class="q-pt-none q-mt-xs" filled v-model="alphaBrushWidth" label="Width"/>
+        <q-input dense class="q-pt-none q-mt-xs" v-model="gridSize"/>
+      </q-field>
+
+
+      <q-field dense v-show="isAlphaBrush" class="q-pt-none q-mt-xs" label="Brush Size"
+      >
+        <q-input dense class="q-pt-none q-mt-xs" filled v-model="alphaBrushHeight" label="Height"/>
+        <q-input dense class="q-pt-none q-mt-xs" filled v-model="alphaBrushWidth" label="Width"/>
         <q-input
           ref="alphaBrushNameRef"
-          filled
+          dense
           v-model="alphaBrushName"
           label="Brush Name"
         />
       </q-field>
 
 
-      <q-field v-show="isLandscape" class="q-pt-none q-mt-xs" dense label="Landscape Name (Optional)"
+      <q-field dense v-show="isLandscape" class="q-pt-none q-mt-xs" label="Landscape Name (Optional)"
                hint="Enter Unique Landscape Name"
       >
-        <q-input v-model="landscapeName"/>
+        <q-input dense v-model="landscapeName"/>
       </q-field>
 
-      <q-field v-show="isBlurRadius" class="q-pt-none q-mt-xs" label="Blur Radius"
+      <q-field dense v-show="isBlurRadius" class="q-pt-none q-mt-xs" label="Blur Radius"
       >
-        <q-input class="q-pt-none q-mt-xs" filled v-model="blurRadius" label="Blur Radius"/>
+        <q-input dense class="q-pt-none q-mt-xs" v-model="blurRadius"/>
       </q-field>
-
 
     </div>
   </div>
@@ -188,9 +195,11 @@ export default {
       alert: ref(false),
       isAlphaBrush: ref(false),
       blurRadius: ref(0),
+      gridSize: ref(2),
       access_token: ref(''),
       isDisabled: ref(false),
       isDownload: ref(true),
+      isWorldPartition: ref(false),
       isLandscape: ref(true),
       isExportOptions: ref(true),
       isBlurRadius: ref(true),
@@ -411,7 +420,7 @@ export default {
       let km = this.tile_info.distance * 100
       let sq = Math.sqrt(km) * 100
 
-      let xyscale = ( sq / this.unrealLandscape.value) * 100
+      let xyscale = (sq / this.unrealLandscape.value) * 100
       return xyscale
     },
     async updatePreviewImage() {
@@ -520,6 +529,13 @@ export default {
             this.tile_info.landscapeName = this.landscapeName
             let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
 
+            let wpGridSize
+            if(this.isWorldPartition === true){
+              wpGridSize = this.gridSize
+            }else{
+              wpGridSize = 0
+            }
+
             data = {
               "objectPath": bpPath,
               "functionName": "GenerateMapboxLandscape",
@@ -542,7 +558,8 @@ export default {
                 "AlphaBrushDestinationPath": AlphaBrushDestinationPath,
                 "AlphaBrushTemplatePath": AlphaBrushTemplatePath,
                 "AlphaBrushTexturesPath": AlphaBrushTexturesPath,
-                "HeightmapProperty": HeightmapProperty
+                "HeightmapProperty": HeightmapProperty,
+                "WorldPartitionGridSize": wpGridSize.toString()
               }
             }
 
