@@ -149,14 +149,21 @@ async function readFileFromDisk(dirHandle, fileName) {
 }
 
 function checkFileApiSupport() {
-  let bEnabled = true
-  try {
-    const dirHandle = window.showDirectoryPicker()
-  } catch (e) {
-    if (e.message === 'window.showDirectoryPicker is not a function') {
-      bEnabled = false
-    }
+  let bEnabled
+  if ('showDirectoryPicker' in window) {
+    bEnabled = true
+  }else{
+    bEnabled = false
   }
+  // let bEnabled = true
+  // try {
+  //   if(window.showDirectoryPicker())
+  //   const dirHandle = window.showDirectoryPicker()
+  // } catch (e) {
+  //   if (e.message === 'window.showDirectoryPicker is not a function') {
+  //     bEnabled = false
+  //   }
+  // }
   return bEnabled
 }
 
