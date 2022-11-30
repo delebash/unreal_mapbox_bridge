@@ -207,16 +207,68 @@ export default {
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
         {
+          label: '65281x65281 -- World Partition(Very Slow minutes)',
+          value: 65281
+        },
+        {
+          label: '59161x59161 -- World Partition(Very Slow minutes)',
+          value: 59161
+        },
+        {
+          label: '540611x54061 -- World Partition(Very Slow minutes)',
+          value: 54061
+        },
+        {
+          label: '49981x49981-- World Partition(Very Slow minutes)',
+          value: 49981
+        },
+        {
+          label: '48961x48961 -- World Partition(Very Slow minutes)',
+          value: 48961
+        },
+        {
+          label: '44881x44881 -- World Partition(Very Slow minutes)',
+          value: 44881
+        },
+        {
+          label: '32641x32641 -- World Partition(Very Slow minutes)',
+          value: 32641
+        },
+        {
+          label: '28561x28561 -- World Partition(Very Slow minutes)',
+          value: 28561
+        },
+        {
+          label: '24481x24481 -- World Partition(Very Slow minutes)',
+          value: 24481
+        },
+        {
+          label: '16321x16321 -- World Partition(Very Slow minutes --not enough video memory)',
+          value: 16321
+        },
+        {
           label: '8129x8129',
           value: 8129
+        },
+        {
+          label: '6097x6097',
+          value: 6097
         },
         {
           label: '4033x4033',
           value: 4033
         },
         {
+          label: '3025x3025',
+          value: 3025
+        },
+        {
           label: '2017x2017',
           value: 2017
+        },
+        {
+          label: '1513x1513',
+          value: 1513
         },
         {
           label: '1009x1009',
