@@ -207,43 +207,43 @@ export default {
       unrealLandscape: ref({label: 505, value: 505}),
       landscapeSize: [
         {
-          label: '65281x65281 -- World Partition(Very Slow minutes)',
+          label: '65281x65281 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 65281
         },
         {
-          label: '59161x59161 -- World Partition(Very Slow minutes)',
+          label: '59161x59161 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 59161
         },
         {
-          label: '540611x54061 -- World Partition(Very Slow minutes)',
+          label: '540611x54061 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 54061
         },
         {
-          label: '49981x49981-- World Partition(Very Slow minutes)',
+          label: '49981x49981-- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 49981
         },
         {
-          label: '48961x48961 -- World Partition(Very Slow minutes)',
+          label: '48961x48961 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 48961
         },
         {
-          label: '44881x44881 -- World Partition(Very Slow minutes)',
+          label: '44881x44881 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 44881
         },
         {
-          label: '32641x32641 -- World Partition(Very Slow minutes)',
+          label: '32641x32641 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 32641
         },
         {
-          label: '28561x28561 -- World Partition(Very Slow minutes)',
+          label: '28561x28561 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 28561
         },
         {
-          label: '24481x24481 -- World Partition(Very Slow minutes)',
+          label: '24481x24481 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 24481
         },
         {
-          label: '16321x16321 -- World Partition(Very Slow minutes --not enough video memory)',
+          label: '16321x16321 -- World Partition(Very Slow minutes --ue crash not enough video memory)',
           value: 16321
         },
         {
