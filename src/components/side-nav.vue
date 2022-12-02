@@ -235,7 +235,7 @@ export default {
           value: 1009
         },
         {
-          label: '512x512-Downloaded-Size',
+          label: '512x512 -- Native Resolution',
           value: 512
         },
         {
