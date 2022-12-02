@@ -62,7 +62,7 @@
                 @update:model-value="landscapeSizeChange"
       />
       <q-field dense v-show="isLandscape" class="q-pt-none q-mt-xs">
-        <q-checkbox v-model="isWorldPartition" label="Enable World Partition" />
+        <q-checkbox v-model="isWorldPartition" label="Enable World Partition"/>
       </q-field>
       <q-field dense v-show="isLandscape" class="q-pt-none q-mt-xs" label="World Partition Grid Size"
       >
@@ -542,9 +542,9 @@ export default {
             let mapTileString = this.tile_info.x + "," + this.tile_info.y + "," + this.tile_info.z
 
             let wpGridSize
-            if(this.isWorldPartition === true){
+            if (this.isWorldPartition === true) {
               wpGridSize = this.gridSize
-            }else{
+            } else {
               wpGridSize = 0
             }
 
@@ -706,24 +706,32 @@ export default {
               break;
 
             case 'Unreal Heightmap':
-              //Download heightmap
-              translateOptions = [
-                '-ot', 'UInt16',
-                '-of', 'PNG',
-                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
-                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
-              ];
-
-              await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
-
-              if (this.exportOptionsModel.includes('satellite')) {
-                //satellite image
+              if (this.tile_info.resampleSize != 512) {
+                //Download heightmap
                 translateOptions = [
-                  '-of', 'JPEG',
-                  '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
-                ]
-                let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-                await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                  '-ot', 'UInt16',
+                  '-of', 'PNG',
+                  '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                  '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
+                ];
+
+                await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
+
+                if (this.exportOptionsModel.includes('satellite')) {
+                  //satellite image
+                  translateOptions = [
+                    '-of', 'JPEG',
+                    '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                  ]
+                  let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
+                  await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                }
+              } else {
+                //Do not process only extract height values
+                await this.saveImage(buff, this.tile_info.sixteenFileName, "png")
+                if (this.exportOptionsModel.includes('satellite')) {
+                  await this.saveImage(buff, this.tile_info.satelliteFileName, "png")
+                }
               }
               this.qt.loading.hide()
               break;
