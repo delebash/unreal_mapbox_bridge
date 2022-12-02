@@ -730,6 +730,7 @@ export default {
                 //Do not process only extract height values
                 await this.saveImage(buff, this.tile_info.sixteenFileName, "png")
                 if (this.exportOptionsModel.includes('satellite')) {
+                  let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
                   await this.saveImage(buff, this.tile_info.satelliteFileName, "png")
                 }
               }
