@@ -347,7 +347,7 @@ export default {
       this.adjustedZscale()
     },
     adjustedZscale() {
-      let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation)
+      let zScale = this.getUnrealZScale(this.preview_image_info.maxElevation, this.preview_image_info.minElevation)
       let xyscale = this.getUnrealXYScale()
       this.tile_info.xyscale = xyscale.toFixed(3)
 
@@ -422,9 +422,23 @@ export default {
         this.tile_info.minmax = ''
       }
     },
-    getUnrealZScale(maxElevation) {
-      let cm = (maxElevation * 100)
-      let zscale = cm * 0.001953125
+    getUnrealZScale(maxElevation, minElevation) {
+      let cm, zscale
+      if (this.exportOptionsModel.includes('zrange')) {
+        cm = (maxElevation * 100)
+
+      } else {
+
+        if (minElevation < 0) {
+          minElevation = 0
+        }
+        let elevation = maxElevation - minElevation
+        cm = (elevation * 100)
+
+      }
+
+      zscale = cm * 0.001953125
+
       return zscale
     },
     getUnrealXYScale() {
