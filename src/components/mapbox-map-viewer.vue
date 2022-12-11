@@ -504,7 +504,7 @@ export default {
         let tile_info = mapUtils.getTileInfo(lng, lat, map);
 
         idbKeyval.set('tile_info', tile_info)
-        that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Area in KM: ' + (tile_info.distance)
+        that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
         //this.tile_info.resolution = this.unrealLandscape.value
         //Reverse Geocoding
         await that.geoCodeReverse(tile_info)
