@@ -430,9 +430,7 @@ export default {
     getUnrealXYScale() {
       //Xy Scale
       let km = this.tile_info.distance * 100
-      let sq = Math.sqrt(km) * 100
-
-      let xyscale = (sq / this.unrealLandscape.value) * 100
+      let xyscale = (km / this.unrealLandscape.value) * 100
       return xyscale
     },
     async updatePreviewImage() {
