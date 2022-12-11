@@ -443,7 +443,7 @@ export default {
     },
     getUnrealXYScale() {
       //Xy Scale
-      let km = this.tile_info.distance * 100
+      let km = this.tile_info.distance * 1000
       let xyscale = (km / this.unrealLandscape.value) * 100
       return xyscale
     },
