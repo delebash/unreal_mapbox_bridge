@@ -273,8 +273,8 @@ export default {
       ],
       exportTyprOptions: [
         {label: 'Unreal Heightmap', value: 'Unreal Heightmap'},
-        {label: 'Unreal Terrain Magic Plugin', value: 'Unreal Terrain Magic Plugin'},
-        {label: 'Unreal Terrain Magic Plugin -- Manual', value: 'Unreal Terrain Magic Plugin -- Manual'},
+        {label: 'Unreal Terrain Magic Plugin -- EarthLandscape Clip', value: 'Unreal Terrain Magic Plugin -- EarthLandscape Clip'},
+        {label: 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip', value: 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip'},
         {label: 'Unreal Stamp Brush Plugin', value: 'Unreal Stamp Brush Plugin'},
         {
           label: 'Unreal Landmass Effect Brush Plugin',
@@ -369,7 +369,7 @@ export default {
       this.adjustedZscale()
     },
     exportType_Change(e) {
-      if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None" || this.exportType.label === "Unreal Terrain Magic Plugin -- Manual") {
+      if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None" || this.exportType.label === "Unreal Terrain Magic Plugin -- HeightmapLandscape Clip") {
         this.isDownload = true
         this.isSendToUnreal = true
         this.isAlphaBrush = false
@@ -390,7 +390,7 @@ export default {
         this.isLandscape = false
         this.isExportOptions = false
         this.isBlurRadius = false
-      } else if (this.exportType.label === "Unreal Terrain Magic Plugin") {
+      } else if (this.exportType.label === "Unreal Terrain Magic Plugin -- EarthLandscape Clip") {
         this.isDownload = false
         this.isSendToUnreal = true
         this.isAlphaBrush = false
@@ -527,7 +527,7 @@ export default {
 
           if (bpPath) {
             //Mapbox_BP is in scene and we can continue
-            if (this.exportType.label !== "Unreal Terrain Magic Plugin") {
+            if (this.exportType.label !== "Unreal Terrain Magic Plugin -- EarthLandscape Clip") {
               await this.createSixteenHeightMap()
             } else {
               this.tile_info.resolution = '505'
@@ -694,7 +694,7 @@ export default {
 
           switch (this.tile_info.exportTypeLabel) {
 
-            case 'Unreal Terrain Magic Plugin -- Manual':
+            case 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip':
               //Download heightmap
               translateOptions = [
                 '-ot', 'UInt16',
