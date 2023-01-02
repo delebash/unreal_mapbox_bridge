@@ -65,17 +65,18 @@
                 besides Unreal.
               </li>
               <li>
-                <u>Unreal Terrain Magic Plugin</u> -- Needs custom C++ adjustment to work. You need to install the paid
-                plugin <a href="https://github.com/GDi4K/unreal-terrain-magic">Terrain Magic</a>.
-                Terrain magic has it's own map to import heightmaps for Unreal.
+                <u>Unreal Terrain Magic Plugin -- EarthLandscape Clip</u> -- Sends tile info string x,y and zoom to Terrain Magic.
+                You will need to install the custom version of Terrain Magic from this link <a href="https://github.com/delebash/unreal-terrain-magic/releases" target="_blank">Custom Version Of Terrain Magic</a>.
+                Terrain magic has it's own map to import heightmaps for Unreal but I just added it to mine for ease of use.
                 This just makes it a one click solution instead of copy and paste.
+                If you like Terrain Magic please purchase it from the marketplace link in description.  Original source for non-commercial <a href="https://github.com/GDi4K/unreal-terrain-magic" target="_blank">Terrain Magic</a>
               </li>
               <li>
-                <u>Unreal Terrain Magic Plugin -- Manual</u> -- No modification to Terrain Magic Pluign needed.
-                You need to install the paid plugin <a href="https://github.com/GDi4K/unreal-terrain-magic">Terrain
-                Magic</a>.
-                You need to click on Match Landscape Size to refersh the imported landscape after you click Send To
-                Unreal.
+                <u>Unreal Terrain Magic Plugin -- HeightmapLandscape Clip</u> -- Downloads heightmap from this app and loads it into Terrain Magic.
+                You will need to install the custom version of Terrain Magic from this link <a href="https://github.com/delebash/unreal-terrain-magic/releases" target="_blank">Custom Version Of Terrain Magic</a>.
+                Terrain magic has it's own map to import heightmaps for Unreal but I just added to mine for ease of use.
+                This just makes it a one click solution instead of copy and paste.
+                If you like Terrain Magic please purchase it from the marketplace link in description.  Original source for non-commercial <a href="https://github.com/GDi4K/unreal-terrain-magic" target="_blank">Terrain Magic</a>
               </li>
               <li>
                 <u>Unreal Stamp Brush Plugin</u> -- You need to install paid plugin <a
