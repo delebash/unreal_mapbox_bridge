@@ -180,20 +180,9 @@ import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
 import mapboxgl from "mapbox-gl";
-import workerUrl from 'gdal3.js/dist/package/gdal3.js?url'
-import dataUrl from 'gdal3.js/dist/package/gdal3WebAssembly.data?url'
-import wasmUrl from 'gdal3.js/dist/package/gdal3WebAssembly.wasm?url'
-import initGdalJs from 'gdal3.js';
 
-const paths = {
-  wasm: wasmUrl,
-  data: dataUrl,
-  js: workerUrl,
-};
 
 let Gdal
-
-
 let ZrangeSeaLevel = 32767
 
 export default {
@@ -302,9 +291,7 @@ export default {
     }
   },
   async mounted() {
-
-    Gdal = await initGdalJs({paths})
-
+    Gdal = await initGdalJs({path: 'https://cdn.jsdelivr.net/npm/gdal3.js@2.4.0/dist/package', useWorker: false})
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
       this.updatePreviewImage()
