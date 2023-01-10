@@ -26,6 +26,7 @@
     "@mapbox/tilebelt": "^1.0.2",
     "@quasar/extras": "^1.15.9",
     "@turf/turf": "^6.5.0",
+    "gdal3.js": "^2.4.0",
     "idb-keyval": "^6.2.0",
     "image-js": "^0.35.2",
     "mapbox-gl": "^2.12.0",

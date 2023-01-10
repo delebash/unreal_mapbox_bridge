@@ -180,9 +180,18 @@ import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
 import mapboxgl from "mapbox-gl";
+import workerUrl from 'gdal3.js/dist/package/gdal3.js?url'
+import dataUrl from 'gdal3.js/dist/package/gdal3WebAssembly.data?url'
+import wasmUrl from 'gdal3.js/dist/package/gdal3WebAssembly.wasm?url'
+import initGdalJs from 'gdal3.js';
 
+const paths = {
+  wasm: wasmUrl,
+  data: dataUrl,
+  js: workerUrl,
+};
 
-const gdalWorker = new Worker('gdalWorker.js');
+let Gdal
 
 
 let ZrangeSeaLevel = 32767
@@ -273,8 +282,14 @@ export default {
       ],
       exportTyprOptions: [
         {label: 'Unreal Heightmap', value: 'Unreal Heightmap'},
-        {label: 'Unreal Terrain Magic Plugin -- EarthLandscape Clip', value: 'Unreal Terrain Magic Plugin -- EarthLandscape Clip'},
-        {label: 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip', value: 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip'},
+        {
+          label: 'Unreal Terrain Magic Plugin -- EarthLandscape Clip',
+          value: 'Unreal Terrain Magic Plugin -- EarthLandscape Clip'
+        },
+        {
+          label: 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip',
+          value: 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip'
+        },
         {label: 'Unreal Stamp Brush Plugin', value: 'Unreal Stamp Brush Plugin'},
         {
           label: 'Unreal Landmass Effect Brush Plugin',
@@ -287,6 +302,8 @@ export default {
     }
   },
   async mounted() {
+
+    Gdal = await initGdalJs({paths})
 
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
@@ -464,28 +481,19 @@ export default {
       await fileUtils.writeFileToDisk(dirHandle, save_fileName, outputBlob)
     },
 
-    async createWorker(buff, filename, translateOptions, file_type, process_type) {
-      let that = this
-      return new Promise(function (resolve) {
-        let file = new File([buff], "temp." + file_type, {
-          type: "image/" + file_type,
-          lastModified: Date.now()
-        });
+    async processGdal(buff, filename, translateOptions, file_type, process_type) {
+      let blob = new Blob([new Uint8Array(buff)], {type: 'image/png'})
+      const file = new File([blob], filename);
+      const result = await Gdal.open(file);
+      const dataset = result.datasets[0];
+      const filePath = await Gdal.gdal_translate(dataset, translateOptions);
+      const fileBytes = await Gdal.getFileBytes(filePath);
 
-        let list = new DataTransfer();
-        list.items.add(file);
-        let myFileList = list.files;
-        let data = {}
-        data.files = myFileList
-        data.translateOptions = translateOptions
-        gdalWorker.postMessage(data);
-        gdalWorker.onmessage = async function (event) {
-          if (process_type === "createHeightmap") {
-            await that.saveImage(event.data, filename, file_type)
-          }
-          resolve(true);
-        };
-      });
+      if (process_type === "createHeightmap") {
+        await this.saveImage(fileBytes, filename, file_type)
+      }
+
+      Gdal.close(dataset);
     },
 
     async sendToUnreal() {
@@ -703,7 +711,7 @@ export default {
                 '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
               ];
 
-              await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
+              await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
               if (this.exportOptionsModel.includes('satellite')) {
                 //satellite image
@@ -712,7 +720,7 @@ export default {
                   '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
                 ]
                 let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-                await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
               }
               this.qt.loading.hide()
               break;
@@ -727,7 +735,7 @@ export default {
                   '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
                 ];
 
-                await this.createWorker(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
+                await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
                 if (this.exportOptionsModel.includes('satellite')) {
                   //satellite image
@@ -736,7 +744,7 @@ export default {
                     '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
                   ]
                   let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-                  await this.createWorker(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                  await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
                 }
               } else {
                 //Do not process only extract height values
@@ -767,7 +775,7 @@ export default {
                 '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
               ];
 
-              await this.createWorker(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
+              await this.processGdal(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
 
               this.qt.loading.hide()
               break;
@@ -784,7 +792,7 @@ export default {
                 '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
               ];
 
-              await this.createWorker(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
+              await this.processGdal(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
 
               this.qt.loading.hide()
               break;
