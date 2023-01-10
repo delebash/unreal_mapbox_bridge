@@ -28,10 +28,10 @@
     "@turf/turf": "^6.5.0",
     "idb-keyval": "^6.2.0",
     "image-js": "^0.35.2",
-    "mapbox-gl": "^2.11.1",
+    "mapbox-gl": "^2.12.0",
     "mapbox-gl-draw-rectangle-mode": "^1.0.4",
     "mitt": "^3.0.0",
-    "quasar": "^2.11.3",
+    "quasar": "^2.11.4",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6"
   },
