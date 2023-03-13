@@ -181,6 +181,7 @@
         </div>
 
         <q-card-actions class="absolute-top" align="right">
+         App Version {{appVersion}}&nbsp;
           <q-btn color="primary" label="Close" @click="onOKClick"/>
         </q-card-actions>
       </q-card-section>
@@ -189,11 +190,14 @@
 </template>
 
 <script>
+import {version} from '../../package.json'
+import {ref} from "vue";
 export default {
-  props: {
-    // ...your custom props
+  setup() {
+    return {
+      appVersion: ref(version)
+    }
   },
-
   emits: [
     // REQUIRED
     'ok', 'hide'
