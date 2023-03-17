@@ -6,22 +6,34 @@ import fileUtils from './fs-helpers'
 import idbKeyval from "../utilities/idb-keyval-iife";
 
 
-function getTileInfo(lng, lat, map) {
+function getTileInfo(lng, lat, map, multiple, x, y, z,bbox) {
   let tileInfo = {}
-  let zoom = Math.floor(map.getZoom());
-  let widthInMeters = 40075016.686 * Math.abs(Math.cos(lat)) / Math.pow(2, zoom);
-  let metersPerPixel = widthInMeters / 512;
-  let xyzpoint = tilebelt.pointToTile(lng, lat, zoom)
+  let xyzpoint
 
-  tileInfo.z = zoom
-  tileInfo.x = xyzpoint[0]
-  tileInfo.y = xyzpoint[1]
+
+  if (multiple === false) {
+    xyzpoint = tilebelt.pointToTile(lng, lat, z)
+    x = xyzpoint[0]
+    y = xyzpoint[1]
+  }
+
+  let widthInMeters = 40075016.686 * Math.abs(Math.cos(lat)) / Math.pow(2, z);
+  let metersPerPixel = widthInMeters / 512;
+
+  tileInfo.z = z
+  tileInfo.x = x
+  tileInfo.y = y
   tileInfo.pointLng = lng
   tileInfo.pointLat = lat
   tileInfo.tileWidthInMeters = widthInMeters
   tileInfo.metersPerPixel = metersPerPixel
   tileInfo.mapboxTileName = tileInfo.z + "-" + tileInfo.x + "-" + tileInfo.y
   tileInfo.tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
+  if (multiple === false) {
+    tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
+  }else{
+    tileInfo.bbox = bbox;
+  }
   tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
   tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
   tileInfo.area_bb = getAreaBB(tileInfo.bbox)

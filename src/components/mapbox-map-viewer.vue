@@ -1,5 +1,43 @@
 <style>
+#infoRectangle {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  background-color: white;
+  padding: 10px;
+  z-index: 10;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
+  line-height: 10px;
+  font-size: 0.8em;
+  text-align: center;
+
+
+}
+
 #map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+#infoRectangle {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  background-color: white;
+  padding: 10px;
+  z-index: 10;
+  width: auto;
+  height: auto;
+  border-radius: 4px;
+  line-height: 10px;
+  font-size: 0.8em;
+  text-align: center;
+
+
 }
 
 #mb-tbar {
@@ -30,7 +68,7 @@
 <template>
 
   <div id="map">
-
+    <div id="infoRectangle"></div>
     <q-toolbar id="mb-tbar" class="bg-primary text-white q-pa-none q-ma-none">
       <q-btn color="info" label="Map Settings">
         <q-menu>
@@ -52,7 +90,7 @@
           </div>
         </q-menu>
       </q-btn>
-      &nbsp; &nbsp; &nbsp; {{ this.tileInfoString }}
+      &nbsp; &nbsp; &nbsp; {{' Zoom: ' + this.zoom + ' ' + this.tileInfoString }}
     </q-toolbar>
 
   </div>
@@ -71,25 +109,33 @@ import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'
 import mbxGeocoding from '@mapbox/mapbox-sdk/services/geocoding'
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
-//import DrawRectangle from 'mapbox-gl-draw-rectangle-mode';
-//import MapboxGLButtonControl from '@delebash/mapbox-gl-button-control'
-//import '../css/styles.css'
+import DrawAssistedRectangle from "@geostarters/mapbox-gl-draw-rectangle-assisted-mode/dist/DrawAssistedRectangle";
+import MapboxGLButtonControl from '@delebash/mapbox-gl-button-control'
+import '../css/styles.css'
+import tib from 'tiles-in-bbox'
+import {useQuasar} from "quasar";
 
 let draw
+let bbRectangle = null
 let geocoder
 
 export default {
   name: 'mapbox-map-viewer',
   setup() {
+    const $q = useQuasar()
     return {
       tileInfoString: ref(''),
       dirHandle: ref(''),
+      qt: $q,
       style_url: ref(''),
+      zoom: ref(''),
       access_token: ref(''),
       mapbox_raster_png_dem: ref(''),
       mapbox_api_url: ref(''),
+      drawmode: ref('simple_select'),
       mapbox_rgb_image_url: ref(''),
       map: ref(''),
+      features: ref([]),
       // bb: ref(null),
       threedview: ref(false),
       layers: ref(['hillshading', 'bounding_box', 'undersea-features-lines', 'undersea-features-points', 'undersea-features-points-label', '10m-bathymetry-81bsvj']),
@@ -133,6 +179,7 @@ export default {
 
   },
   methods: {
+
     async changeLayers(layers) {
 
       for (const layertype of this.layer_type) {
@@ -320,6 +367,7 @@ export default {
 
       this.map = map
 
+
       const coordinatesGeocoder = function (query) {
         // Match anything which looks like
         // decimal degrees coordinate pair.
@@ -384,37 +432,137 @@ export default {
       // Add zoom and rotation controls to the map.
       map.addControl(new mapboxgl.NavigationControl());
 
-      // let modes = MapboxDraw.modes;
-      // modes.draw_rectangle = DrawRectangle;
-      //
-      // let drawOptions = {
-      //   displayControlsDefault: false,
-      //   controls: {
-      //     trash: true, combine_features: true,
-      //     uncombine_features: true
-      //   },
-      //   modes: modes
-      // }
-      //
-      // draw = new MapboxDraw(drawOptions);
-      //
-      // map.addControl(draw)
-      //
-      // const rectangle = new MapboxGLButtonControl({
-      //   className: "mapbox-gl-draw_polygon",
-      //   title: "Draw Rectangle",
-      //   eventHandler: changeDrawMode
-      // });
-      //
-      // map.addControl(rectangle);
-      //
-      // function changeDrawMode(event) {
-      //   let baseClass = 'mapboxgl-ctrl-icon'
-      //
-      //   if (event.target.className === baseClass + ' ' + 'mapbox-gl-draw_polygon') {
-      //     draw.changeMode('draw_rectangle');
-      //   }
-      // }
+      const STYLES_DRAW = [
+
+        {
+          "id": "gl-draw-line",
+          "type": "line",
+          "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#FF0000",
+            "line-width": 2
+          }
+        },
+        {
+          "id": "gl-draw-polygon-fill",
+          "type": "fill",
+          "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+          "paint": {
+            "fill-color": "#FF0000",
+            "fill-outline-color": "#D20C0C",
+            "fill-opacity": 0.1
+          }
+        },
+
+        {
+          "id": "gl-draw-polygon-stroke-active",
+          "type": "line",
+          "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#D20C0C",
+            "line-width": 2
+          }
+        },
+
+        {
+          "id": "gl-draw-polygon-and-line-vertex-halo-active",
+          "type": "circle",
+          "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+          "paint": {
+            "circle-radius": 5,
+            "circle-color": "#FFF"
+          }
+        },
+
+        {
+          "id": "gl-draw-polygon-and-line-vertex-active",
+          "type": "circle",
+          "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+          "paint": {
+            "circle-radius": 3,
+            "circle-color": "#D20C0C",
+          }
+        },
+
+        {
+          "id": "gl-draw-line-static",
+          "type": "line",
+          "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "static"]],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#FF0000",
+            "line-width": 3
+          }
+        },
+        {
+          "id": "gl-draw-polygon-fill-static",
+          "type": "fill",
+          "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+          "paint": {
+            "fill-color": "#ee0508",
+
+            "fill-opacity": 0.8
+          }
+        },
+        {
+          "id": "gl-draw-polygon-stroke-static",
+          "type": "line",
+          "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#c40b0b",
+
+            "line-width": 2
+          }
+        }
+      ];
+
+
+      draw = new MapboxDraw({
+        modes: {
+          ...MapboxDraw.modes,
+          // draw_line_string: MapboxDraw.modes.simple_select,
+          // simple_select: MapboxDraw.modes.simple_select,
+          draw_assisted_rectangle: DrawAssistedRectangle
+        },
+        displayControlsDefault: false,
+        controls: {
+          trash: true
+        },
+        userProperties: true,
+        styles: STYLES_DRAW
+      });
+      map.addControl(draw);
+
+      function updateArea(e) {
+        const data = draw.getAll();
+        const answer = document.getElementById('calculated-area');
+        if (data.features.length > 0) {
+          const area = turf.area(data);
+// Restrict the area to 2 decimal points.
+          const rounded_area = Math.round(area * 100) / 100;
+          answer.innerHTML = `<p><strong>${rounded_area}</strong></p><p>square meters</p>`;
+        } else {
+          answer.innerHTML = '';
+          if (e.type !== 'draw.delete')
+            alert('Click the map to draw a polygon.');
+        }
+      }
+
 
       //Game Navigation Controls
       // pixels the map pans when the up or down arrow is clicked
@@ -427,6 +575,9 @@ export default {
         return t * (2 - t);
       }
 
+      map.on('wheel', () => {
+        that.zoom = Math.floor(map.getZoom());
+      });
       map.on('style.load', () => {
         const waiting = () => {
           if (!map.isStyleLoaded()) {
@@ -489,63 +640,228 @@ export default {
       //     // `e.lngLat` is the longitude, latitude geographical position of the event.
       //     JSON.stringify(e.lngLat.wrap());
       // });
-      map.on('click', async function (e) {
-        //   mapUtils.showLayerID(map)
-        let dirHandle = await idbKeyval.get('dirHandle')
+      const rectangle = new MapboxGLButtonControl({
+        className: "mapbox-gl-draw_polygon",
+        title: "Draw Rectangle",
+        eventHandler: changeDrawMode
+      });
 
-        //Verify user has permission to rea/write from selected directory
-        if (await fileUtils.verifyPermission(dirHandle, true) === false) {
-          console.error(`User did not grant permission to '${dirHandle.name}'`);
-          return;
+      map.addControl(rectangle);
+
+      function changeDrawMode(event) {
+
+        let baseClass = 'mapboxgl-ctrl-icon'
+        let className = baseClass + ' ' + 'mapbox-gl-draw_polygon'
+        let button = event.target
+
+
+        if (button.className === className) {
+          if (button.style.backgroundColor === "green") {
+            button.style.backgroundColor = "white"
+            draw.deleteAll()
+            // draw.changeMode('simple_select');
+            that.drawmode = "simple_select"
+          } else {
+            button.style.backgroundColor = "green"
+            draw.changeMode('draw_assisted_rectangle');
+            that.drawmode = "draw_assisted_rectangle"
+            bbRectangle = null
+            map.setPaintProperty('bounding_box', 'fill-opacity', 0);
+          }
+
         }
+        console.log(that.drawmode)
+      }
 
-        let lng = e.lngLat.lng
-        let lat = e.lngLat.lat
-        let tile_info = mapUtils.getTileInfo(lng, lat, map);
-
-        idbKeyval.set('tile_info', tile_info)
-        that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
-        //this.tile_info.resolution = this.unrealLandscape.value
-        //Reverse Geocoding
-        await that.geoCodeReverse(tile_info)
-
-        map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
-        map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
-
-
-        //Long/Lat popup
-        // new mapboxgl.Popup()
-        //     .setLngLat(e.lngLat)
-        //     .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
-        //     .addTo(map);
-
-
-        that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
-        //Get terrain rgb from selected tile
-        let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
-        let rgb_buff = await rgb_image.toBuffer()
-        await idbKeyval.set('rgb_image_buffer', rgb_buff)
-        await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
-
-        //Create preview imamge
-        let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
-
-        let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
-        //Note file does not have to be written to disk in order to update preview image
-        if (bFileExists === false) {
-          let buff = await previewImageInfo.image.toBuffer()
-          await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
-        }
-
-        emitter.emit('updatePreviewImage', {
-          dir_handle: dirHandle,
-          tile_info: tile_info,
-          preview_image_info: previewImageInfo,
-          map: map
-        })
+      map.on('draw.create', function (e) {
+        console.log('draw mode create ' + e.type)
+        // that.drawmode = draw.getMode();
+        // console.log(feature);
+        bbRectangle = e
+      });
+      map.on('draw.update', function (e) {
+        console.log('draw mode update ' + e.type)
+        bbRectangle = e
+      });
+      map.on('draw.selectionchange', function (e) {
+        console.log('draw mode selectionchange ' + e.type)
+        bbRectangle = e
+      })
+      map.on('draw.delete', function (e) {
+        console.log('draw mode delete ' + e.type)
+        bbRectangle = null
       })
 
+      map.on("draw.modechange", (e) => {
+        console.log('draw mode CHANGE ' + e.mode)
+        // if (e.mode === "draw_polygon") {
+        //   draw.changeMode("draw_assisted_rectangle");
+        // }
+        //
+      });
+
+      map.on('click', async function (e) {
+
+
+          let dirHandle = await idbKeyval.get('dirHandle')
+
+          //Verify user has permission to rea/write from selected directory
+          if (await fileUtils.verifyPermission(dirHandle, true) === false) {
+            console.error(`User did not grant permission to '${dirHandle.name}'`);
+            return;
+          }
+
+          if (that.drawmode === "simple_select") {
+            //   mapUtils.showLayerID(map)
+
+
+            let lng = e.lngLat.lng
+            let lat = e.lngLat.lat
+            let z = Math.floor(map.getZoom());
+            let tile_info = mapUtils.getTileInfo(lng, lat, map, false, 0, 0, z);
+
+            idbKeyval.set('tile_info', tile_info)
+            that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+            //this.tile_info.resolution = this.unrealLandscape.value
+            //Reverse Geocoding
+            await that.geoCodeReverse(tile_info)
+
+            map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
+            map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
+
+
+            //Long/Lat popup
+            // new mapboxgl.Popup()
+            //     .setLngLat(e.lngLat)
+            //     .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
+            //     .addTo(map);
+
+
+            that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
+            //Get terrain rgb from selected tile
+            let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
+            let rgb_buff = await rgb_image.toBuffer()
+            await idbKeyval.set('rgb_image_buffer', rgb_buff)
+            await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+
+            //Create preview imamge
+            let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+            let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+            //Note file does not have to be written to disk in order to update preview image
+            if (bFileExists === false) {
+              let buff = await previewImageInfo.image.toBuffer()
+              await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+            }
+
+            emitter.emit('updatePreviewImage', {
+              dir_handle: dirHandle,
+              tile_info: tile_info,
+              preview_image_info: previewImageInfo,
+              map: map
+            })
+          } else {
+
+            if (bbRectangle != null && bbRectangle.type === "draw.selectionchange") {
+
+              that.qt.loading.show()
+
+              let coords = bbRectangle.features[0].geometry.coordinates[0]
+              let z = Math.floor(map.getZoom());
+              let lng = e.lngLat.lng
+              let lat = e.lngLat.lat
+              let tile_info
+
+              if (coords) {
+                let minlng, minlat, maxlng, maxlt
+                minlng = coords[3][0]
+                minlat = coords[3][1]
+                maxlng = coords[1][0]
+                maxlt = coords[1][1]
+
+
+                let bbox = {
+                  left: minlng,
+                  bottom: minlat,
+                  right: maxlng,
+                  top: maxlt
+                }
+
+                let filesArray = []
+
+                let tiles = tib.tilesInBbox(bbox, z)
+
+                for (let tile of tiles) {
+                  let fileInfo = {}
+                  // console.log(tile)
+                  tile_info = mapUtils.getTileInfo(lng, lat, map, true, tile.x, tile.y, tile.z, bbox);
+                  that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+                  that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
+                  //Get terrain rgb from selected tile
+                  let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
+                  let rgb_buff = await rgb_image.toBuffer()
+                  // await idbKeyval.set('rgb_image_buffer', rgb_buff)
+                  //  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+
+                  let rgbStr = rgb_buff.toString()
+                  fileInfo.buffer = rgbStr
+                  fileInfo.name = tile_info.rgbFileName
+                  fileInfo.x = tile_info.x
+                  fileInfo.y = tile_info.y
+                  fileInfo.z = tile_info.z
+                  filesArray.push(fileInfo)
+
+                }
+
+                const response = await fetch('http://localhost:3000', {
+                  method: "POST",
+                  body: JSON.stringify(filesArray),
+                  headers: {
+                    "Content-Type": "application/json",
+                  }
+                })
+                let rgb_buff = await response.arrayBuffer()
+                 await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+                 await idbKeyval.set('rgb_image_buffer', rgb_buff)
+
+
+                //Create preview imamge
+                let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
+
+                let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+                let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+                //Note file does not have to be written to disk in order to update preview image
+                if (bFileExists === false) {
+                  let buff = await previewImageInfo.image.toBuffer()
+                  await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+                }
+
+                emitter.emit('updatePreviewImage', {
+                  dir_handle: dirHandle,
+                  tile_info: tile_info,
+                  preview_image_info: previewImageInfo,
+                  map: map
+                })
+                that.qt.loading.hide()
+              }
+            }
+          }
+        }
+      )
+
+
       map.on('mousemove', (e) => {
+
+        if (draw.getMode() === "draw_assisted_rectangle") {
+
+          const features = map.queryRenderedFeatures(e.point);
+          if (features[0] && features[0].layer && features[0].layer.id === "gl-draw-line.hot") {
+
+            document.getElementById("infoRectangle").innerHTML = "Angle:" + features[0].properties.angle;
+          }
+
+        }
         map.getCanvas().style.cursor = 'pointer';
         const features = map.queryRenderedFeatures(e.point);
         let depth
@@ -571,15 +887,16 @@ export default {
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
-    },
-    // async changeStyle() {
-    //   if (this.map.getSource("mapbox-3d")) {
-    //     this.map.setTerrain(null)
-    //     this.map.removeSource("mapbox-3d");
-    //     this.threedview = false
-    //   }
-    //   await this.map.setStyle('mapbox://styles/mapbox/' + this.style, {diff: false});
-    // },
+    }
+    ,
+// async changeStyle() {
+//   if (this.map.getSource("mapbox-3d")) {
+//     this.map.setTerrain(null)
+//     this.map.removeSource("mapbox-3d");
+//     this.threedview = false
+//   }
+//   await this.map.setStyle('mapbox://styles/mapbox/' + this.style, {diff: false});
+// },
 
 
     async geoCodeReverse(tile_info) {
