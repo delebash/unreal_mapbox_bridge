@@ -813,8 +813,9 @@ export default {
 
                 }
 
-                const response = await fetch('http://localhost:3000', {
+                const response = await fetch('https://long-cyan-katydid-garb.cyclic.app/backend', {
                   method: "POST",
+                  mode: 'no-cors',
                   body: JSON.stringify(filesArray),
                   headers: {
                     "Content-Type": "application/json",
