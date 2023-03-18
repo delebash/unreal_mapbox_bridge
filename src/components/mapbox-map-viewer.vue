@@ -765,6 +765,8 @@ export default {
             if (bbRectangle != null && bbRectangle.type === "draw.selectionchange") {
 
               that.qt.loading.show()
+              let backendServer = await idbKeyval.get('backendServer')
+              let saveStitchingFiles = await idbKeyval.get('saveStitchingFiles')
 
               let coords = bbRectangle.features[0].geometry.coordinates[0]
               let z = Math.floor(map.getZoom());
@@ -799,7 +801,10 @@ export default {
                   //Get terrain rgb from selected tile
                   let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
                   let rgb_buff = await rgb_image.toBuffer()
-                  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+
+                  if(saveStitchingFiles === true) {
+                    await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+                  }
 
                   let rgbStr = rgb_buff.toString()
                   fileInfo.x = tile_info.x
@@ -811,7 +816,7 @@ export default {
                 let payload = JSON.stringify(filesArray)
 
                 try {
-                  const response = await fetch('https://long-cyan-katydid-garb.cyclic.app/backend', {
+                  const response = await fetch(backendServer, {
                     method: "POST",
                     body: payload,
                     headers: {

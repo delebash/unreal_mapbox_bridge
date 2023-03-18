@@ -76,6 +76,13 @@
                        hint=""
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
+              <q-input dense class="q-pb-lg" v-model="backendServer" label="Backend Server for Tile Stitching"
+                       filled
+                       lazy-rules
+                       hint=""
+              >
+              </q-input>
+              <q-checkbox v-model="saveStitchingFiles" label="Save Temp Stitching files to disk" />
               <div class="q-pa-none row items-start">
                 <div class="col q-pa-none">
                   <q-input dense class="q-pb-none" v-model="dirName" label="Enter download directory path *"
@@ -96,6 +103,8 @@
               <!--                <q-input v-model="unrealMapPath"/>-->
               <!--              </q-field>-->
               <!--              <br>-->
+
+
               <q-btn class="q-pt-none" dense @click="saveUserSettings()" color="secondary"
                      label="Save settings"></q-btn>
             </q-tab-panel>
@@ -163,6 +172,8 @@ export default {
       selectedTab: ref('map'),
       alert: ref(false),
       alertMsg: ref(''),
+      backendServer: ref(''),
+      saveStitchingFiles: ref(false),
       dirHandle: ref(''),
       dirName: ref(''),
       style_url: ref(''),
@@ -191,9 +202,9 @@ export default {
   },
   methods: {
 
-     checkFileApiSupport() {
+    checkFileApiSupport() {
       let bEnabled = fileUtils.checkFileApiSupport()
-      if(bEnabled === false){
+      if (bEnabled === false) {
         this.alertMsg = 'This browser does not support File System Access API.  Try Edge or Chrome.'
         this.alert = true
       }
@@ -253,7 +264,8 @@ export default {
       idbKeyval.set('mapbox_satellite_endpoint', this.mapbox_satellite_endpoint);
       idbKeyval.set('mapbox_raster_png_dem', this.mapbox_raster_png_dem);
       idbKeyval.set('create_folder', this.createFolder);
-      //  idbKeyval.set('mappath', this.unrealMapPath );
+       idbKeyval.set('backendServer', this.backendServer );
+       idbKeyval.set('saveStitchingFiles', this.saveStitchingFiles );
 
       if (this.isRequiredSettings() === true) {
         this.loadMap()
@@ -269,6 +281,8 @@ export default {
 
       let dirHandle = await idbKeyval.get('dirHandle') || ''
       this.createFolder = await idbKeyval.get('create_folder') || ''
+      this.saveStitchingFiles = await idbKeyval.get('saveStitchingFiles') || false
+      this.backendServer = await idbKeyval.get('backendServer') || 'http://localhost:3000/backend'
       this.dirHandle = dirHandle
       this.dirName = dirHandle.name
     }
