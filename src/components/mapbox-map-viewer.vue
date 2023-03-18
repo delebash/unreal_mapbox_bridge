@@ -811,7 +811,7 @@ export default {
                 let payload = JSON.stringify(filesArray)
 
                 try {
-                  const response = await fetch('http://localhost:3000/backend', {
+                  const response = await fetch('https://long-cyan-katydid-garb.cyclic.app/backend', {
                     method: "POST",
                     body: payload,
                     headers: {
