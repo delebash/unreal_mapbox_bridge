@@ -144,7 +144,7 @@ async function fileExists(dirHandle, fileName) {
 async function readFileFromDisk(dirHandle, fileName) {
   let fileHandle = await dirHandle.getFileHandle(fileName)
   const file = await fileHandle.getFile();
-  let imageArrayBuffer = await file.arrayBuffer()
+  const imageArrayBuffer = await file.arrayBuffer();
   return imageArrayBuffer
 }
 

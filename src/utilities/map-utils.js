@@ -6,7 +6,7 @@ import fileUtils from './fs-helpers'
 import idbKeyval from "../utilities/idb-keyval-iife";
 
 
-function getTileInfo(lng, lat, map, multiple, x, y, z,bbox) {
+function getTileInfo(lng, lat, map, multiple, x, y, z, bbox) {
   let tileInfo = {}
   let xyzpoint
 
@@ -31,7 +31,7 @@ function getTileInfo(lng, lat, map, multiple, x, y, z,bbox) {
   tileInfo.tile = [tileInfo.x, tileInfo.y, tileInfo.z] // x,y,z
   if (multiple === false) {
     tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
-  }else{
+  } else {
     tileInfo.bbox = bbox;
   }
   tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
@@ -162,8 +162,12 @@ function getUniqueFeatures(features) {
  * @return {image-js} Image-js image.
  */
 async function loadImageFromArray(imageArray) {
-  let image = await Image.load(imageArray)
-  return image
+  try {
+    let image = await Image.load(imageArray)
+    return image
+  } catch (e) {
+    console.log(e)
+  }
 }
 
 /**
@@ -262,17 +266,12 @@ async function unrealRemoteControl(data, url) {
  */
 async function getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url) {
   let rgbImageArrayBuffer
-  let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.rgbFileName)
   let image
-  if (bFileExists === false) {
-    rgbImageArrayBuffer = await downloadTerrainRgb(mapbox_rgb_image_url)
-  } else {
-    rgbImageArrayBuffer = await fileUtils.readFileFromDisk(dirHandle, tile_info.rgbFileName)
-  }
-  idbKeyval.set('rgbImageArrayBuffer', rgbImageArrayBuffer)
-  image = await loadImageFromArray(rgbImageArrayBuffer)
 
-  return image
+  rgbImageArrayBuffer = await downloadTerrainRgb(mapbox_rgb_image_url)
+  image = await loadImageFromArray(rgbImageArrayBuffer)
+  idbKeyval.set('rgbImageArrayBuffer', rgbImageArrayBuffer)
+   return image
 }
 
 /**

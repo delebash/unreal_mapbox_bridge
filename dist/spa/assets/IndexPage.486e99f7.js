@@ -1,1 +1,0 @@
-import{Q as e}from"./QPage.2cd4fa98.js";import{ak as a,aY as t,al as o,aU as s,ao as n,aq as r}from"./index.8c609a77.js";const c=t({name:"IndexPage"}),l=r("img",{alt:"Unreal Vault Organizer logo",style:{width:"200px",height:"200px"}},null,-1);function i(p,d,f,_,x,m){return o(),s(e,{class:"flex flex-center"},{default:n(()=>[l]),_:1})}var h=a(c,[["render",i]]);export{h as default};

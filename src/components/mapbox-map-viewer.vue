@@ -90,7 +90,7 @@
           </div>
         </q-menu>
       </q-btn>
-      &nbsp; &nbsp; &nbsp; {{' Zoom: ' + this.zoom + ' ' + this.tileInfoString }}
+      &nbsp; &nbsp; &nbsp; {{ ' Zoom: ' + this.zoom + ' ' + this.tileInfoString }}
     </q-toolbar>
 
   </div>
@@ -793,57 +793,57 @@ export default {
 
                 for (let tile of tiles) {
                   let fileInfo = {}
-                  // console.log(tile)
                   tile_info = mapUtils.getTileInfo(lng, lat, map, true, tile.x, tile.y, tile.z, bbox);
                   that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
                   that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
                   //Get terrain rgb from selected tile
                   let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
                   let rgb_buff = await rgb_image.toBuffer()
-                  // await idbKeyval.set('rgb_image_buffer', rgb_buff)
-                  //  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+                  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
 
                   let rgbStr = rgb_buff.toString()
-                  fileInfo.buffer = rgbStr
-                  fileInfo.name = tile_info.rgbFileName
                   fileInfo.x = tile_info.x
                   fileInfo.y = tile_info.y
-                  fileInfo.z = tile_info.z
+                  fileInfo.buffer = rgbStr
                   filesArray.push(fileInfo)
-
                 }
 
-                const response = await fetch('https://long-cyan-katydid-garb.cyclic.app/backend', {
-                  method: "POST",
-                  mode: 'no-cors',
-                  body: JSON.stringify(filesArray),
-                  headers: {
-                    "Content-Type": "application/json",
+                let payload = JSON.stringify(filesArray)
+
+                try {
+                  const response = await fetch('http://localhost:3000/backend', {
+                    method: "POST",
+                    body: payload,
+                    headers: {
+                      "Content-Type": "application/json",
+                    }
+                  })
+
+                  let rgb_buff = await response.arrayBuffer()
+                  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+                  await idbKeyval.set('rgb_image_buffer', rgb_buff)
+
+                  //Create preview imamge
+                  let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
+
+                  let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+                  let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+                  //Note file does not have to be written to disk in order to update preview image
+                  if (bFileExists === false) {
+                    let buff = await previewImageInfo.image.toBuffer()
+                    await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
                   }
-                })
-                let rgb_buff = await response.arrayBuffer()
-                 await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
-                 await idbKeyval.set('rgb_image_buffer', rgb_buff)
 
-
-                //Create preview imamge
-                let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
-
-                let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
-
-                let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
-                //Note file does not have to be written to disk in order to update preview image
-                if (bFileExists === false) {
-                  let buff = await previewImageInfo.image.toBuffer()
-                  await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+                  emitter.emit('updatePreviewImage', {
+                    dir_handle: dirHandle,
+                    tile_info: tile_info,
+                    preview_image_info: previewImageInfo,
+                    map: map
+                  })
+                } catch (e) {
+                  console.log(e)
                 }
-
-                emitter.emit('updatePreviewImage', {
-                  dir_handle: dirHandle,
-                  tile_info: tile_info,
-                  preview_image_info: previewImageInfo,
-                  map: map
-                })
                 that.qt.loading.hide()
               }
             }
