@@ -181,7 +181,6 @@ import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
 import mapboxgl from "mapbox-gl";
 
-
 let Gdal
 let ZrangeSeaLevel = 32767
 
@@ -268,6 +267,7 @@ export default {
         {label: 'Download Satellite', value: 'satellite'},
         {label: 'Download Geojson Features', value: 'features'},
         {label: 'Combine Unique Features', value: 'combine_features'},
+        {label: 'Create Weightmap (Splatmap) Files', value: 'raster_style'},
       ],
       exportTyprOptions: [
         {label: 'Unreal Heightmap', value: 'Unreal Heightmap'},
@@ -469,7 +469,7 @@ export default {
     },
 
     async processGdal(buff, filename, translateOptions, file_type, process_type) {
-      let blob = new Blob([new Uint8Array(buff)], {type: 'image/png'})
+      let blob = new Blob([new Uint8Array(buff)], {type: 'image/' + file_type})
       const file = new File([blob], filename);
       const result = await Gdal.open(file);
       const dataset = result.datasets[0];
@@ -713,7 +713,7 @@ export default {
               break;
 
             case 'Unreal Heightmap':
-              if (this.tile_info.resampleSize != 512) {
+              if (this.tile_info.resampleSize !== 512) {
                 //Download heightmap
                 translateOptions = [
                   '-ot', 'UInt16',
@@ -732,6 +732,56 @@ export default {
                   ]
                   let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
                   await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                }
+
+                if (this.exportOptionsModel.includes('raster_style')) {
+                  let mapbox_raster_style_endpoint = await idbKeyval.get('mapbox_raster_style_endpoint') || 'https://api.mapbox.com/styles/v1'
+                  let mapbox_raster_style_url = await idbKeyval.get('mapbox_raster_style_url') || ''
+
+                  let rasterstyle_url = mapbox_raster_style_endpoint + '/' + mapbox_raster_style_url + '/tiles/512/' + `${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
+
+                  let buff = await mapUtils.downloadTerrainRgb(rasterstyle_url)
+                  let splat_image = await mapUtils.loadImageFromArray(buff)
+                  await this.saveImage(buff, 'orig' + '.png', "png")
+
+                  //Change color for splat map
+                  let pixelsArray = splat_image.getPixelsArray()
+                  let black = [0, 0, 0]
+                  let white = [255, 255, 255]
+                  let j = 0
+                  let rgbColor = []
+                  let weight_data = await idbKeyval.get('weightmap_data')
+                  for (let data of weight_data) {
+                    let black = [j, 0, 0]
+                    rgbColor = JSON.stringify(data.color.split(',').map(Number));
+                    for (let i = 0; i < pixelsArray.length; i++) {
+                      if (JSON.stringify(pixelsArray[i]) === rgbColor) {
+                        splat_image.setPixel(i, white)
+                      } else {
+                        splat_image.setPixel(i, black)
+                      }
+                    }
+
+
+                    // translateOptions = [
+                    //   '-ot', 'UInt16',
+                    //   '-of', 'PNG',
+                    //   '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
+                    // ];
+                    //
+                    //
+                    // let splat_buff = await splat_image.toBuffer()
+                    // await this.processGdal(splat_buff, data.name + '.png', translateOptions, "png", "createHeightmap");
+
+
+                    let img = splat_image.resize({
+                      width: this.tile_info.resampleSize,
+                      height: this.tile_info.resampleSize
+                    })
+                    let splat_buff = await img.toBuffer()
+                    await this.saveImage(splat_buff, data.name + '.png', "png")
+                    j = j + 1
+                  }
                 }
               } else {
                 //Do not process only extract height values

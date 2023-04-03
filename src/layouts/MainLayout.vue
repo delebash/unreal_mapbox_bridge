@@ -25,6 +25,7 @@
           >
             <q-btn dense flat @click="changeDrawer" round icon="menu"/>
             <q-tab dense name="map" label="Map"/>
+            <q-tab dense name="weightmap" @click="loadWeightMap()" label="Weight Map"/>
             <q-tab dense name="settings" label="Settings"/>
             <q-btn style="background: #FF0080; color: white" label="Help" class="q-mr-lg" @click="showDialog"/>
             <q-btn dense flat round
@@ -37,6 +38,10 @@
             <q-tab-panel name="map" class="row q-pl-xs q-pt-xs q-pb-none q-ma-none"
                          style="width: 100%; height: calc(100vh - 65px)">
               <mapbox-map-viewer class="col" ref="mapBoxViewer"></mapbox-map-viewer>
+            </q-tab-panel>
+            <q-tab-panel name="weightmap" class="row q-pl-xs q-pt-xs q-pb-none q-ma-none"
+                         style="width: 100%; height: calc(100vh - 65px)">
+              <weightmap-viewer class="col" ref="weightmapViewerRef"></weightmap-viewer>
             </q-tab-panel>
             <q-tab-panel lass="row q-pl-xs q-pt-xs q-pb-none q-ma-none" name="settings">
               See: <a href="https://docs.mapbox.com/help/glossary/access-token/" target="_blank">Mapbox access token
@@ -76,13 +81,27 @@
                        hint=""
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
+              <q-input dense class="q-pb-lg" v-model="mapbox_raster_style_url"
+                       label="Mapbox Weight Map Style"
+                       filled
+                       lazy-rules
+                       hint=""
+              >
+              </q-input>
+              <q-input dense class="q-pb-lg" v-model="mapbox_raster_style_endpoint"
+                       label="Mapbox Raster From Style Endpoint"
+                       filled
+                       lazy-rules
+                       hint=""
+              >
+              </q-input>
               <q-input dense class="q-pb-lg" v-model="backendServer" label="Backend Server for Tile Stitching"
                        filled
                        lazy-rules
                        hint=""
               >
               </q-input>
-              <q-checkbox v-model="saveStitchingFiles" label="Save Temp Stitching files to disk" />
+              <q-checkbox v-model="saveStitchingFiles" label="Save Temp Stitching files to disk"/>
               <div class="q-pa-none row items-start">
                 <div class="col q-pa-none">
                   <q-input dense class="q-pb-none" v-model="dirName" label="Enter download directory path *"
@@ -96,17 +115,53 @@
                 <q-btn class="q-pb-none" dense @click="openDirectory()" color="secondary"
                        label="Select download folder"></q-btn>
               </div>
-              <!--              <q-checkbox v-model="createFolder" label="Creat a folder for each tile information downloaded" />-->
               <br>
-              <!--              <q-field class="q-pt-none q-mt-xs" dense label="Unreal Map Path" hint="Path to Unreal Map"-->
-              <!--              >-->
-              <!--                <q-input v-model="unrealMapPath"/>-->
-              <!--              </q-field>-->
-              <!--              <br>-->
 
+              <div class="q-pa-md">
+                <q-table
+                  flat bordered
+                  title="Weightmap colors"
+                  :rows="rows"
+                  :columns="columns"
+                  row-key="name"
+                  :selected-rows-label="getSelectedString"
+                  selection="multiple"
+                  v-model:selected="selected"
+                  virtual-scroll
+                  v-model:pagination="pagination"
+                  :rows-per-page-options="[0]"
+                  :loading="loading"
+                >
+                  <template v-slot:top>
+                    <q-btn color="primary" :disable="loading" label="Add new color" @click="addRow"/>
+                    <q-btn class="q-ml-sm" color="primary" :disable="loading" label="Delete selected rows"
+                           @click="removeRow"/>
+                  </template>
+                  <template v-slot:body="props">
+                    <q-tr :props="props">
+                      <q-td>
+                        <q-checkbox dense v-model="props.selected"/>
+                      </q-td>
+                      <q-td key="name" :props="props">
+                        {{ props.row.name }}
+                        <q-popup-edit v-model="props.row.name" title="Name" v-slot="scope" @save="saveRow">
+                          <q-input v-model="scope.value" dense autofocus counter @keyup.enter="scope.set"/>
+                        </q-popup-edit>
+                      </q-td>
+                      <q-td key="color" :props="props">
+                        {{ props.row.color }}
+                        <q-popup-edit v-model="props.row.color" title="r,g,b" v-slot="scope" @save="saveRow">
+                          <q-input v-model="scope.value" dense autofocus counter @keyup.enter="scope.set"/>
+                        </q-popup-edit>
+                      </q-td>
+                    </q-tr>
+                  </template>
+                </q-table>
 
+              </div>
               <q-btn class="q-pt-none" dense @click="saveUserSettings()" color="secondary"
                      label="Save settings"></q-btn>
+
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
@@ -135,8 +190,10 @@
 
 <script>
 
-import {ref} from 'vue'
+
+import {ref, isProxy, toRaw} from 'vue';
 import MapboxMapViewer from '../components/mapbox-map-viewer.vue'
+import WeightmapViewer from '../components/wieghtmap-viewer.vue'
 import SideNav from '../components/side-nav.vue'
 import {Notify} from 'quasar'
 import mapboxgl from "mapbox-gl";
@@ -145,12 +202,77 @@ import Help from '../components/help.vue'
 import idbKeyval from '../utilities/idb-keyval-iife';
 import fileUtils from '../utilities/fs-helpers';
 
-// import ReloadPrompt from '../components/ReloadPrompt.vue'
+
+const columns = [
+  {name: 'name', align: 'left', label: 'Name', field: 'name', sortable: true},
+  {name: 'color', align: 'left', label: 'Color', field: 'color', sortable: true}
+]
+
+let rows = [
+  {
+    name: 'Forest',
+    color: '201, 28, 19'
+  },
+  {
+    name: 'Water',
+    color: '78, 143, 207'
+
+  },
+  {
+    name: 'Scrub',
+    color: '143, 253, 139'
+
+  }, {
+    name: 'Trees',
+    color: '34, 106, 32'
+
+  },
+  {
+    name: 'Rock',
+    color: '101, 100, 93'
+
+  },
+  {
+    name: 'Sand',
+    color: '243, 234, 129'
+
+  },
+  {
+    name: 'Grass',
+    color: '33, 225, 29'
+
+  },
+  {
+    name: 'Glacier',
+    color: '255, 255, 255'
+
+  },
+  {
+    name: 'Landcover',
+    color: '0, 0, 0'
+  },
+  {
+    name: 'Hillshade',
+    color: '242, 110, 220'
+  }
+]
 
 export default {
   setup() {
     const $q = useQuasar()
+    const selected = ref([])
+    const loading = ref(false)
     return {
+      selected,
+      columns,
+      rows: ref(rows),
+      loading,
+      pagination: ref({
+        rowsPerPage: 0
+      }),
+      getSelectedString() {
+        return selected.value.length === 0 ? '' : `${selected.value.length} record${selected.value.length > 1 ? 's' : ''} selected of ${rows.length}`
+      },
       showDialog() {
         $q.dialog({
           component: Help,
@@ -179,6 +301,8 @@ export default {
       style_url: ref(''),
       access_token: ref(''),
       mapbox_api_url: ref(''),
+      mapbox_raster_style_endpoint: ref(''),
+      mapbox_raster_style_url: ref(''),
       mapbox_raster_png_dem: ref(''),
       mapbox_satellite_endpoint: ref(''),
       // unrealMapPath: ref(''),
@@ -201,7 +325,30 @@ export default {
 
   },
   methods: {
+    addRow() {
+      let newRow = {name: 'Color', color: '0, 0, 0'}
+      this.rows.push(newRow)
 
+    },
+    removeRow() {
+
+      if (this.selected.length > 0) {
+        let myrows = this.rows.filter(item => !this.selected.includes(item))
+        this.rows = JSON.parse(JSON.stringify(myrows))
+        this.saveRow()
+      } else {
+        this.alertMsg = 'Select row(s) to delete.'
+        this.alert = true
+      }
+    },
+    saveRow() {
+      if (isProxy(this.rows)) {
+        let rawData = toRaw(this.rows)
+        idbKeyval.set('weightmap_data', rawData);
+      } else {
+        idbKeyval.set('weightmap_data', this.rows);
+      }
+    },
     checkFileApiSupport() {
       let bEnabled = fileUtils.checkFileApiSupport()
       if (bEnabled === false) {
@@ -219,6 +366,11 @@ export default {
       this.selectedTab = "map"
       await this.$nextTick(() => {
         this.$refs.mapBoxViewer.loadMapboxMap()
+      })
+    },
+    async loadWeightMap() {
+      await this.$nextTick(() => {
+        this.$refs.weightmapViewerRef.loadMapboxWeightMap()
       })
     },
     isRequiredSettings() {
@@ -264,8 +416,11 @@ export default {
       idbKeyval.set('mapbox_satellite_endpoint', this.mapbox_satellite_endpoint);
       idbKeyval.set('mapbox_raster_png_dem', this.mapbox_raster_png_dem);
       idbKeyval.set('create_folder', this.createFolder);
-       idbKeyval.set('backendServer', this.backendServer );
-       idbKeyval.set('saveStitchingFiles', this.saveStitchingFiles );
+      idbKeyval.set('backendServer', this.backendServer);
+      idbKeyval.set('saveStitchingFiles', this.saveStitchingFiles);
+      idbKeyval.set('mapbox_raster_style_endpoint', this.mapbox_raster_style_endpoint);
+      idbKeyval.set('mapbox_raster_style_url', this.mapbox_raster_style_url);
+      idbKeyval.set('weightmap_data', this.rows);
 
       if (this.isRequiredSettings() === true) {
         this.loadMap()
@@ -278,17 +433,27 @@ export default {
       this.mapbox_api_url = await idbKeyval.get('mapbox_api_url') || 'https://api.mapbox.com/v4/'
       this.mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint') || 'https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles'
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem') || 'mapbox.mapbox-terrain-dem-v1'
+      this.mapbox_raster_style_endpoint = await idbKeyval.get('mapbox_raster_style_endpoint') || 'https://api.mapbox.com/styles/v1'
+      this.mapbox_raster_style_url = await idbKeyval.get('mapbox_raster_style_url') || ''
 
       let dirHandle = await idbKeyval.get('dirHandle') || ''
       this.createFolder = await idbKeyval.get('create_folder') || ''
       this.saveStitchingFiles = await idbKeyval.get('saveStitchingFiles') || false
       this.backendServer = await idbKeyval.get('backendServer') || 'http://localhost:3000/backend'
+      let weight_data = await idbKeyval.get('weightmap_data') || []
+      if (weight_data.length === 0) {
+        idbKeyval.set('weightmap_data', rows);
+        this.rows = rows
+      } else {
+        this.rows = weight_data
+      }
       this.dirHandle = dirHandle
       this.dirName = dirHandle.name
     }
   },
   components: {
     MapboxMapViewer,
+    WeightmapViewer,
     SideNav,
     Help
     // ReloadPrompt

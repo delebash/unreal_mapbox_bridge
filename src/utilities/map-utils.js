@@ -319,5 +319,6 @@ export default {
   createHeightMapImage,
   loadImageFromArray,
   unrealRemoteControl,
-  downloadTerrainRgb
+  downloadTerrainRgb,
+  convertImage
 }
