@@ -81,7 +81,9 @@
                        hint=""
                        :rules="[ val => val && val.length > 0 || 'Please type something']" :type="isPwd ? '' : 'text'">
               </q-input>
-              <q-input dense class="q-pb-lg" v-model="mapbox_raster_style_url"
+              Click  <a href="https://api.mapbox.com/styles/v1/delebash/clfzz7dot000001qilz330eyt.html?title=copy&access_token=pk.eyJ1IjoiZGVsZWJhc2giLCJhIjoiY2t1YWxkODF0MGh2NjJxcXA4czBpdXlmdyJ9.D_ngzR7j4vU1CILtpNLg4Q&zoomwheel=true&fresh=true#8.76/35.8732/5.8202/0/7">Copy Mapbox Weightmap Style</a>
+              to copy this style to your mapbox account and then paste your new style address in text box below in the format name/style id example:  delebash/clfzz7dot000001qilz330eyt
+                           <q-input dense class="q-pb-lg" v-model="mapbox_raster_style_url"
                        label="Mapbox Weight Map Style"
                        filled
                        lazy-rules

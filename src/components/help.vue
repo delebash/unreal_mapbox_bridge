@@ -127,6 +127,9 @@
               <li>
                 <u>Combine Unique Features</u> -- Removes overlapping features when downloading geojson
               </li>
+              <li>
+                <u>Create Weightmap (Splatmap) Files</u> -- You can now create weightmap files for use in Unreal for texturing your landscape.
+              </li>
             </ul>
           </div>
         </div>
