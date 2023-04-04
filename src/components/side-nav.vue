@@ -93,7 +93,10 @@
       >
         <q-input dense class="q-pt-none q-mt-xs" v-model="blurRadius"/>
       </q-field>
-
+      <q-field dense v-show="isBlurRadius" class="q-pt-none q-mt-xs" label="Weightmap Blur Radius"
+      >
+        <q-input dense class="q-pt-none q-mt-xs" v-model="blurRadiusWeightmap"/>
+      </q-field>
     </div>
   </div>
 
@@ -192,6 +195,7 @@ export default {
       alert: ref(false),
       isAlphaBrush: ref(false),
       blurRadius: ref(0),
+      blurRadiusWeightmap: ref(10),
       gridSize: ref(2),
       access_token: ref(''),
       isDisabled: ref(false),
@@ -748,11 +752,9 @@ export default {
                   let pixelsArray = splat_image.getPixelsArray()
                   let black = [0, 0, 0]
                   let white = [255, 255, 255]
-                  let j = 0
                   let rgbColor = []
                   let weight_data = await idbKeyval.get('weightmap_data')
                   for (let data of weight_data) {
-                    let black = [j, 0, 0]
                     rgbColor = JSON.stringify(data.color.split(',').map(Number));
                     for (let i = 0; i < pixelsArray.length; i++) {
                       if (JSON.stringify(pixelsArray[i]) === rgbColor) {
@@ -762,25 +764,15 @@ export default {
                       }
                     }
 
+                    let img = splat_image
+                      .resize({
+                        width: this.tile_info.resampleSize,
+                        height: this.tile_info.resampleSize
+                      })
+                      .gaussianFilter({radius: this.blurRadiusWeightmap})
 
-                    // translateOptions = [
-                    //   '-ot', 'UInt16',
-                    //   '-of', 'PNG',
-                    //   '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
-                    // ];
-                    //
-                    //
-                    // let splat_buff = await splat_image.toBuffer()
-                    // await this.processGdal(splat_buff, data.name + '.png', translateOptions, "png", "createHeightmap");
-
-
-                    let img = splat_image.resize({
-                      width: this.tile_info.resampleSize,
-                      height: this.tile_info.resampleSize
-                    })
                     let splat_buff = await img.toBuffer()
                     await this.saveImage(splat_buff, data.name + '.png', "png")
-                    j = j + 1
                   }
                 }
               } else {

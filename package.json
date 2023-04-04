@@ -33,7 +33,7 @@
     "mapbox-gl": "^2.13.0",
     "mapbox-gl-draw-rectangle-mode": "^1.0.4",
     "mitt": "^3.0.0",
-    "quasar": "^2.11.9",
+    "quasar": "^2.11.10",
     "tiles-in-bbox": "^1.0.2",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6"
@@ -41,7 +41,7 @@
   "devDependencies": {
     "@quasar/app-vite": "^1.2.1",
     "autoprefixer": "^10.4.14",
-    "electron": "^23.2.1",
+    "electron": "^24.0.0",
     "workbox-build": "^6.5.4",
     "workbox-cacheable-response": "^6.5.4",
     "workbox-core": "^6.5.4",
