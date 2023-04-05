@@ -65,18 +65,29 @@
                 besides Unreal.
               </li>
               <li>
-                <u>Unreal Terrain Magic Plugin -- EarthLandscape Clip</u> -- Sends tile info string x,y and zoom to Terrain Magic.
-                You will need to install the custom version of Terrain Magic from this link <a href="https://github.com/delebash/unreal-terrain-magic/releases" target="_blank">Custom Version Of Terrain Magic</a>.
-                Terrain magic has it's own map to import heightmaps for Unreal but I just added it to mine for ease of use.
+                <u>Unreal Terrain Magic Plugin -- EarthLandscape Clip</u> -- Sends tile info string x,y and zoom to
+                Terrain Magic.
+                You will need to install the custom version of Terrain Magic from this link <a
+                href="https://github.com/delebash/unreal-terrain-magic/releases" target="_blank">Custom Version Of
+                Terrain Magic</a>.
+                Terrain magic has it's own map to import heightmaps for Unreal but I just added it to mine for ease of
+                use.
                 This just makes it a one click solution instead of copy and paste.
-                If you like Terrain Magic please purchase it from the marketplace link in description.  Original source for non-commercial <a href="https://github.com/GDi4K/unreal-terrain-magic" target="_blank">Terrain Magic</a>
+                If you like Terrain Magic please purchase it from the marketplace link in description. Original source
+                for non-commercial <a href="https://github.com/GDi4K/unreal-terrain-magic" target="_blank">Terrain
+                Magic</a>
               </li>
               <li>
-                <u>Unreal Terrain Magic Plugin -- HeightmapLandscape Clip</u> -- Downloads heightmap from this app and loads it into Terrain Magic.
-                You will need to install the custom version of Terrain Magic from this link <a href="https://github.com/delebash/unreal-terrain-magic/releases" target="_blank">Custom Version Of Terrain Magic</a>.
+                <u>Unreal Terrain Magic Plugin -- HeightmapLandscape Clip</u> -- Downloads heightmap from this app and
+                loads it into Terrain Magic.
+                You will need to install the custom version of Terrain Magic from this link <a
+                href="https://github.com/delebash/unreal-terrain-magic/releases" target="_blank">Custom Version Of
+                Terrain Magic</a>.
                 Terrain magic has it's own map to import heightmaps for Unreal but I just added to mine for ease of use.
                 This just makes it a one click solution instead of copy and paste.
-                If you like Terrain Magic please purchase it from the marketplace link in description.  Original source for non-commercial <a href="https://github.com/GDi4K/unreal-terrain-magic" target="_blank">Terrain Magic</a>
+                If you like Terrain Magic please purchase it from the marketplace link in description. Original source
+                for non-commercial <a href="https://github.com/GDi4K/unreal-terrain-magic" target="_blank">Terrain
+                Magic</a>
               </li>
               <li>
                 <u>Unreal Stamp Brush Plugin</u> -- You need to install paid plugin <a
@@ -128,8 +139,9 @@
                 <u>Combine Unique Features</u> -- Removes overlapping features when downloading geojson
               </li>
               <li>
-                <u>Create Weightmap (Splatmap) Files</u> -- You can now create weightmap files for use in Unreal for texturing your landscape.
-                Setup and Use instructions  https://www.youtube.com/watch?v=j_4pZ5EneVc&t=6s
+                <u>Create Weightmap (Splatmap) Files</u> -- You can now create weightmap files for use in Unreal for
+                texturing your landscape.
+                Setup and Use instructions https://www.youtube.com/watch?v=j_4pZ5EneVc&t=6s
               </li>
             </ul>
           </div>
@@ -141,7 +153,8 @@
               <u>Landscape Size</u> -- Resamples the size of the image to recommended Unreal Landscape sizes.
             </li>
             <li>
-              <u>Enable World Partition</u> -- If you have a World Partition project and want a World Partition landscape with proxies, enable this..
+              <u>Enable World Partition</u> -- If you have a World Partition project and want a World Partition
+              landscape with proxies, enable this..
             </li>
             <li>
               <u>World Partition Grid Size</u> -- Grid size setting.
@@ -184,8 +197,35 @@
           </ul>
         </div>
 
+        <div><u>Videos:</u>
+          <ul>
+            <li>
+              <u>Unreal Mapbox Bridge Introduction and Setup (Updated 10/31/22)</u> --
+              https://www.youtube.com/watch?v=wwEDuVmCayU&t
+            </li>
+            <li>
+              <u>Weightmaps</u> -- https://www.youtube.com/watch?v=j_4pZ5EneVc&t
+            </li>
+            <li>
+              <u>Work around to fix Mapbox Bridge imported landscape with artifacts</u> -- https://www.youtube.com/watch?v=j_4pZ5EneVc&t
+            </li>
+            <li>
+              <u>Tut on how to overlay a satellite image on your landscape</u> -- https://www.youtube.com/watch?v=Z3e5Zaxmo1c&t
+            </li>
+            <li>
+              <u>Unreal Mapbox Bridge and Terrain Magic Integration update (01/02/2023)</u> -- https://www.youtube.com/watch?v=dgtL6ISxTFU
+            </li>
+            <li>
+              <u> Unreal Mapbox Bridge Integration with marketplace Landscape Stamping Tool</u> -- https://www.youtube.com/watch?v=8b03jsvj1yo&t
+            </li>
+            <li>
+              <u>Tile Stitching and Free Form Select</u> -- https://www.youtube.com/watch?v=v8Sln_Tzki8&t
+            </li>
+          </ul>
+        </div>
+
         <q-card-actions class="absolute-top" align="right">
-         App Version {{appVersion}}&nbsp;
+          App Version {{ appVersion }}&nbsp;
           <q-btn color="primary" label="Close" @click="onOKClick"/>
         </q-card-actions>
       </q-card-section>
@@ -196,6 +236,7 @@
 <script>
 import {version} from '../../package.json'
 import {ref} from "vue";
+
 export default {
   setup() {
     return {
