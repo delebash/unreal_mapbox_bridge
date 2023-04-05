@@ -200,26 +200,30 @@
         <div><u>Videos:</u>
           <ul>
             <li>
-              <u>Unreal Mapbox Bridge Introduction and Setup (Updated 10/31/22)</u> --
-              https://www.youtube.com/watch?v=wwEDuVmCayU&t
+              <a href="https://www.youtube.com/watch?v=wwEDuVmCayU&t">Unreal Mapbox Bridge Introduction and Setup
+                (Updated 10/31/22)</a>
             </li>
             <li>
-              <u>Weightmaps</u> -- https://www.youtube.com/watch?v=j_4pZ5EneVc&t
+              <a href="https://www.youtube.com/watch?v=j_4pZ5EneVc&t">Weightmaps</a>
             </li>
             <li>
-              <u>Work around to fix Mapbox Bridge imported landscape with artifacts</u> -- https://www.youtube.com/watch?v=j_4pZ5EneVc&t
+              <a href="https://www.youtube.com/watch?v=j_4pZ5EneVc&t">Work around to fix Mapbox Bridge imported
+                landscape with artifacts</a>
             </li>
             <li>
-              <u>Tut on how to overlay a satellite image on your landscape</u> -- https://www.youtube.com/watch?v=Z3e5Zaxmo1c&t
+              <a href="https://www.youtube.com/watch?v=Z3e5Zaxmo1c&tU">Tut on how to overlay a satellite image on your
+                landscape</a>
             </li>
             <li>
-              <u>Unreal Mapbox Bridge and Terrain Magic Integration update (01/02/2023)</u> -- https://www.youtube.com/watch?v=dgtL6ISxTFU
+              <a href="https://www.youtube.com/watch?v=dgtL6ISxTFU">Unreal Mapbox Bridge and Terrain Magic Integration
+                update (01/02/2023)</a>
             </li>
             <li>
-              <u> Unreal Mapbox Bridge Integration with marketplace Landscape Stamping Tool</u> -- https://www.youtube.com/watch?v=8b03jsvj1yo&t
+              <a href="https://www.youtube.com/watch?v=8b03jsvj1yo&t">Unreal Mapbox Bridge Integration with marketplace
+                Landscape Stamping Tool</a>
             </li>
             <li>
-              <u>Tile Stitching and Free Form Select</u> -- https://www.youtube.com/watch?v=v8Sln_Tzki8&t
+              <a href="https://www.youtube.com/watch?v=v8Sln_Tzki8&t">Tile Stitching and Free Form Select</a>
             </li>
           </ul>
         </div>
