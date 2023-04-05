@@ -129,6 +129,7 @@
               </li>
               <li>
                 <u>Create Weightmap (Splatmap) Files</u> -- You can now create weightmap files for use in Unreal for texturing your landscape.
+                Setup and Use instructions  https://www.youtube.com/watch?v=j_4pZ5EneVc&t=6s
               </li>
             </ul>
           </div>
