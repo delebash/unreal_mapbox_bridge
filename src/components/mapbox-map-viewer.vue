@@ -439,7 +439,7 @@ export default {
           mapboxgl: mapboxgl,
           localGeocoder: coordinatesGeocoder,
           zoom: 10,
-          placeholder: 'Try: -40, 170 or  Name',
+          placeholder: 'Try: Lng , Lat or Name',
           reverseGeocode: true
         })
         // geocoder.on('result', function(e) {
