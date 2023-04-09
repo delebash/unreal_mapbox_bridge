@@ -1,21 +1,4 @@
 <style>
-#infoRectangle {
-  position: absolute;
-  bottom: 5px;
-  left: 5px;
-  background-color: white;
-  padding: 10px;
-  z-index: 10;
-  width: auto;
-  height: auto;
-  border-radius: 4px;
-  line-height: 10px;
-  font-size: 0.8em;
-  text-align: center;
-
-
-}
-
 #map {
   position: absolute;
   top: 0;
@@ -64,7 +47,7 @@
 
   <div id="map">
     <pre id="features"></pre>
-    <div id="infoRectangle"></div>
+<!--    <div id="infoRectangle"></div>-->
     <q-toolbar id="mb-tbar" class="bg-primary text-white q-pa-none q-ma-none">
       <q-btn color="info" label="Map Settings">
         <q-menu>
