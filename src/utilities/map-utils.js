@@ -2,11 +2,11 @@ import mapboxgl from "mapbox-gl";
 import tilebelt from '@mapbox/tilebelt'
 import * as turf from '@turf/turf'
 import {Image} from "image-js";
-import fileUtils from './fs-helpers'
 import idbKeyval from "../utilities/idb-keyval-iife";
 
 
-function getTileInfo(lng, lat, map, multiple, x, y, z, bbox) {
+
+function getTileInfo(lng, lat, multiple, x, y, z, bbox) {
   let tileInfo = {}
   let xyzpoint
 
@@ -34,7 +34,7 @@ function getTileInfo(lng, lat, map, multiple, x, y, z, bbox) {
   } else {
     tileInfo.bbox = bbox;
   }
-  tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
+  //tileInfo.bbox = tilebelt.tileToBBOX(tileInfo.tile);
   tileInfo.polygon_bb = getTileGeoJsonBB(tileInfo.bbox)
   tileInfo.area_bb = getAreaBB(tileInfo.bbox)
 
@@ -154,7 +154,6 @@ function getUniqueFeatures(features) {
   return uniqueFeatures;
 }
 
-
 /**
  * Load image-js image from array
  *
@@ -264,14 +263,14 @@ async function unrealRemoteControl(data, url) {
  * @param {string} mapbox_rgb_image_url Request url to Mapbox api.
  * @return {image-js} Image-js image.
  */
-async function getMapboxTerrainRgb(dirHandle, tile_info, mapbox_rgb_image_url) {
+async function getMapboxTerrainRgb(mapbox_rgb_image_url) {
   let rgbImageArrayBuffer
   let image
 
   rgbImageArrayBuffer = await downloadTerrainRgb(mapbox_rgb_image_url)
   image = await loadImageFromArray(rgbImageArrayBuffer)
   idbKeyval.set('rgbImageArrayBuffer', rgbImageArrayBuffer)
-   return image
+  return image
 }
 
 /**
@@ -320,5 +319,6 @@ export default {
   loadImageFromArray,
   unrealRemoteControl,
   downloadTerrainRgb,
-  convertImage
+  convertImage,
+  getTileGeoJsonBB
 }

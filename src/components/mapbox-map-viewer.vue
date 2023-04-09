@@ -91,7 +91,21 @@
     </q-toolbar>
 
   </div>
+  <q-dialog v-model="alert">
+    <q-card>
+      <q-card-section>
+        <div class="text-h6">Alert</div>
+      </q-card-section>
 
+      <q-card-section class="q-pt-none">
+        {{ alertMsg }}
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="OK" color="primary" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script>
@@ -113,14 +127,114 @@ import tib from 'tiles-in-bbox'
 import {useQuasar} from "quasar";
 
 let draw
-let bbRectangle = null
 let geocoder
+
+const STYLES_DRAW = [
+
+  {
+    "id": "gl-draw-line",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#FF0000",
+      "line-width": 2
+    }
+  },
+  {
+    "id": "gl-draw-polygon-fill",
+    "type": "fill",
+    "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+    "paint": {
+      "fill-color": "#FF0000",
+      "fill-outline-color": "#D20C0C",
+      "fill-opacity": 0.1
+    }
+  },
+
+  {
+    "id": "gl-draw-polygon-stroke-active",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#D20C0C",
+      "line-width": 2
+    }
+  },
+
+  {
+    "id": "gl-draw-polygon-and-line-vertex-halo-active",
+    "type": "circle",
+    "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+    "paint": {
+      "circle-radius": 5,
+      "circle-color": "#FFF"
+    }
+  },
+
+  {
+    "id": "gl-draw-polygon-and-line-vertex-active",
+    "type": "circle",
+    "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+    "paint": {
+      "circle-radius": 3,
+      "circle-color": "#D20C0C",
+    }
+  },
+
+  {
+    "id": "gl-draw-line-static",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#FF0000",
+      "line-width": 3
+    }
+  },
+  {
+    "id": "gl-draw-polygon-fill-static",
+    "type": "fill",
+    "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+    "paint": {
+      "fill-color": "#ee0508",
+
+      "fill-opacity": 0.8
+    }
+  },
+  {
+    "id": "gl-draw-polygon-stroke-static",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#c40b0b",
+
+      "line-width": 2
+    }
+  }
+];
 
 export default {
   name: 'mapbox-map-viewer',
   setup() {
     const $q = useQuasar()
     return {
+      alert: ref(false),
+      alertMsg: ref(''),
       tileInfoString: ref(''),
       dirHandle: ref(''),
       qt: $q,
@@ -138,10 +252,6 @@ export default {
       threedview: ref(false),
       layers: ref(['hillshading', 'bounding_box', 'undersea-features-lines', 'undersea-features-points', 'undersea-features-points-label', '10m-bathymetry-81bsvj']),
       layer_type: [
-        // {
-        //   label: 'Raster From Style',
-        //   value: 'Raster From Style'
-        // },
         {
           label: 'Hillshade',
           value: 'hillshading'
@@ -185,20 +295,7 @@ export default {
     async changeLayers(layers) {
 
       for (const layertype of this.layer_type) {
-
-
         if (layers.includes(layertype.value)) {
-
-          // if (layertype.value === 'Raster From Style') {
-          //   this.rasterFromStyle = true
-          //   await this.loadMapboxMap()
-          //   break;
-          // } else {
-          //   this.rasterFromStyle = false
-          //   // await this.loadMapboxMap()
-          // }
-
-
           if (layertype.value !== '3d') {
             this.map.setLayoutProperty(
               layertype.value,
@@ -220,6 +317,28 @@ export default {
           }
         }
       }
+    },
+
+    changeDrawMode(e) {
+      let btnTile = document.getElementsByClassName("mapbox-gl-draw_polygon")[0]
+      let btnStitchTiles = document.getElementsByClassName("mapbox-gl-draw_line")[0]
+      let btnClicked = e.target
+
+      if (btnClicked.title === "Select single tile") {
+        btnStitchTiles.style.backgroundColor = "white"
+        btnTile.style.backgroundColor = "green"
+        draw.deleteAll()
+        draw.changeMode('simple_select');
+        this.drawmode = "simple_select"
+      } else if (btnClicked.title === "Draw Rectangle to select multiple tiles") {
+        btnStitchTiles.style.backgroundColor = "green"
+        btnTile.style.backgroundColor = "white"
+        draw.deleteAll()
+        draw.changeMode('draw_assisted_rectangle');
+        this.drawmode = "draw_assisted_rectangle"
+        this.map.setPaintProperty('bounding_box', 'fill-opacity', 0);
+      }
+      console.log(this.drawmode)
     },
 
     loadMapSourcesLayers(map) {
@@ -273,7 +392,6 @@ export default {
             'fill-opacity': 0
           }
         });
-
 
         map.addSource('bathymetry', {
           type: 'vector',
@@ -356,607 +474,26 @@ export default {
         );
       }
     },
-
-    async loadMapboxMap() {
-      mapboxgl.accessToken = await idbKeyval.get('access_token')
-      this.access_token = mapboxgl.accessToken
-      this.mapbox_api_url = await idbKeyval.get('mapbox_api_url')
-      this.dirHandle = await idbKeyval.get('dirHandle')
-
-      this.style_url = await idbKeyval.get('style_url')
-      this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
-
-
-      // https://api.mapbox.com/styles/v1/{username}/{style_id}/tiles/{tilesize}/{z}/{x}/{y}{@2x}
-      let that = this
-      if (!mapboxgl.supported()) {
-        alert('Your browser does not support Mapbox GL');
-      } else {
-        let map = new mapboxgl.Map({
-          container: 'map',
-          trackResize: true,
-          style: that.style_url,
-          center: [-121.7598, 46.8760], //Mt. Rainier
-          zoom: 9,
-          maxZoom: 14,
-          doubleClickZoom: true,
-          antialias: true,
-          boxZoom: true,
-          failIfMajorPerformanceCaveat: true
-        });
-
-        this.map = map
-
-
-        const coordinatesGeocoder = function (query) {
-          // Match anything which looks like
-          // decimal degrees coordinate pair.
-          const matches = query.match(
-            /^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i
-          );
-          if (!matches) {
-            return null;
-          }
-
-          function coordinateFeature(lng, lat) {
-            return {
-              center: [lng, lat],
-              geometry: {
-                type: 'Point',
-                coordinates: [lng, lat]
-              },
-              place_name: 'Lat: ' + lat + ' Lng: ' + lng,
-              place_type: ['coordinate'],
-              properties: {},
-              type: 'Feature'
-            };
-          }
-
-          const coord1 = Number(matches[1]);
-          const coord2 = Number(matches[2]);
-          const geocodes = [];
-
-          if (coord1 < -90 || coord1 > 90) {
-            // must be lng, lat
-            geocodes.push(coordinateFeature(coord1, coord2));
-          }
-
-          if (coord2 < -90 || coord2 > 90) {
-            // must be lat, lng
-            geocodes.push(coordinateFeature(coord2, coord1));
-          }
-
-          if (geocodes.length === 0) {
-            // else could be either lng, lat or lat, lng
-            geocodes.push(coordinateFeature(coord1, coord2));
-            geocodes.push(coordinateFeature(coord2, coord1));
-          }
-          return geocodes;
-        };
-
-        geocoder = new MapboxGeocoder({
-          accessToken: this.access_token,
-          mapboxgl: mapboxgl,
-          localGeocoder: coordinatesGeocoder,
-          zoom: 10,
-          placeholder: 'Try: Lng , Lat or Name',
-          reverseGeocode: true
-        })
-        // geocoder.on('result', function(e) {
-        //   console.log(e.result.center)
-        // })
-        map.addControl(geocoder)
-
-        map.addControl(new mapboxgl.FullscreenControl({}))
-
-        // Add zoom and rotation controls to the map.
-        map.addControl(new mapboxgl.NavigationControl());
-
-        const STYLES_DRAW = [
-
-          {
-            "id": "gl-draw-line",
-            "type": "line",
-            "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
-            "layout": {
-              "line-cap": "round",
-              "line-join": "round"
-            },
-            "paint": {
-              "line-color": "#FF0000",
-              "line-width": 2
-            }
-          },
-          {
-            "id": "gl-draw-polygon-fill",
-            "type": "fill",
-            "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
-            "paint": {
-              "fill-color": "#FF0000",
-              "fill-outline-color": "#D20C0C",
-              "fill-opacity": 0.1
-            }
-          },
-
-          {
-            "id": "gl-draw-polygon-stroke-active",
-            "type": "line",
-            "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
-            "layout": {
-              "line-cap": "round",
-              "line-join": "round"
-            },
-            "paint": {
-              "line-color": "#D20C0C",
-              "line-width": 2
-            }
-          },
-
-          {
-            "id": "gl-draw-polygon-and-line-vertex-halo-active",
-            "type": "circle",
-            "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
-            "paint": {
-              "circle-radius": 5,
-              "circle-color": "#FFF"
-            }
-          },
-
-          {
-            "id": "gl-draw-polygon-and-line-vertex-active",
-            "type": "circle",
-            "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
-            "paint": {
-              "circle-radius": 3,
-              "circle-color": "#D20C0C",
-            }
-          },
-
-          {
-            "id": "gl-draw-line-static",
-            "type": "line",
-            "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "static"]],
-            "layout": {
-              "line-cap": "round",
-              "line-join": "round"
-            },
-            "paint": {
-              "line-color": "#FF0000",
-              "line-width": 3
-            }
-          },
-          {
-            "id": "gl-draw-polygon-fill-static",
-            "type": "fill",
-            "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
-            "paint": {
-              "fill-color": "#ee0508",
-
-              "fill-opacity": 0.8
-            }
-          },
-          {
-            "id": "gl-draw-polygon-stroke-static",
-            "type": "line",
-            "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
-            "layout": {
-              "line-cap": "round",
-              "line-join": "round"
-            },
-            "paint": {
-              "line-color": "#c40b0b",
-
-              "line-width": 2
-            }
-          }
-        ];
-
-
-        draw = new MapboxDraw({
-          modes: {
-            ...MapboxDraw.modes,
-            // draw_line_string: MapboxDraw.modes.simple_select,
-            // simple_select: MapboxDraw.modes.simple_select,
-            draw_assisted_rectangle: DrawAssistedRectangle
-          },
-          displayControlsDefault: false,
-          controls: {
-            trash: true
-          },
-          userProperties: true,
-          styles: STYLES_DRAW
-        });
-        map.addControl(draw);
-
-        function updateArea(e) {
-          const data = draw.getAll();
-          const answer = document.getElementById('calculated-area');
-          if (data.features.length > 0) {
-            const area = turf.area(data);
-// Restrict the area to 2 decimal points.
-            const rounded_area = Math.round(area * 100) / 100;
-            answer.innerHTML = `<p><strong>${rounded_area}</strong></p><p>square meters</p>`;
-          } else {
-            answer.innerHTML = '';
-            if (e.type !== 'draw.delete')
-              alert('Click the map to draw a polygon.');
-          }
-        }
-
-
-        //Game Navigation Controls
-        // pixels the map pans when the up or down arrow is clicked
-        const deltaDistance = 100;
-
-        // degrees the map rotates when the left or right arrow is clicked
-        const deltaDegrees = 25;
-
-        function easing(t) {
-          return t * (2 - t);
-        }
-
-        map.on('wheel', () => {
-          that.zoom = Math.floor(map.getZoom());
-        });
-        map.on('style.load', () => {
-          const waiting = () => {
-            if (!map.isStyleLoaded()) {
-              setTimeout(waiting, 200);
-            } else {
-              //  if (that.style === "streets-v11") {
-              that.loadMapSourcesLayers(map)
-              //  }
-            }
-          };
-          waiting();
-        });
-
-        map.on('load', function () {
-
-          //Game Controls
-          map.getCanvas().focus();
-
-          map.getCanvas().addEventListener(
-            'keydown',
-            (e) => {
-              e.preventDefault();
-              if (e.which === 87) {
-// w
-                map.panBy([0, -deltaDistance], {
-                  easing: easing
-                });
-              } else if (e.which === 83) {
-// s
-                map.panBy([0, deltaDistance], {
-                  easing: easing
-                });
-              } else if (e.which === 65) {
-// a
-                map.easeTo({
-                  bearing: map.getBearing() - deltaDegrees,
-                  easing: easing
-                });
-              } else if (e.which === 68) {
-// d
-                map.easeTo({
-                  bearing: map.getBearing() + deltaDegrees,
-                  easing: easing
-                });
-              }
-            },
-            true
-          );
-
-        });
-        map.on('error', e => {
-          console.error(e);
-        });
-
-        // map.on('mousemove', (e) => {
-        //   document.getElementById('info').innerHTML =
-        //   // `e.point` is the x, y coordinates of the `mousemove` event
-        //   // relative to the top-left corner of the map.
-        //     JSON.stringify(e.point) +
-        //     '<br />' +
-        //     // `e.lngLat` is the longitude, latitude geographical position of the event.
-        //     JSON.stringify(e.lngLat.wrap());
-        // });
-        const rectangle = new MapboxGLButtonControl({
-          className: "mapbox-gl-draw_polygon",
-          title: "Draw Rectangle",
-          eventHandler: changeDrawMode
-        });
-
-        map.addControl(rectangle);
-
-        function changeDrawMode(event) {
-
-          let baseClass = 'mapboxgl-ctrl-icon'
-          let className = baseClass + ' ' + 'mapbox-gl-draw_polygon'
-          let button = event.target
-
-
-          if (button.className === className) {
-            if (button.style.backgroundColor === "green") {
-              button.style.backgroundColor = "white"
-              draw.deleteAll()
-              // draw.changeMode('simple_select');
-              that.drawmode = "simple_select"
-            } else {
-              button.style.backgroundColor = "green"
-              draw.changeMode('draw_assisted_rectangle');
-              that.drawmode = "draw_assisted_rectangle"
-              bbRectangle = null
-              map.setPaintProperty('bounding_box', 'fill-opacity', 0);
-            }
-
-          }
-          console.log(that.drawmode)
-        }
-
-        map.on('draw.create', function (e) {
-          console.log('draw mode create ' + e.type)
-          // that.drawmode = draw.getMode();
-          // console.log(feature);
-          bbRectangle = e
-        });
-        map.on('draw.update', function (e) {
-          console.log('draw mode update ' + e.type)
-          bbRectangle = e
-        });
-        map.on('draw.selectionchange', function (e) {
-          console.log('draw mode selectionchange ' + e.type)
-          bbRectangle = e
-        })
-        map.on('draw.delete', function (e) {
-          console.log('draw mode delete ' + e.type)
-          bbRectangle = null
-        })
-
-        map.on("draw.modechange", (e) => {
-          console.log('draw mode CHANGE ' + e.mode)
-          // if (e.mode === "draw_polygon") {
-          //   draw.changeMode("draw_assisted_rectangle");
-          // }
-          //
-        });
-
-        map.on('dblclick', async function (e) {
-
-            const features = map.queryRenderedFeatures(e.point);
-
-// Limit the number of properties we're displaying for
-// legibility and performance
-            const displayProperties = [
-              'type',
-              'properties',
-              'id',
-              'layer',
-              'source',
-              'sourceLayer',
-              'state'
-            ];
-
-            const displayFeatures = features.map((feat) => {
-              const displayFeat = {};
-              displayProperties.forEach((prop) => {
-                displayFeat[prop] = feat[prop];
-              });
-              return displayFeat;
-            });
-            console.log(displayFeatures)
-          }
-        )
-
-        map.on('click', async function (e) {
-
-
-            let dirHandle = await idbKeyval.get('dirHandle')
-
-            //Verify user has permission to rea/write from selected directory
-            if (await fileUtils.verifyPermission(dirHandle, true) === false) {
-              console.error(`User did not grant permission to '${dirHandle.name}'`);
-              return;
-            }
-
-            if (that.drawmode === "simple_select") {
-              //   mapUtils.showLayerID(map)
-
-
-              let lng = e.lngLat.lng
-              let lat = e.lngLat.lat
-              let z = Math.floor(map.getZoom());
-              let tile_info = mapUtils.getTileInfo(lng, lat, map, false, 0, 0, z);
-
-              idbKeyval.set('tile_info', tile_info)
-              that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
-              //this.tile_info.resolution = this.unrealLandscape.value
-              //Reverse Geocoding
-              await that.geoCodeReverse(tile_info)
-
-              map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
-              map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
-
-
-              //Long/Lat popup
-              // new mapboxgl.Popup()
-              //     .setLngLat(e.lngLat)
-              //     .setHTML(`Long/Lat: (${lng.toFixed(4)} /  ${lat.toFixed(4)})`)
-              //     .addTo(map);
-
-
-              that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
-              //Get terrain rgb from selected tile
-              let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
-              let rgb_buff = await rgb_image.toBuffer()
-              await idbKeyval.set('rgb_image_buffer', rgb_buff)
-              await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
-
-              //Create preview imamge
-              let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
-
-              let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
-              //Note file does not have to be written to disk in order to update preview image
-              if (bFileExists === false) {
-                let buff = await previewImageInfo.image.toBuffer()
-                await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
-              }
-
-              emitter.emit('updatePreviewImage', {
-                dir_handle: dirHandle,
-                tile_info: tile_info,
-                preview_image_info: previewImageInfo,
-                map: map
-              })
-            } else {
-
-              if (bbRectangle != null && bbRectangle.type === "draw.selectionchange") {
-
-                that.qt.loading.show()
-                let backendServer = await idbKeyval.get('backendServer')
-                let saveStitchingFiles = await idbKeyval.get('saveStitchingFiles')
-
-                let coords = bbRectangle.features[0].geometry.coordinates[0]
-                let z = Math.floor(map.getZoom());
-                let lng = e.lngLat.lng
-                let lat = e.lngLat.lat
-                let tile_info
-
-                if (coords) {
-                  let minlng, minlat, maxlng, maxlt
-                  minlng = coords[3][0]
-                  minlat = coords[3][1]
-                  maxlng = coords[1][0]
-                  maxlt = coords[1][1]
-
-
-                  let bbox = {
-                    left: minlng,
-                    bottom: minlat,
-                    right: maxlng,
-                    top: maxlt
-                  }
-
-                  let filesArray = []
-
-                  let tiles = tib.tilesInBbox(bbox, z)
-
-                  for (let tile of tiles) {
-                    let fileInfo = {}
-                    tile_info = mapUtils.getTileInfo(lng, lat, map, true, tile.x, tile.y, tile.z, bbox);
-                    that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
-                    that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
-                    //Get terrain rgb from selected tile
-                    let rgb_image = await mapUtils.getMapboxTerrainRgb(dirHandle, tile_info, that.mapbox_rgb_image_url)
-                    let rgb_buff = await rgb_image.toBuffer()
-
-                    if (saveStitchingFiles === true) {
-                      await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
-                    }
-
-                    let rgbStr = rgb_buff.toString()
-                    fileInfo.x = tile_info.x
-                    fileInfo.y = tile_info.y
-                    fileInfo.buffer = rgbStr
-                    filesArray.push(fileInfo)
-                  }
-
-                  let payload = JSON.stringify(filesArray)
-
-                  try {
-                    const response = await fetch(backendServer, {
-                      method: "POST",
-                      body: payload,
-                      headers: {
-                        "Content-Type": "application/json",
-                      }
-                    })
-
-                    let rgb_buff = await response.arrayBuffer()
-                    await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
-                    await idbKeyval.set('rgb_image_buffer', rgb_buff)
-
-                    //Create preview imamge
-                    let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
-
-                    let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
-
-                    let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
-                    //Note file does not have to be written to disk in order to update preview image
-                    if (bFileExists === false) {
-                      let buff = await previewImageInfo.image.toBuffer()
-                      await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
-                    }
-
-                    emitter.emit('updatePreviewImage', {
-                      dir_handle: dirHandle,
-                      tile_info: tile_info,
-                      preview_image_info: previewImageInfo,
-                      map: map
-                    })
-                  } catch (e) {
-                    console.log(e)
-                  }
-                  that.qt.loading.hide()
-                }
-              }
-            }
-          }
-        )
-
-
-        map.on('mousemove', (e) => {
-
-          if (draw.getMode() === "draw_assisted_rectangle") {
-
-            const features = map.queryRenderedFeatures(e.point);
-            if (features[0] && features[0].layer && features[0].layer.id === "gl-draw-line.hot") {
-
-              document.getElementById("infoRectangle").innerHTML = "Angle:" + features[0].properties.angle;
-            }
-
-          }
-          map.getCanvas().style.cursor = 'pointer';
-          const features = map.queryRenderedFeatures(e.point);
-          let depth
-          let obj = {}
-          for (const feat of features) {
-            if (Object.keys(feat.type).length > 0) {
-              if (Object.keys(feat.properties).length > 0) {
-                let properties = feat.properties
-                let layer = feat.layer
-                if (properties.DEPTH) {
-                  obj.depth = properties.DEPTH
-                } else {
-                }
-                obj.type = feat.type
-
-                obj.id = layer.id
-              }
-            }
-          }
-        })
-      }
+    coordinateFeature(lng, lat) {
+      return {
+        center: [lng, lat],
+        geometry: {
+          type: 'Point',
+          coordinates: [lng, lat]
+        },
+        place_name: 'Lat: ' + lat + ' Lng: ' + lng,
+        place_type: ['coordinate'],
+        properties: {},
+        type: 'Feature'
+      };
     },
 
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
-    }
-    ,
-// async changeStyle() {
-//   if (this.map.getSource("mapbox-3d")) {
-//     this.map.setTerrain(null)
-//     this.map.removeSource("mapbox-3d");
-//     this.threedview = false
-//   }
-//   await this.map.setStyle('mapbox://styles/mapbox/' + this.style, {diff: false});
-// },
-
+    },
 
     async geoCodeReverse(tile_info) {
-      // mapboxClient = mapboxSdk({ accessToken:  this.access_token });
-      //  const baseClient = mbxClient({ accessToken: MY_ACCESS_TOKEN });
       const geocodingClient = mbxGeocoding({accessToken: mapboxgl.accessToken});
 
       geocodingClient.reverseGeocode({
@@ -996,65 +533,490 @@ export default {
             }
           }
         });
+    },
+    updateBBox(bbRectangle) {
+      let coords = bbRectangle.features[0].geometry.coordinates[0]
+      let minlng, minlat, maxlng, maxlt
+      minlng = coords[3][0]
+      minlat = coords[3][1]
+      maxlng = coords[1][0]
+      maxlt = coords[1][1]
+      let bbox = [minlng, minlat, maxlng, maxlt]
+      let tile_info = mapUtils.getTileInfo(0, 0, true, 0, 0, 0, bbox);
+      idbKeyval.set('tile_info', tile_info)
+    },
+
+    async loadMapboxMap() {
+
+      mapboxgl.accessToken = await idbKeyval.get('access_token')
+      this.access_token = mapboxgl.accessToken
+      this.mapbox_api_url = await idbKeyval.get('mapbox_api_url')
+      this.dirHandle = await idbKeyval.get('dirHandle')
+
+      this.style_url = await idbKeyval.get('style_url')
+      this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
+
+      let that = this
+
+      if (!mapboxgl.supported()) {
+        this.alertMsg = 'Your browser does not support Mapbox GL'
+        this.alert = true
+      } else {
+        let map = new mapboxgl.Map({
+          container: 'map',
+          trackResize: true,
+          style: that.style_url,
+          center: [-121.7598, 46.8760], //Mt. Rainier
+          zoom: 9,
+          maxZoom: 14,
+          doubleClickZoom: true,
+          antialias: true,
+          boxZoom: true,
+          failIfMajorPerformanceCaveat: true
+        });
+
+        this.map = map
+
+        this.map.doubleClickZoom.disable()
+        // ADD CONTROLS
+
+        //Geocoder
+        const coordinatesGeocoder = function (query) {
+          // Match anything which looks like
+          // decimal degrees coordinate pair.
+          const matches = query.match(
+            /^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i
+          );
+          if (!matches) {
+            return null;
+          }
+
+          const coord1 = Number(matches[1]);
+          const coord2 = Number(matches[2]);
+          const geocodes = [];
+
+          if (coord1 < -90 || coord1 > 90) {
+            // must be lng, lat
+            geocodes.push(that.coordinateFeature(coord1, coord2));
+          }
+
+          if (coord2 < -90 || coord2 > 90) {
+            // must be lat, lng
+            geocodes.push(that.coordinateFeature(coord2, coord1));
+          }
+
+          if (geocodes.length === 0) {
+            // else could be either lng, lat or lat, lng
+            geocodes.push(that.coordinateFeature(coord1, coord2));
+            geocodes.push(that.coordinateFeature(coord2, coord1));
+          }
+          return geocodes;
+        };
+
+        geocoder = new MapboxGeocoder({
+          accessToken: this.access_token,
+          mapboxgl: mapboxgl,
+          localGeocoder: coordinatesGeocoder,
+          zoom: 10,
+          placeholder: 'Try: Lng , Lat or Name',
+          reverseGeocode: true
+        })
+
+        map.addControl(geocoder)
+
+        map.addControl(new mapboxgl.FullscreenControl({}))
+
+        // Add zoom and rotation controls to the map.
+        map.addControl(new mapboxgl.NavigationControl());
+
+        //Draw
+        draw = new MapboxDraw({
+          modes: {
+            ...MapboxDraw.modes,
+            draw_assisted_rectangle: DrawAssistedRectangle
+          },
+          displayControlsDefault: false,
+          controls: {},
+          userProperties: true,
+          styles: STYLES_DRAW
+        });
+        map.addControl(draw);
+
+        //Add simple select for single tile
+        const tile_select = new MapboxGLButtonControl({
+          className: "mapbox-gl-draw_polygon",
+          title: "Select single tile",
+          eventHandler: that.changeDrawMode
+        });
+
+        map.addControl(tile_select);
+
+        const rectangle = new MapboxGLButtonControl({
+          className: "mapbox-gl-draw_line",
+          title: "Draw Rectangle to select multiple tiles",
+          eventHandler: that.changeDrawMode
+        });
+
+        map.addControl(rectangle);
+
+        //Set default draw mode to Single Tile
+
+        //Game Navigation Controls
+        // pixels the map pans when the up or down arrow is clicked
+        const deltaDistance = 100;
+
+        // degrees the map rotates when the left or right arrow is clicked
+        const deltaDegrees = 25;
+
+        function easing(t) {
+          return t * (2 - t);
+        }
+
+        //END ADD CONTROLS
+
+        map.on('wheel', () => {
+          that.zoom = Math.floor(map.getZoom());
+        });
+
+        map.on('load', function () {
+          let btnTile = document.getElementsByClassName("mapbox-gl-draw_polygon")[0]
+          btnTile.style.backgroundColor = "green"
+          draw.changeMode('simple_select');
+          this.drawmode = "simple_select"
+          //load layers and set bound
+          that.loadMapSourcesLayers(map)
+
+          //Game Controls
+          map.getCanvas().focus();
+
+          //Keyboard controls
+          map.getCanvas().addEventListener(
+            'keydown',
+            (e) => {
+              e.preventDefault();
+              if (e.which === 87) {
+// w
+                map.panBy([0, -deltaDistance], {
+                  easing: easing
+                });
+              } else if (e.which === 83) {
+// s
+                map.panBy([0, deltaDistance], {
+                  easing: easing
+                });
+              } else if (e.which === 65) {
+// a
+                map.easeTo({
+                  bearing: map.getBearing() - deltaDegrees,
+                  easing: easing
+                });
+              } else if (e.which === 68) {
+// d
+                map.easeTo({
+                  bearing: map.getBearing() + deltaDegrees,
+                  easing: easing
+                });
+              }
+            },
+            true
+          );
+        });
+
+        map.on('error', e => {
+          console.error(e);
+        });
+
+
+        map.on('draw.create', function (e) {
+          console.log('draw mode create ' + e.type)
+          that.updateBBox(e)
+        });
+
+        map.on('draw.update', function (e) {
+          console.log('draw mode update ' + e.type)
+          that.updateBBox(e)
+        });
+        map.on('draw.selectionchange', function (e) {
+          console.log('draw mode selectionchange ' + e.type)
+        })
+        map.on('draw.delete', function (e) {
+          console.log('draw mode delete ' + e.type)
+        })
+
+        map.on("draw.modechange", (e) => {
+          console.log('draw mode CHANGE ' + e.mode)
+        });
+
+        map.on('click', async function (e) {
+          if (that.drawmode === "simple_select") {
+            let lng = e.lngLat.lng
+            let lat = e.lngLat.lat
+            let z = Math.floor(map.getZoom());
+            let tile_info = mapUtils.getTileInfo(lng, lat, false, 0, 0, z);
+
+            idbKeyval.set('tile_info', tile_info)
+            that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+
+            map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
+            map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
+          }
+
+          // const features = map.queryRenderedFeatures(e.point);
+          //
+          // // Limit the number of properties we're displaying for
+          // // legibility and performance
+          // const displayProperties = [
+          //   'type',
+          //   'properties',
+          //   'id',
+          //   'layer',
+          //   'source',
+          //   'sourceLayer',
+          //   'state'
+          // ];
+          //
+          // const displayFeatures = features.map((feat) => {
+          //   const displayFeat = {};
+          //   displayProperties.forEach((prop) => {
+          //     displayFeat[prop] = feat[prop];
+          //   });
+          //   return displayFeat;
+          // });
+          // console.log(displayFeatures)
+
+        })
+
+        map.on('dblclick', async function (e) {
+
+            let dirHandle = await idbKeyval.get('dirHandle')
+
+            //Verify user has permission to rea/write from selected directory
+            if (await fileUtils.verifyPermission(dirHandle, true) === false) {
+              console.error(`User did not grant permission to '${dirHandle.name}'`);
+              return;
+            }
+
+            let tile_info = await idbKeyval.get('tile_info')
+            that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+
+            if (that.drawmode === "simple_select") {
+
+              //Reverse Geocoding
+              //await that.geoCodeReverse(tile_info)
+
+              that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
+              //Get terrain rgb from selected tile
+              let rgb_image = await mapUtils.getMapboxTerrainRgb(that.mapbox_rgb_image_url)
+              let rgb_buff = await rgb_image.toBuffer()
+              await idbKeyval.set('rgb_image_buffer', rgb_buff)
+              await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+
+              //Create preview imamge
+              let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+              let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+              //Note file does not have to be written to disk in order to update preview image
+              if (bFileExists === false) {
+                let buff = await previewImageInfo.image.toBuffer()
+                await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+              }
+
+              emitter.emit('updatePreviewImage', {
+                dir_handle: dirHandle,
+                tile_info: tile_info,
+                preview_image_info: previewImageInfo,
+                map: map
+              })
+            } else if (that.drawmode === "draw_assisted_rectangle") {
+
+              let exportOptionsModel = await idbKeyval.get('exportOptionsModel')
+              let backendServer = await idbKeyval.get('backendServer')
+              let saveStitchingFiles = await idbKeyval.get('saveStitchingFiles')
+              let mapbox_raster_style_endpoint = await idbKeyval.get('mapbox_raster_style_endpoint') || 'https://api.mapbox.com/styles/v1'
+              let mapbox_raster_style_url = await idbKeyval.get('mapbox_raster_style_url') || ''
+              let z = Math.floor(map.getZoom());
+
+              let isServerRunning = true
+              //Check if server is running
+              that.qt.loading.show()
+              try {
+                const response = await fetch(backendServer, {
+                  method: "GET"
+                })
+              } catch (e) {
+                console.log(e)
+                isServerRunning = false
+                that.qt.loading.hide()
+              }
+
+              if (isServerRunning === true) {
+                let bboxTiles = {
+                  left: tile_info.bbox[0],
+                  bottom: tile_info.bbox[1],
+                  right: tile_info.bbox[2],
+                  top: tile_info.bbox[3]
+                }
+
+                let tiles = tib.tilesInBbox(bboxTiles, z)
+                let filesArray = []
+                let splatArray = []
+
+                for (let tile of tiles) {
+                  let fileInfo = {}
+                  tile_info = mapUtils.getTileInfo(0, 0, true, tile.x, tile.y, tile.z, tile_info.bbox);
+                  that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+                  that.mapbox_rgb_image_url = that.mapbox_api_url + that.mapbox_raster_png_dem + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x.pngraw?access_token=` + that.access_token;
+                  //Get terrain rgb from selected tile
+                  let rgb_image = await mapUtils.getMapboxTerrainRgb(that.mapbox_rgb_image_url)
+                  let rgb_buff = await rgb_image.toBuffer()
+
+                  if (saveStitchingFiles === true) {
+                    await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+                  }
+
+                  let rgbStr = rgb_buff.toString()
+                  fileInfo.x = tile_info.x
+                  fileInfo.y = tile_info.y
+                  fileInfo.buffer = rgbStr
+                  filesArray.push(fileInfo)
+
+                  // if (exportOptionsModel.includes('raster_style')) {
+                  //   console.log('test3')
+                  //   let rasterstyle_url = mapbox_raster_style_endpoint + '/' + mapbox_raster_style_url + '/tiles/512/' + `${tile_info.z}/${tile_info.x}/${tile_info.y}@2x?access_token=` + that.access_token;
+                  //   let rgb_splat = await mapUtils.getMapboxTerrainRgb(rasterstyle_url)
+                  //   let splat_buff = await rgb_splat.toBuffer()
+                  //
+                  //   fileInfo = {}
+                  //   let splatStr = splat_buff.toString()
+                  //   fileInfo.x = tile_info.x
+                  //   fileInfo.y = tile_info.y
+                  //   fileInfo.buffer = splatStr
+                  //   splatArray.push(fileInfo)
+                  // }
+                }
+
+                idbKeyval.set('tile_info', tile_info)
+
+                let payload = JSON.stringify(filesArray)
+
+                try {
+                  const response = await fetch(backendServer, {
+                    method: "POST",
+                    body: payload,
+                    headers: {
+                      "Content-Type": "application/json",
+                    }
+                  })
+
+                  let rgb_buff = await response.arrayBuffer()
+                  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+                  await idbKeyval.set('rgb_image_buffer', rgb_buff)
+
+                  // if (exportOptionsModel.includes('raster_style')) {
+                  //
+                  //   let payload = JSON.stringify(splatArray)
+                  //
+                  //   const response = await fetch(backendServer, {
+                  //     method: "POST",
+                  //     body: payload,
+                  //     headers: {
+                  //       "Content-Type": "application/json",
+                  //     }
+                  //   })
+                  //   //  this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+                  //
+                  //   let splat_buff = await response.arrayBuffer()
+                  //   await fileUtils.writeFileToDisk(dirHandle, 'splat' + '.png', splat_buff)
+                  // }
+
+
+                  //Create preview imamge
+                  let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
+
+                  let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+                  let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+                  //Note file does not have to be written to disk in order to update preview image
+                  if (bFileExists === false) {
+                    let buff = await previewImageInfo.image.toBuffer()
+                    await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+                  }
+
+                  emitter.emit('updatePreviewImage', {
+                    dir_handle: dirHandle,
+                    tile_info: tile_info,
+                    preview_image_info: previewImageInfo,
+                    map: map
+                  })
+                } catch (e) {
+                  console.log(e)
+                  that.alertMsg = e
+                  that.alert = true
+                  that.qt.loading.hide()
+                }
+                that.qt.loading.hide()
+              } else {
+                that.alertMsg = 'Cannot connect to backend server for stitching tiles.'
+                that.alert = true
+                that.qt.loading.hide()
+              }
+            }
+          }
+        )
+
+        // map.on('mousemove', (e) => {
+
+        // if (draw.getMode() === "draw_assisted_rectangle") {
+        //   const features = map.queryRenderedFeatures(e.point);
+        //   if (features[0] && features[0].layer && features[0].layer.id === "gl-draw-line.hot") {
+        //     document.getElementById("infoRectangle").innerHTML = "Angle:" + features[0].properties.angle;
+        //   }
+        // }
+
+        // map.getCanvas().style.cursor = 'pointer';
+        // const features = map.queryRenderedFeatures(e.point);
+        // let depth
+        // let obj = {}
+        //
+        // for (const feat of features) {
+        //   if (Object.keys(feat.type).length > 0) {
+        //     if (Object.keys(feat.properties).length > 0) {
+        //       let properties = feat.properties
+        //       let layer = feat.layer
+        //       if (properties.DEPTH) {
+        //         obj.depth = properties.DEPTH
+        //       } else {
+        //       }
+        //       obj.type = feat.type
+        //
+        //       obj.id = layer.id
+        //     }
+        //   }
+        // }
+
+        // })
+
+      }
     }
   }
 }
 
+
+// function updateArea(e) {
+//   const data = draw.getAll();
+//   const answer = document.getElementById('calculated-area');
+//   if (data.features.length > 0) {
+//     const area = turf.area(data);
+// // Restrict the area to 2 decimal points.
+//     const rounded_area = Math.round(area * 100) / 100;
+//     answer.innerHTML = `<p><strong>${rounded_area}</strong></p><p>square meters</p>`;
+//   } else {
+//     answer.innerHTML = '';
+//     if (e.type !== 'draw.delete')
+//       alert('Click the map to draw a polygon.');
+//   }
+// }
 //
-// (async () => {
-//   const map = new mapboxgl.Map({
-//     container: 'map',
-//     zoom: 13,
-//     center: [6.6301, 45.35625],
-//     pitch: 80,
-//     bearing: 160,
-//     interactive: false,
-//     style: 'mapbox://styles/mapbox/satellite-streets-v11'
-//   });
-//
-//   await map.once('load');
-// // Add fog
-//   map.setFog({
-//     'range': [-1, 1.5],
-//     'color': 'white',
-//     'horizon-blend': 0.1
-//   });
-//
-// // Add some 3d terrain
-//   map.addSource('mapbox-dem', {
-//     'type': 'raster-dem',
-//     'url': 'mapbox://mapbox.terrain-rgb',
-//     'tileSize': 512,
-//     'maxzoom': 14
-//   });
-//   map.setTerrain({
-//     'source': 'mapbox-dem',
-//     'exaggeration': 1.5
-//   });
-//
-// // Add two different day and night sky layers so that we may switch between
-// // them during animation. We add a sky opacity transition to slightly animate
-// // the opacity updates.
-//   map.addLayer({
-//     'id': 'sky-day',
-//     'type': 'sky',
-//     'paint': {
-//       'sky-type': 'gradient',
-//       'sky-opacity-transition': { 'duration': 500 }
-//     }
-//   });
-//   map.addLayer({
-//     'id': 'sky-night',
-//     'type': 'sky',
-//     'paint': {
-//       'sky-type': 'atmosphere',
-//       'sky-atmosphere-sun': [90, 0],
-//       'sky-atmosphere-halo-color': 'rgba(255, 255, 255, 0.5)',
-//       'sky-atmosphere-color': 'rgba(255, 255, 255, 0.2)',
-//       'sky-opacity': 0,
-//       'sky-opacity-transition': { 'duration': 500 }
-//     }
-//   });
 
 </script>
 

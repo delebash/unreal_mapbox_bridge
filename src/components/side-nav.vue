@@ -176,7 +176,7 @@
 
 <script>
 
-import {ref} from 'vue'
+import {ref, isProxy, toRaw} from 'vue';
 import fileUtils from '../utilities/fs-helpers'
 import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
@@ -244,7 +244,7 @@ export default {
           value: 505
         }
       ],
-      url: ref('thirtytwo-9-82-180.png'),
+      url: ref(''),
       tile_info: ref(''),
       save_fileName: ref(''),
       dirHandle: ref(''),
@@ -325,7 +325,7 @@ export default {
           }
         });
       } else {
-        this.alertMsg = 'Please select a location on the map first.'
+        this.alertMsg = 'Please double click on your chosen selection first.'
         this.alert = true
       }
     },
@@ -346,7 +346,7 @@ export default {
           }
         });
       } else {
-        this.alertMsg = 'Please select a location on the map first.'
+        this.alertMsg = 'Please double click on your chosen selection first.'
         this.alert = true
       }
     },
@@ -375,6 +375,8 @@ export default {
       this.exportOptionsModel = e
       this.tile_info.resolution = this.unrealLandscape.value
       this.adjustedZscale()
+      let rawData = toRaw(this.exportOptionsModel)
+      idbKeyval.set('exportOptionsModel', rawData)
     },
     exportType_Change(e) {
       if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None" || this.exportType.label === "Unreal Terrain Magic Plugin -- HeightmapLandscape Clip") {
@@ -412,7 +414,7 @@ export default {
         this.bbinfoalert = true
       } else {
         this.bbinfoalert = false
-        this.alertMsg = 'Please select a location on the map first.'
+        this.alertMsg = 'Please double click on your chosen selection first.'
         this.alert = true
       }
     },
@@ -603,7 +605,7 @@ export default {
           }
         }
       } else {
-        this.alertMsg = 'Please select a map location'
+        this.alertMsg = 'Please double click on your chosen selection first'
         this.alert = true
       }
 
@@ -725,7 +727,7 @@ export default {
                   '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
                   '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
                 ];
-
+           
                 await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
                 if (this.exportOptionsModel.includes('satellite')) {
@@ -746,7 +748,7 @@ export default {
 
                   let buff = await mapUtils.downloadTerrainRgb(rasterstyle_url)
                   let splat_image = await mapUtils.loadImageFromArray(buff)
-                  await this.saveImage(buff, 'orig' + '.png', "png")
+                  await this.saveImage(buff, 'splat_' + this.tile_info.sixteenFileName, "png")
 
                   //Change color for splat map
                   let pixelsArray = splat_image.getPixelsArray()
@@ -772,7 +774,7 @@ export default {
                       .gaussianFilter({radius: this.blurRadiusWeightmap})
 
                     let splat_buff = await img.toBuffer()
-                    await this.saveImage(splat_buff, data.name + '.png', "png")
+                    await this.saveImage(splat_buff, 'splat_' + data.name + '_' + this.tile_info.sixteenFileName, "png")
                   }
                 }
               } else {
@@ -832,11 +834,11 @@ export default {
               break;
           }
         } else {
-          this.alertMsg = 'Please select a location on the map first.'
+          this.alertMsg = 'Please double click on your chosen selection first.'
           this.alert = true
         }
       } else {
-        this.alertMsg = 'Please select a location on the map first.'
+        this.alertMsg = 'Please double click on your chosen selection first.'
         this.alert = true
       }
     }

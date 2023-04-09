@@ -40,7 +40,21 @@
 
         <ul>
           <li>
+            <u>Select a Draw mode</u> -- Select a draw mode from the control on the right of the map.
+
+            <u><img src="/single_tile.png" alt="Single select"> Single tile select</u> -- Select a single tile (default mode)
+            <br>
+            <u><img src="/multiple_tile.png" alt="Multiple select"> Draw rectangle to select multiple tiles</u> --  Note you need to run the backend server for tile stitching
+              See Tile stitching video on at the bottom for use.
+          </li>
+          <li>
             <u>Left Mouse Click</u> -- Selects a location on the map indicated by a blue bounding box.
+          </li>
+          <li>
+            <u>Double Left Mouse Click</u> -- Download the tile preview and tile information.
+          </li>
+          <li>
+            <u>Left Mouse Hold</u> -- Drag the mouse around to move the map.
           </li>
           <li>
             <u>Left Mouse Hold</u> -- Drag the mouse around to move the map.

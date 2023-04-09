@@ -40,26 +40,15 @@ export default {
         }
 
         mapweight.on('load', () => {
-          // const waiting = () => {
-          //   if (!mapweight.isStyleLoaded()) {
-          //     setTimeout(waiting, 200);
-          //   } else {
-          //     //  if (that.style === "streets-v11") {
-              this.loadMapSourcesLayers(mapweight)
+          this.loadMapSourcesLayers(mapweight)
           mapweight.getSource('bounding_box_source').setData(tile_info.polygon_bb);
           mapweight.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
-          mapweight.fitBounds(tile_info.bbox, {});
-          //     //  }
-          //   }
-          // };
-          // waiting();
+          mapweight.fitBounds(tile_info.bbox);
         });
 
-          mapweight.getSource('bounding_box_source').setData(tile_info.polygon_bb);
-          mapweight.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
-          mapweight.fitBounds(tile_info.bbox, {});
-
-
+        mapweight.getSource('bounding_box_source').setData(tile_info.polygon_bb);
+        mapweight.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
+        mapweight.fitBounds(tile_info.bbox);
 
       }
     },
