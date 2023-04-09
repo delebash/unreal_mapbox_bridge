@@ -45,7 +45,7 @@
             <u><img src="/single_tile.png" alt="Single select"> Single tile select</u> -- Select a single tile (default mode)
             <br>
             <u><img src="/multiple_tile.png" alt="Multiple select"> Draw rectangle to select multiple tiles</u> --  Note you need to run the backend server for tile stitching
-              See Tile stitching video on at the bottom for use.
+              See Tile stitching video at the bottom for use.
           </li>
           <li>
             <u>Left Mouse Click</u> -- Selects a location on the map indicated by a blue bounding box.
