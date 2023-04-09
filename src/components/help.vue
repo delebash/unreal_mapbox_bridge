@@ -41,7 +41,7 @@
         <ul>
           <li>
             <u>Select a Draw mode</u> -- Select a draw mode from the control on the right of the map.
-
+            <br>
             <u><img src="/single_tile.png" alt="Single select"> Single tile select</u> -- Select a single tile (default mode)
             <br>
             <u><img src="/multiple_tile.png" alt="Multiple select"> Draw rectangle to select multiple tiles</u> --  Note you need to run the backend server for tile stitching
