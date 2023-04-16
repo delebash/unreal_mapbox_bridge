@@ -47,7 +47,7 @@
 
   <div id="map">
     <pre id="features"></pre>
-<!--    <div id="infoRectangle"></div>-->
+    <!--    <div id="infoRectangle"></div>-->
     <q-toolbar id="mb-tbar" class="bg-primary text-white q-pa-none q-ma-none">
       <q-btn color="info" label="Map Settings">
         <q-menu>

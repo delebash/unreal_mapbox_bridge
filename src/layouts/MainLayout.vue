@@ -422,7 +422,13 @@ export default {
       idbKeyval.set('saveStitchingFiles', this.saveStitchingFiles);
       idbKeyval.set('mapbox_raster_style_endpoint', this.mapbox_raster_style_endpoint);
       idbKeyval.set('mapbox_raster_style_url', this.mapbox_raster_style_url);
-      idbKeyval.set('weightmap_data', this.rows);
+      if (isProxy(this.rows)) {
+        let rawData = toRaw(this.rows)
+        idbKeyval.set('weightmap_data', rawData);
+      } else {
+        idbKeyval.set('weightmap_data', this.rows);
+      }
+
 
       if (this.isRequiredSettings() === true) {
         this.loadMap()

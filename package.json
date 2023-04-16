@@ -50,6 +50,10 @@
     "workbox-routing": "^6.5.4",
     "workbox-strategies": "^6.5.4"
   },
+  "overrides": {
+    "vite": "^4.0.0",
+    "@vitejs/plugin-vue": "^4.0.0"
+  },
   "engines": {
     "node": "^18 || ^16 || ^14.19",
     "npm": ">= 6.13.4",
