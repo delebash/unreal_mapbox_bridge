@@ -30,7 +30,7 @@
     "@turf/turf": "^6.5.0",
     "idb-keyval": "^6.2.0",
     "image-js": "^0.35.3",
-    "mapbox-gl": "^2.13.0",
+    "mapbox-gl": "^2.14.1",
     "mapbox-gl-draw-rectangle-mode": "^1.0.4",
     "mitt": "^3.0.0",
     "quasar": "^2.11.10",
@@ -41,7 +41,7 @@
   "devDependencies": {
     "@quasar/app-vite": "^1.2.1",
     "autoprefixer": "^10.4.14",
-    "electron": "^24.0.0",
+    "electron": "^24.1.2",
     "workbox-build": "^6.5.4",
     "workbox-cacheable-response": "^6.5.4",
     "workbox-core": "^6.5.4",

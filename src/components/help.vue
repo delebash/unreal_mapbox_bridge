@@ -214,30 +214,7 @@
         <div><u>Videos:</u>
           <ul>
             <li>
-              <a href="https://www.youtube.com/watch?v=wwEDuVmCayU&t">Unreal Mapbox Bridge Introduction and Setup
-                (Updated 10/31/22)</a>
-            </li>
-            <li>
-              <a href="https://www.youtube.com/watch?v=j_4pZ5EneVc&t">Weightmaps</a>
-            </li>
-            <li>
-              <a href="https://www.youtube.com/watch?v=j_4pZ5EneVc&t">Work around to fix Mapbox Bridge imported
-                landscape with artifacts</a>
-            </li>
-            <li>
-              <a href="https://www.youtube.com/watch?v=Z3e5Zaxmo1c&tU">Tut on how to overlay a satellite image on your
-                landscape</a>
-            </li>
-            <li>
-              <a href="https://www.youtube.com/watch?v=dgtL6ISxTFU">Unreal Mapbox Bridge and Terrain Magic Integration
-                update (01/02/2023)</a>
-            </li>
-            <li>
-              <a href="https://www.youtube.com/watch?v=8b03jsvj1yo&t">Unreal Mapbox Bridge Integration with marketplace
-                Landscape Stamping Tool</a>
-            </li>
-            <li>
-              <a href="https://www.youtube.com/watch?v=v8Sln_Tzki8&t">Tile Stitching and Free Form Select</a>
+              <a href="https://www.youtube.com/playlist?list=PLFCVXzupw1r_7ExUSGDxHGHU-gPRxOGeZ">Unreal Mapbox Bridge Tutorial Playlist</a>
             </li>
           </ul>
         </div>
