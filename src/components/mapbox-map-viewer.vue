@@ -843,6 +843,7 @@ export default {
                 let tiles = tib.tilesInBbox(bboxTiles, z)
                 let filesArray = []
                 let splatArray = []
+                let satArray = []
 
                 for (let tile of tiles) {
                   let fileInfo = {}
@@ -863,19 +864,35 @@ export default {
                   fileInfo.buffer = rgbStr
                   filesArray.push(fileInfo)
 
-                  // if (exportOptionsModel.includes('raster_style')) {
-                  //   console.log('test3')
-                  //   let rasterstyle_url = mapbox_raster_style_endpoint + '/' + mapbox_raster_style_url + '/tiles/512/' + `${tile_info.z}/${tile_info.x}/${tile_info.y}@2x?access_token=` + that.access_token;
-                  //   let rgb_splat = await mapUtils.getMapboxTerrainRgb(rasterstyle_url)
-                  //   let splat_buff = await rgb_splat.toBuffer()
-                  //
-                  //   fileInfo = {}
-                  //   let splatStr = splat_buff.toString()
-                  //   fileInfo.x = tile_info.x
-                  //   fileInfo.y = tile_info.y
-                  //   fileInfo.buffer = splatStr
-                  //   splatArray.push(fileInfo)
-                  // }
+                  if (exportOptionsModel.includes('raster_style')) {
+
+                    let rasterstyle_url = mapbox_raster_style_endpoint + '/' + mapbox_raster_style_url + '/tiles/512/' + `${tile_info.z}/${tile_info.x}/${tile_info.y}@2x?access_token=` + that.access_token;
+                    let rgb_splat = await mapUtils.getMapboxTerrainRgb(rasterstyle_url)
+                    let splat_buff = await rgb_splat.toBuffer()
+
+                    fileInfo = {}
+                    let splatStr = splat_buff.toString()
+                    fileInfo.x = tile_info.x
+                    fileInfo.y = tile_info.y
+                    fileInfo.buffer = splatStr
+                    splatArray.push(fileInfo)
+                  }
+                  if (exportOptionsModel.includes('satellite')) {
+
+                    let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
+                    let mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${tile_info.z}/${tile_info.x}/${tile_info.y}@2x?access_token=` + that.access_token;
+                    // let satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
+
+                    let sat_img = await mapUtils.getMapboxTerrainRgb(mapbox_satellite_image_url)
+                    let sat_buff = await sat_img.toBuffer()
+
+                    fileInfo = {}
+                    let satStr = sat_buff.toString()
+                    fileInfo.x = tile_info.x
+                    fileInfo.y = tile_info.y
+                    fileInfo.buffer = satStr
+                    satArray.push(fileInfo)
+                  }
                 }
 
                 idbKeyval.set('tile_info', tile_info)
@@ -892,25 +909,45 @@ export default {
                   })
 
                   let rgb_buff = await response.arrayBuffer()
-                  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
                   await idbKeyval.set('rgb_image_buffer', rgb_buff)
+                  await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
 
-                  // if (exportOptionsModel.includes('raster_style')) {
-                  //
-                  //   let payload = JSON.stringify(splatArray)
-                  //
-                  //   const response = await fetch(backendServer, {
-                  //     method: "POST",
-                  //     body: payload,
-                  //     headers: {
-                  //       "Content-Type": "application/json",
-                  //     }
-                  //   })
-                  //   //  this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
-                  //
-                  //   let splat_buff = await response.arrayBuffer()
-                  //   await fileUtils.writeFileToDisk(dirHandle, 'splat' + '.png', splat_buff)
-                  // }
+
+                  if (exportOptionsModel.includes('raster_style')) {
+
+                    let payload = JSON.stringify(splatArray)
+
+                    const response = await fetch(backendServer, {
+                      method: "POST",
+                      body: payload,
+                      headers: {
+                        "Content-Type": "application/json",
+                      }
+                    })
+                    //  this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+
+                    let splat_buff = await response.arrayBuffer()
+                    await idbKeyval.set('splat_image_buffer', splat_buff)
+                    await fileUtils.writeFileToDisk(dirHandle, 'splat_' + tile_info.rgbFileName, splat_buff)
+                  }
+
+                  if (exportOptionsModel.includes('satellite')) {
+
+                    let payload = JSON.stringify(satArray)
+
+                    const response = await fetch(backendServer, {
+                      method: "POST",
+                      body: payload,
+                      headers: {
+                        "Content-Type": "application/json",
+                      }
+                    })
+                    //  this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+
+                    let sat_buff = await response.arrayBuffer()
+                    await idbKeyval.set('sat_image_buffer', sat_buff)
+                    await fileUtils.writeFileToDisk(dirHandle, 'sat_' + tile_info.rgbFileName, sat_buff)
+                  }
 
 
                   //Create preview imamge
