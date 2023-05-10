@@ -7,6 +7,10 @@
 
 # Plugin version for Unreal Egine 5 <a href="https://github.com/delebash/UnrealMapboxBridgePlugin" target="_blank">UnrealMapboxBridge</a>
 
+# Tutorial Playlist
+
+https://www.youtube.com/playlist?list=PLFCVXzupw1r_7ExUSGDxHGHU-gPRxOGeZ
+
 Get Help here <a href="https://discord.gg/2WkHWNDf8q" target="_blank">Discord Server</a>
 
 For what is coming next check the **<a href="https://trello.com/b/7jXYlo13/unreal-mapbox-bridge" target="_blank">RoadMap</a>**
