@@ -535,7 +535,7 @@ export default {
       }
     },
     async loadUserData() {
-      this.mapserver = await idbKeyval.get('mapserver')
+      this.mapserver = await idbKeyval.get('mapserver') || 'Mapbox'
       if (this.mapserver === 'Maptiler') {
         this.maptiler_access_token = await idbKeyval.get('maptiler_access_token') || ''
         this.maptiler_style_url = await idbKeyval.get('maptiler_style_url') || 'https://api.maptiler.com/maps/streets/style.json'
