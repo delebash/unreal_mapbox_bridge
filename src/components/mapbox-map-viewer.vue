@@ -536,7 +536,7 @@ export default {
       this.mapbox_api_url = await idbKeyval.get('mapbox_api_url')
       this.dirHandle = await idbKeyval.get('dirHandle')
 
-      this.style_url = await idbKeyval.get('style_url')
+      this.style_url = await idbKeyval.get('mapbox_style_url')
       this.mapbox_raster_png_dem = await idbKeyval.get('mapbox_raster_png_dem')
 
       let that = this
@@ -552,7 +552,7 @@ export default {
           center: [-121.7598, 46.8760], //Mt. Rainier
           zoom: 9,
           maxZoom: 14,
-          doubleClickZoom: true,
+          doubleClickZoom: false,
           antialias: true,
           boxZoom: true,
           failIfMajorPerformanceCaveat: true
@@ -735,6 +735,7 @@ export default {
             let lng = e.lngLat.lng
             let lat = e.lngLat.lat
             let z = Math.floor(map.getZoom());
+            that.zoom = z
             let tile_info = mapUtils.getTileInfo(lng, lat, false, 0, 0, z);
 
             idbKeyval.set('tile_info', tile_info)

@@ -182,7 +182,7 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
-import mapboxgl from "mapbox-gl";
+
 
 let Gdal
 let ZrangeSeaLevel = 32767
@@ -197,7 +197,8 @@ export default {
       blurRadius: ref(0),
       blurRadiusWeightmap: ref(10),
       gridSize: ref(2),
-      access_token: ref(''),
+      mapbox_access_token: ref(''),
+      maptiler_access_token: ref(''),
       isDisabled: ref(false),
       isDownload: ref(true),
       isWorldPartition: ref(false),
@@ -246,6 +247,7 @@ export default {
       ],
       url: ref(''),
       tile_info: ref(''),
+      satellite_endpoint: ref(''),
       save_fileName: ref(''),
       dirHandle: ref(''),
       preview_image_info: ref(''),
@@ -622,24 +624,29 @@ export default {
       await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.tileInfoFileName, jsonTile_info)
     },
     async createSixteenHeightMap() {
+      let mapserver = await idbKeyval.get('mapserver')
+      if (this.mapserver === 'Mapbox') {
+        this.access_token = await idbKeyval.get('mapbox_access_token')
+        this.satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
 
+      } else if (this.mapserver === 'Maptiler') {
+        this.access_token = await idbKeyval.get('maptiler_access_token')
+        this.satellite_endpoint = await idbKeyval.get('maptiler_satellite_endpoint')
+
+      }
       if (this.tile_info) {
         let translateOptions
         let buff
 
         this.tile_info.resolution = this.unrealLandscape.value
-        mapboxgl.accessToken = await idbKeyval.get('access_token')
-        this.access_token = mapboxgl.accessToken
-        // utm zone calc   zone = int(longitude + 180.0) / 6 + 1
-
+        this.access_token = await idbKeyval.get('access_token')
 
         this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
         this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
         this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
 
-        let mapbox_satellite_endpoint = await idbKeyval.get('mapbox_satellite_endpoint')
-        //let mapbox_api_url = await idbKeyval.get('mapbox_api_url')
-        this.tile_info.mapbox_satellite_image_url = mapbox_satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
+
+        this.tile_info.mapbox_satellite_image_url = this.satellite_endpoint + `/${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
         this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
 
         this.qt.loading.show()
@@ -707,13 +714,15 @@ export default {
               await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
               if (this.exportOptionsModel.includes('satellite')) {
-                //satellite image
-                translateOptions = [
-                  '-of', 'JPEG',
-                  '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
-                ]
-                let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-                await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                if (this.mapserver === 'Mapbox') {
+                  //satellite image
+                  translateOptions = [
+                    '-of', 'JPEG',
+                    '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                  ]
+                  let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
+                  await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                }
               }
               this.qt.loading.hide()
               break;
@@ -727,62 +736,66 @@ export default {
                   '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
                   '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
                 ];
-           
+
                 await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
+                if (this.mapserver === 'Mapbox') {
+                  if (this.exportOptionsModel.includes('satellite')) {
+                    //satellite image
+                    translateOptions = [
+                      '-of', 'JPEG',
+                      '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                    ]
+                    let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
+                    await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                  }
 
-                if (this.exportOptionsModel.includes('satellite')) {
-                  //satellite image
-                  translateOptions = [
-                    '-of', 'JPEG',
-                    '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
-                  ]
-                  let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-                  await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
-                }
+                  if (this.exportOptionsModel.includes('raster_style')) {
+                    let mapbox_raster_style_endpoint = await idbKeyval.get('mapbox_raster_style_endpoint') || 'https://api.mapbox.com/styles/v1'
+                    let mapbox_raster_style_url = await idbKeyval.get('mapbox_raster_style_url') || ''
 
-                if (this.exportOptionsModel.includes('raster_style')) {
-                  let mapbox_raster_style_endpoint = await idbKeyval.get('mapbox_raster_style_endpoint') || 'https://api.mapbox.com/styles/v1'
-                  let mapbox_raster_style_url = await idbKeyval.get('mapbox_raster_style_url') || ''
+                    let rasterstyle_url = mapbox_raster_style_endpoint + '/' + mapbox_raster_style_url + '/tiles/512/' + `${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
 
-                  let rasterstyle_url = mapbox_raster_style_endpoint + '/' + mapbox_raster_style_url + '/tiles/512/' + `${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}@2x?access_token=` + this.access_token;
+                    let buff = await mapUtils.downloadTerrainRgb(rasterstyle_url)
+                    let splat_image = await mapUtils.loadImageFromArray(buff)
+                    await this.saveImage(buff, 'splat_' + this.tile_info.sixteenFileName, "png")
 
-                  let buff = await mapUtils.downloadTerrainRgb(rasterstyle_url)
-                  let splat_image = await mapUtils.loadImageFromArray(buff)
-                  await this.saveImage(buff, 'splat_' + this.tile_info.sixteenFileName, "png")
-
-                  //Change color for splat map
-                  let pixelsArray = splat_image.getPixelsArray()
-                  let black = [0, 0, 0]
-                  let white = [255, 255, 255]
-                  let rgbColor = []
-                  let weight_data = await idbKeyval.get('weightmap_data')
-                  for (let data of weight_data) {
-                    rgbColor = JSON.stringify(data.color.split(',').map(Number));
-                    for (let i = 0; i < pixelsArray.length; i++) {
-                      if (JSON.stringify(pixelsArray[i]) === rgbColor) {
-                        splat_image.setPixel(i, white)
-                      } else {
-                        splat_image.setPixel(i, black)
+                    //Change color for splat map
+                    let pixelsArray = splat_image.getPixelsArray()
+                    let black = [0, 0, 0]
+                    let white = [255, 255, 255]
+                    let rgbColor = []
+                    let weight_data = await idbKeyval.get('weightmap_data')
+                    for (let data of weight_data) {
+                      rgbColor = JSON.stringify(data.color.split(',').map(Number));
+                      for (let i = 0; i < pixelsArray.length; i++) {
+                        if (JSON.stringify(pixelsArray[i]) === rgbColor) {
+                          splat_image.setPixel(i, white)
+                        } else {
+                          splat_image.setPixel(i, black)
+                        }
                       }
+
+                      let img = splat_image
+                        .resize({
+                          width: this.tile_info.resampleSize,
+                          height: this.tile_info.resampleSize
+                        })
+                        .gaussianFilter({radius: this.blurRadiusWeightmap})
+
+                      let splat_buff = await img.toBuffer()
+                      await this.saveImage(splat_buff, 'splat_' + data.name + '_' + this.tile_info.sixteenFileName, "png")
                     }
-
-                    let img = splat_image
-                      .resize({
-                        width: this.tile_info.resampleSize,
-                        height: this.tile_info.resampleSize
-                      })
-                      .gaussianFilter({radius: this.blurRadiusWeightmap})
-
-                    let splat_buff = await img.toBuffer()
-                    await this.saveImage(splat_buff, 'splat_' + data.name + '_' + this.tile_info.sixteenFileName, "png")
                   }
                 }
               } else {
                 //Do not process only extract height values
                 await this.saveImage(buff, this.tile_info.sixteenFileName, "png")
-                if (this.exportOptionsModel.includes('satellite')) {
-                  let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
-                  await this.saveImage(buff, this.tile_info.satelliteFileName, "png")
+
+                if (this.mapserver === 'Mapbox') {
+                  if (this.exportOptionsModel.includes('satellite')) {
+                    let buff = await mapUtils.downloadTerrainRgb(this.tile_info.mapbox_satellite_image_url)
+                    await this.saveImage(buff, this.tile_info.satelliteFileName, "png")
+                  }
                 }
               }
               this.qt.loading.hide()
