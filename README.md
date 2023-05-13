@@ -2,10 +2,14 @@
 
 #### Use real world heightmap data from Mapbox and automatically convert it to an Unreal heightmap image
 
-# Check out the demo running live [here](https://terrain.justgeektechs.com/)
+# Live site [here](https://terrain.justgeektechs.com/)
 
 
 # Plugin version for Unreal Egine 5 <a href="https://github.com/delebash/UnrealMapboxBridgePlugin" target="_blank">UnrealMapboxBridge</a>
+
+# Tutorial Playlist
+
+https://www.youtube.com/playlist?list=PLFCVXzupw1r_7ExUSGDxHGHU-gPRxOGeZ
 
 Get Help here <a href="https://discord.gg/2WkHWNDf8q" target="_blank">Discord Server</a>
 
