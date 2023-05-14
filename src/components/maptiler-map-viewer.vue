@@ -16,6 +16,18 @@
         <q-menu>
           <div class="row no-wrap q-pa-md">
             <div class="column">
+              <u><b>Enable Layers</b></u>
+
+              <q-option-group
+                dense
+                color="green"
+                checked-icon="check"
+                unchecked-icon="clear"
+                :options="layer_type"
+                type="toggle"
+                v-model="layers"
+                @update:model-value="changeLayers"
+              />
 
             </div>
           </div>
@@ -55,7 +67,110 @@ import mapUtils from "src/utilities/map-utils";
 import fileUtils from "src/utilities/fs-helpers";
 import emitter from "src/utilities/emitter";
 import tib from "tiles-in-bbox";
+import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
+import DrawAssistedRectangle from "@geostarters/mapbox-gl-draw-rectangle-assisted-mode";
+import MapTilerGLButtonControl from "../maptiler-gl-button-control/index.js";
 
+let draw
+const STYLES_DRAW = [
+
+  {
+    "id": "gl-draw-line",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "LineString"], ["!=", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#FF0000",
+      "line-width": 2
+    }
+  },
+  {
+    "id": "gl-draw-polygon-fill",
+    "type": "fill",
+    "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+    "paint": {
+      "fill-color": "#FF0000",
+      "fill-outline-color": "#D20C0C",
+      "fill-opacity": 0.1
+    }
+  },
+
+  {
+    "id": "gl-draw-polygon-stroke-active",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "Polygon"], ["!=", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#D20C0C",
+      "line-width": 2
+    }
+  },
+
+  {
+    "id": "gl-draw-polygon-and-line-vertex-halo-active",
+    "type": "circle",
+    "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+    "paint": {
+      "circle-radius": 5,
+      "circle-color": "#FFF"
+    }
+  },
+
+  {
+    "id": "gl-draw-polygon-and-line-vertex-active",
+    "type": "circle",
+    "filter": ["all", ["==", "meta", "vertex"], ["==", "$type", "Point"], ["!=", "mode", "static"]],
+    "paint": {
+      "circle-radius": 3,
+      "circle-color": "#D20C0C",
+    }
+  },
+
+  {
+    "id": "gl-draw-line-static",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "LineString"], ["==", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#FF0000",
+      "line-width": 3
+    }
+  },
+  {
+    "id": "gl-draw-polygon-fill-static",
+    "type": "fill",
+    "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+    "paint": {
+      "fill-color": "#ee0508",
+
+      "fill-opacity": 0.8
+    }
+  },
+  {
+    "id": "gl-draw-polygon-stroke-static",
+    "type": "line",
+    "filter": ["all", ["==", "$type", "Polygon"], ["==", "mode", "static"]],
+    "layout": {
+      "line-cap": "round",
+      "line-join": "round"
+    },
+    "paint": {
+      "line-color": "#c40b0b",
+
+      "line-width": 2
+    }
+  }
+];
 export default {
   name: 'maptiler-map-viewer',
   setup() {
@@ -72,16 +187,49 @@ export default {
       maptiler_rgb_image_url: ref(''),
       maptiler_raster_png_dem: ref(''),
       maptiler_api_url: ref(''),
+      satellite_endpoint: ref(''),
+      satellite_image_url: ref(''),
       rasterFromStyle: ref(false),
-      zoom: ref('')
+      zoom: ref(''),
+      drawmode: ref('simple_select'),
+      layers: ref(['hillshading', 'bounding_box']),
+      layer_type: [
+        {
+          label: 'Hillshade',
+          value: 'hillshading'
+        },
+        {
+          label: 'Bounding Box',
+          value: 'bounding_box'
+        },
+        {
+          label: 'Satellite',
+          value: 'satellite'
+        }
+      ],
     }
   },
   mounted() {
   },
   methods: {
+    async changeLayers(layers) {
+      for (const layertype of this.layer_type) {
+        if (layers.includes(layertype.value)) {
+          this.map.setLayoutProperty(
+            layertype.value,
+            'visibility',
+            'visible'
+          )
+        } else {
+          this.map.setLayoutProperty(
+            layertype.value,
+            'visibility',
+            'none'
+          )
+        }
+      }
+    },
     async loadMapSourcesLayers(map) {
-
-      if (this.rasterFromStyle === false) {
         map.addSource("maptiler_terrain_dem", {
           "type": "raster-dem",
           "url": this.maptiler_raster_png_dem + 'tiles.json'
@@ -118,11 +266,57 @@ export default {
             'fill-opacity': 0
           }
         })
+
+      map.addSource('satellite', {
+        'type': 'raster',
+        'url': this.maptiler_api_url + '/tiles/satellite/tiles.json' ,
+        'tileSize': 512,
+      });
+
+      map.addLayer({
+        id: 'satellite',
+        source: 'satellite',
+        type: "raster",
+        'layout': {
+          'visibility': 'none'
+        }
+      });
+    },
+    changeDrawMode(e) {
+      let btnTile = document.getElementsByClassName("mapbox-gl-draw_polygon")[0]
+      let btnStitchTiles = document.getElementsByClassName("mapbox-gl-draw_line")[0]
+      let btnClicked = e.target
+
+      if (btnClicked.title === "Select single tile") {
+        btnStitchTiles.style.backgroundColor = "white"
+        btnTile.style.backgroundColor = "green"
+        draw.deleteAll()
+        draw.changeMode('simple_select');
+        this.drawmode = "simple_select"
+      } else if (btnClicked.title === "Draw Rectangle to select multiple tiles") {
+        btnStitchTiles.style.backgroundColor = "green"
+        btnTile.style.backgroundColor = "white"
+        draw.deleteAll()
+        draw.changeMode('draw_assisted_rectangle');
+        this.drawmode = "draw_assisted_rectangle"
+        this.map.setPaintProperty('bounding_box', 'fill-opacity', 0);
       }
+      console.log(this.drawmode)
     },
     resizeMap() {
       //Fixes size of map when drawer is closed
       this.map.resize()
+    },
+    updateBBox(bbRectangle) {
+      let coords = bbRectangle.features[0].geometry.coordinates[0]
+      let minlng, minlat, maxlng, maxlt
+      minlng = coords[3][0]
+      minlat = coords[3][1]
+      maxlng = coords[1][0]
+      maxlt = coords[1][1]
+      let bbox = [minlng, minlat, maxlng, maxlt]
+      let tile_info = mapUtils.getTileInfo(0, 0, true, 0, 0, 0, bbox);
+      idbKeyval.set('tile_info', tile_info)
     },
     async loadMapTilerMap() {
       this.maptiler_access_token = await idbKeyval.get('maptiler_access_token')
@@ -149,7 +343,7 @@ export default {
       });
 
       this.map = map
-
+      this.map.doubleClickZoom.disable()
       //Add controls
       const gc = new GeocodingControl({
         apiKey: maptilersdk.config.apiKey,
@@ -160,22 +354,57 @@ export default {
       });
       map.addControl(gc, 'top-right');
 
+      //Draw
+      draw = new MapboxDraw({
+        modes: {
+          ...MapboxDraw.modes,
+          draw_assisted_rectangle: DrawAssistedRectangle
+        },
+        displayControlsDefault: false,
+        controls: {},
+        userProperties: true,
+        styles: STYLES_DRAW
+      });
+      map.addControl(draw);
+
+      //Add simple select for single tile
+      const tile_select = new MapTilerGLButtonControl({
+        className: "mapbox-gl-draw_polygon",
+        title: "Select single tile",
+        eventHandler: that.changeDrawMode
+      });
+
+      map.addControl(tile_select);
+
+      const rectangle = new MapTilerGLButtonControl({
+        className: "mapbox-gl-draw_line",
+        title: "Draw Rectangle to select multiple tiles",
+        eventHandler: that.changeDrawMode
+      });
+      map.addControl(rectangle);
 
       map.on('load', function () {
         that.loadMapSourcesLayers(map)
+        let btnTile = document.getElementsByClassName("mapbox-gl-draw_polygon")[0]
+        btnTile.style.backgroundColor = "green"
+        draw.changeMode('simple_select');
+        this.drawmode = "simple_select"
       });
       map.on('click', async function (e) {
+        if (that.drawmode === "simple_select") {
+          let lng = e.lngLat.lng
+          let lat = e.lngLat.lat
+          let z = Math.floor(map.getZoom());
+          that.zoom = z
+          let tile_info = mapUtils.getTileInfo(lng, lat, false, 0, 0, z);
 
-        let lng = e.lngLat.lng
-        let lat = e.lngLat.lat
-        let z = Math.floor(map.getZoom());
-        that.zoom = z
-        let tile_info = mapUtils.getTileInfo(lng, lat, false, 0, 0, z);
+          idbKeyval.set('tile_info', tile_info)
+          that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+          map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
+          map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
+        }
 
-        idbKeyval.set('tile_info', tile_info)
-        that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
-        map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
-        map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
+
       })
 
       map.on('wheel', () => {
@@ -185,7 +414,25 @@ export default {
       map.on('error', e => {
         console.error(e);
       });
+      map.on('draw.create', function (e) {
+        console.log('draw mode create ' + e.type)
+        that.updateBBox(e)
+      });
 
+      map.on('draw.update', function (e) {
+        console.log('draw mode update ' + e.type)
+        that.updateBBox(e)
+      });
+      map.on('draw.selectionchange', function (e) {
+        console.log('draw mode selectionchange ' + e.type)
+      })
+      map.on('draw.delete', function (e) {
+        console.log('draw mode delete ' + e.type)
+      })
+
+      map.on("draw.modechange", (e) => {
+        console.log('draw mode CHANGE ' + e.mode)
+      });
       map.on('dblclick', async function (e) {
 
         let dirHandle = await idbKeyval.get('dirHandle')
@@ -198,31 +445,168 @@ export default {
 
         let tile_info = await idbKeyval.get('tile_info')
         that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
-//https://api.maptiler.com/tiles/terrain-rgb-v2/10/536/358.webp?key=dfgdg
-        that.maptiler_rgb_image_url = that.maptiler_raster_png_dem + `${tile_info.z}/${tile_info.x}/${tile_info.y}.webp?key=` + that.maptiler_access_token;
-        //Get terrain rgb from selected tile
 
-        let rgb_image = await mapUtils.getMapboxTerrainRgb(that.maptiler_rgb_image_url)
-        let rgb_buff = await rgb_image.toBuffer()
-        await idbKeyval.set('rgb_image_buffer', rgb_buff)
-        await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+        if (that.drawmode === "simple_select") {
 
-        //Create preview imamge
-        let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+          that.maptiler_rgb_image_url = that.maptiler_raster_png_dem + `${tile_info.z}/${tile_info.x}/${tile_info.y}.webp?key=` + that.maptiler_access_token;
+          //Get terrain rgb from selected tile
 
-        let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
-        //Note file does not have to be written to disk in order to update preview image
-        if (bFileExists === false) {
-          let buff = await previewImageInfo.image.toBuffer()
-          await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+          let rgb_image = await mapUtils.getMapboxTerrainRgb(that.maptiler_rgb_image_url)
+          let rgb_buff = await rgb_image.toBuffer()
+          await idbKeyval.set('rgb_image_buffer', rgb_buff)
+          await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+
+          //Create preview imamge
+          let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+          let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+          //Note file does not have to be written to disk in order to update preview image
+          if (bFileExists === false) {
+            let buff = await previewImageInfo.image.toBuffer()
+            await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+          }
+
+          emitter.emit('updatePreviewImage', {
+            dir_handle: dirHandle,
+            tile_info: tile_info,
+            preview_image_info: previewImageInfo,
+            map: map
+          })
+        } else if (that.drawmode === "draw_assisted_rectangle") {
+
+          let exportOptionsModel = await idbKeyval.get('exportOptionsModel')
+          let backendServer = await idbKeyval.get('backendServer')
+          let saveStitchingFiles = await idbKeyval.get('saveStitchingFiles')
+          let z = Math.floor(map.getZoom());
+
+          let isServerRunning = true
+          //Check if server is running
+          that.qt.loading.show()
+          try {
+            const response = await fetch(backendServer, {
+              method: "GET"
+            })
+          } catch (e) {
+            console.log(e)
+            isServerRunning = false
+            that.qt.loading.hide()
+          }
+
+          if (isServerRunning === true) {
+            let bboxTiles = {
+              left: tile_info.bbox[0],
+              bottom: tile_info.bbox[1],
+              right: tile_info.bbox[2],
+              top: tile_info.bbox[3]
+            }
+
+            let tiles = tib.tilesInBbox(bboxTiles, z)
+            let filesArray = []
+            let splatArray = []
+            let satArray = []
+
+            for (let tile of tiles) {
+              let fileInfo = {}
+              tile_info = mapUtils.getTileInfo(0, 0, true, tile.x, tile.y, tile.z, tile_info.bbox);
+              that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+              that.maptiler_rgb_image_url = that.maptiler_raster_png_dem + `${tile_info.z}/${tile_info.x}/${tile_info.y}.webp?key=` + that.maptiler_access_token;
+
+              //Get terrain rgb from selected tile
+              let rgb_image = await mapUtils.getMapboxTerrainRgb(that.maptiler_rgb_image_url)
+              let rgb_buff = await rgb_image.toBuffer()
+
+              if (saveStitchingFiles === true) {
+                await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+              }
+
+              let rgbStr = rgb_buff.toString()
+              fileInfo.x = tile_info.x
+              fileInfo.y = tile_info.y
+              fileInfo.buffer = rgbStr
+              filesArray.push(fileInfo)
+
+              if (exportOptionsModel.includes('satellite')) {
+                that.satellite_endpoint = await idbKeyval.get('maptiler_satellite_endpoint')
+                that.satellite_image_url = this.satellite_endpoint + `/${tile_info.z}/${tile_info.x}/${tile_info.y}.jpg?key=` + that.maptiler_access_token;
+                let sat_img = await mapUtils.getMapboxTerrainRgb(that.satellite_image_url)
+                let sat_buff = await sat_img.toBuffer()
+
+                fileInfo = {}
+                let satStr = sat_buff.toString()
+                fileInfo.x = tile_info.x
+                fileInfo.y = tile_info.y
+                fileInfo.buffer = satStr
+                satArray.push(fileInfo)
+              }
+            }
+
+            idbKeyval.set('tile_info', tile_info)
+
+            let payload = JSON.stringify(filesArray)
+
+            try {
+              const response = await fetch(backendServer, {
+                method: "POST",
+                body: payload,
+                headers: {
+                  "Content-Type": "application/json",
+                }
+              })
+
+              let rgb_buff = await response.arrayBuffer()
+              await idbKeyval.set('rgb_image_buffer', rgb_buff)
+              await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+
+
+              if (exportOptionsModel.includes('satellite')) {
+
+                let payload = JSON.stringify(satArray)
+
+                const response = await fetch(backendServer, {
+                  method: "POST",
+                  body: payload,
+                  headers: {
+                    "Content-Type": "application/json",
+                  }
+                })
+
+                let sat_buff = await response.arrayBuffer()
+                await idbKeyval.set('sat_image_buffer', sat_buff)
+                await fileUtils.writeFileToDisk(dirHandle, 'sat_' + tile_info.rgbFileName, sat_buff)
+              }
+
+
+              //Create preview imamge
+              let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
+
+              let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+              let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+              //Note file does not have to be written to disk in order to update preview image
+              if (bFileExists === false) {
+                let buff = await previewImageInfo.image.toBuffer()
+                await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+              }
+
+              emitter.emit('updatePreviewImage', {
+                dir_handle: dirHandle,
+                tile_info: tile_info,
+                preview_image_info: previewImageInfo,
+                map: map
+              })
+            } catch (e) {
+              console.log(e)
+              that.alertMsg = e
+              that.alert = true
+              that.qt.loading.hide()
+            }
+            that.qt.loading.hide()
+          } else {
+            that.alertMsg = 'Cannot connect to backend server for stitching tiles.'
+            that.alert = true
+            that.qt.loading.hide()
+          }
         }
-
-        emitter.emit('updatePreviewImage', {
-          dir_handle: dirHandle,
-          tile_info: tile_info,
-          preview_image_info: previewImageInfo,
-          map: map
-        })
       });
     }
   }

@@ -1,0 +1,19 @@
+{
+  "name": "@delebash/mapbox-gl-button-control",
+  "version": "1.0.4",
+  "description": "Easily add custom buttons to Mapbox Control Panel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Elebash",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/delebash/mapbox-gl-button-control.git"
+  },
+  "bugs": {
+    "url": "https://github.com/delebash/mapbox-gl-button-control/issues"
+  },
+  "homepage": "https://github.com/delebash/mapbox-gl-button-control#readme"
+}

@@ -7,7 +7,7 @@
       <div class="row  q-pa-xs full-height">
         <q-card class="col q-pl-xs">
           <!-- drawer content -->
-          <side-nav></side-nav>
+          <side-nav ref="sideNavRef"></side-nav>
         </q-card>
       </div>
     </q-drawer>
@@ -25,7 +25,7 @@
           >
             <q-btn dense flat @click="changeDrawer" round icon="menu"/>
             <q-tab dense name="map" label="Map"/>
-            <q-tab dense name="weightmap" @click="loadWeightMap()" label="Weight Map"/>
+            <q-tab v-if="mapserver == 'Mapbox'" dense name="weightmap" @click="loadWeightMap()" label="Weight Map"/>
             <q-tab dense name="settings" label="Settings"/>
             <q-btn style="background: #FF0080; color: white" label="Help" class="q-mr-lg" @click="showDialog"/>
             <q-btn dense flat round
@@ -55,7 +55,7 @@
                 <q-input dense v-model="maptiler_access_token" label="Maptiler Access Token *" filled
                          :type="isPwd ? 'password' : 'text'"
                          lazy-rules
-                         hint="You will need your own access token created from your Maptiler accounts page. The Mapbox free plan is a great choice."
+                         hint="You will need your own access token created from your Maptiler accounts page. The Maptiler free plan is a great choice."
                          :rules="[ val => val && val.length > 0 || 'Please type something']">
                   <template v-slot:append>
                     <q-icon dense
@@ -85,6 +85,33 @@
                          :rules="[ val => val && val.length > 0 || 'Please type something']"
                          :type="isPwd ? '' : 'text'">
                 </q-input>
+                <q-input dense class="q-pb-lg" v-model="maptiler_satellite_endpoint" label="Maptiler Satellite Endpoint *"
+                         filled
+                         lazy-rules
+                         hint=""
+                         :rules="[ val => val && val.length > 0 || 'Please type something']"
+                         :type="isPwd ? '' : 'text'">
+                </q-input>
+
+<!--                Click <a-->
+<!--                href="https://api.mapbox.com/styles/v1/delebash/clfzz7dot000001qilz330eyt.html?title=copy&access_token=pk.eyJ1IjoiZGVsZWJhc2giLCJhIjoiY2t1YWxkODF0MGh2NjJxcXA4czBpdXlmdyJ9.D_ngzR7j4vU1CILtpNLg4Q&zoomwheel=true&fresh=true#8.76/35.8732/5.8202/0/7">Copy-->
+<!--                Maptiler Weightmap Style</a>-->
+<!--                to copy this style to your mapbox account and then paste your new style address in text box below in the-->
+<!--                format name/style id example: delebash/clfzz7dot000001qilz330eyt-->
+<!--                <q-input dense class="q-pb-lg" v-model="maptiler_raster_style_url"-->
+<!--                         label="Maptiler Weight Map Style"-->
+<!--                         filled-->
+<!--                         lazy-rules-->
+<!--                         hint=""-->
+<!--                >-->
+<!--                </q-input>-->
+<!--                <q-input dense class="q-pb-lg" v-model="maptiler_raster_style_endpoint"-->
+<!--                         label="Maptiler Raster From Style Endpoint"-->
+<!--                         filled-->
+<!--                         lazy-rules-->
+<!--                         hint=""-->
+<!--                >-->
+<!--                </q-input>-->
               </div>
 
               <div v-if="mapserver == 'Mapbox'">
@@ -177,7 +204,7 @@
               </div>
               <br>
 
-              <div class="q-pa-md">
+              <div v-if="mapserver == 'Mapbox'" class="q-pa-md">
                 <q-table
                   flat bordered
                   title="Weightmap colors"
@@ -364,6 +391,9 @@ export default {
       maptiler_access_token: ref(''),
       maptiler_api_url: ref(''),
       maptiler_raster_png_dem: ref(''),
+      maptiler_satellite_endpoint: ref(''),
+      maptiler_raster_style_url: ref(''),
+      maptiler_raster_style_endpoint: ref(''),
       mapbox_style_url: ref(''),
       mapbox_access_token: ref(''),
       mapbox_api_url: ref(''),
@@ -445,6 +475,7 @@ export default {
         } else if (this.mapserver === 'Maptiler') {
           this.$refs.mapTilerViewer.loadMapTilerMap()
         }
+        this.$refs.sideNavRef.forceRefresh()
       })
     },
     async loadWeightMap() {
@@ -507,6 +538,9 @@ export default {
         idbKeyval.set('maptiler_style_url', this.maptiler_style_url);
         idbKeyval.set('maptiler_api_url', this.maptiler_api_url);
         idbKeyval.set('maptiler_raster_png_dem', this.maptiler_raster_png_dem);
+        idbKeyval.set('maptiler_satellite_endpoint', this.maptiler_satellite_endpoint);
+        idbKeyval.set('maptiler_raster_style_endpoint', this.maptiler_raster_style_endpoint);
+        idbKeyval.set('maptiler_raster_style_url', this.maptiler_raster_style_url);
       } else if (this.mapserver === 'Mapbox') {
         idbKeyval.set('mapbox_access_token', this.mapbox_access_token);
         idbKeyval.set('mapbox_style_url', this.mapbox_style_url);
@@ -541,6 +575,9 @@ export default {
         this.maptiler_style_url = await idbKeyval.get('maptiler_style_url') || 'https://api.maptiler.com/maps/streets/style.json'
         this.maptiler_raster_png_dem = await idbKeyval.get('maptiler_raster_png_dem') || 'https://api.maptiler.com/tiles/terrain-rgb-v2/'
         this.maptiler_api_url = await idbKeyval.get('maptiler_api_url') || 'https://api.maptiler.com'
+        this.maptiler_satellite_endpoint = await idbKeyval.get('maptiler_satellite_endpoint') || 'https://api.maptiler.com/tiles/satellite-v2'
+        this.maptiler_raster_style_endpoint = await idbKeyval.get('maptiler_raster_style_endpoint') || 'https://api.maptiler.com/maps'
+        this.maptiler_raster_style_url = await idbKeyval.get('maptiler_raster_style_url') || ''
 
       } else if (this.mapserver === 'Mapbox') {
         this.mapbox_access_token = await idbKeyval.get('mapbox_access_token') || ''
