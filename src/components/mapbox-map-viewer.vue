@@ -552,7 +552,6 @@ export default {
           style: that.style_url,
           center: [-121.7598, 46.8760], //Mt. Rainier
           zoom: 9,
-          maxZoom: 14,
           doubleClickZoom: false,
           antialias: true,
           boxZoom: true,

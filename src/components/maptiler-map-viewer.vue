@@ -336,7 +336,6 @@ export default {
         style: this.maptiler_style_url,
         center: [-121.7598, 46.8760], //Mt. Rainier
         zoom: 9,
-        maxZoom: 14,
         doubleClickZoom: false,
         terrainControl: true,
         fullscreenControl: true,
