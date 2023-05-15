@@ -181,12 +181,12 @@
                 >
                 </q-input>
               </div>
-              <q-input dense class="q-pb-lg" v-model="backendServer" label="Backend Server for Tile Stitching"
-                       filled
-                       lazy-rules
-                       hint=""
-              >
-              </q-input>
+<!--              <q-input dense class="q-pb-lg" v-model="backendServer" label="Backend Server for Tile Stitching"-->
+<!--                       filled-->
+<!--                       lazy-rules-->
+<!--                       hint=""-->
+<!--              >-->
+<!--              </q-input>-->
               <q-checkbox v-model="saveStitchingFiles" label="Save Temp Stitching files to disk"/>
               <div class="q-pa-none row items-start">
                 <div class="col q-pa-none">
@@ -383,7 +383,7 @@ export default {
       selectedTab: ref('map'),
       alert: ref(false),
       alertMsg: ref(''),
-      backendServer: ref(''),
+     // backendServer: ref(''),
       saveStitchingFiles: ref(false),
       dirHandle: ref(''),
       dirName: ref(''),
@@ -553,7 +553,7 @@ export default {
 
       idbKeyval.set('mapserver', this.mapserver);
       idbKeyval.set('create_folder', this.createFolder);
-      idbKeyval.set('backendServer', this.backendServer);
+     // idbKeyval.set('backendServer', this.backendServer);
       idbKeyval.set('saveStitchingFiles', this.saveStitchingFiles);
 
       if (isProxy(this.rows)) {
@@ -593,7 +593,7 @@ export default {
       let dirHandle = await idbKeyval.get('dirHandle') || ''
       this.createFolder = await idbKeyval.get('create_folder') || ''
       this.saveStitchingFiles = await idbKeyval.get('saveStitchingFiles') || false
-      this.backendServer = await idbKeyval.get('backendServer') || 'http://localhost:3000/backend'
+     // this.backendServer = await idbKeyval.get('backendServer') || 'http://localhost:3000/backend'
       let weight_data = await idbKeyval.get('weightmap_data') || []
       if (weight_data.length === 0) {
         idbKeyval.set('weightmap_data', rows);

@@ -71,6 +71,7 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import DrawAssistedRectangle from "@geostarters/mapbox-gl-draw-rectangle-assisted-mode";
 import MapTilerGLButtonControl from "../maptiler-gl-button-control/index.js";
+import {combineTilesJimp} from '../utilities/combine-tiles-jimp'
 
 let draw
 const STYLES_DRAW = [
@@ -230,46 +231,46 @@ export default {
       }
     },
     async loadMapSourcesLayers(map) {
-        map.addSource("maptiler_terrain_dem", {
-          "type": "raster-dem",
-          "url": this.maptiler_raster_png_dem + 'tiles.json'
-        });
+      map.addSource("maptiler_terrain_dem", {
+        "type": "raster-dem",
+        "url": this.maptiler_raster_png_dem + 'tiles.json'
+      });
 
-        // Hillshade
-        map.addLayer({
-          "id": "hillshading",
-          "source": "maptiler_terrain_dem",
-          "type": "hillshade"
-        });
+      // Hillshade
+      map.addLayer({
+        "id": "hillshading",
+        "source": "maptiler_terrain_dem",
+        "type": "hillshade"
+      });
 
-        map.addSource('bounding_box_source', {
-          type: 'geojson',
-          data: {
-            'type': 'Feature',
-            'geometry': {
-              'type': 'Polygon',
-              'coordinates': [[[0, 0],
-                [0, 1],
-                [1, 1],
-                [1, 0],
-                [0, 0]]]
-            }
+      map.addSource('bounding_box_source', {
+        type: 'geojson',
+        data: {
+          'type': 'Feature',
+          'geometry': {
+            'type': 'Polygon',
+            'coordinates': [[[0, 0],
+              [0, 1],
+              [1, 1],
+              [1, 0],
+              [0, 0]]]
           }
-        });
+        }
+      });
 
-        map.addLayer({
-          id: 'bounding_box',
-          type: 'fill',
-          source: 'bounding_box_source',
-          paint: {
-            'fill-color': '#008888',
-            'fill-opacity': 0
-          }
-        })
+      map.addLayer({
+        id: 'bounding_box',
+        type: 'fill',
+        source: 'bounding_box_source',
+        paint: {
+          'fill-color': '#008888',
+          'fill-opacity': 0
+        }
+      })
 
       map.addSource('satellite', {
         'type': 'raster',
-        'url': this.maptiler_api_url + '/tiles/satellite/tiles.json' ,
+        'url': this.maptiler_api_url + '/tiles/satellite/tiles.json',
         'tileSize': 512,
       });
 
@@ -390,6 +391,7 @@ export default {
         draw.changeMode('simple_select');
         this.drawmode = "simple_select"
       });
+
       map.on('click', async function (e) {
         if (that.drawmode === "simple_select") {
           let lng = e.lngLat.lng
@@ -403,8 +405,6 @@ export default {
           map.getSource('bounding_box_source').setData(tile_info.polygon_bb);
           map.setPaintProperty('bounding_box', 'fill-opacity', 0.45);
         }
-
-
       })
 
       map.on('wheel', () => {
@@ -447,7 +447,7 @@ export default {
         that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
 
         if (that.drawmode === "simple_select") {
-
+          that.qt.loading.show()
           that.maptiler_rgb_image_url = that.maptiler_raster_png_dem + `${tile_info.z}/${tile_info.x}/${tile_info.y}.webp?key=` + that.maptiler_access_token;
           //Get terrain rgb from selected tile
 
@@ -472,39 +472,26 @@ export default {
             preview_image_info: previewImageInfo,
             map: map
           })
+          that.qt.loading.hide()
         } else if (that.drawmode === "draw_assisted_rectangle") {
-
+          that.qt.loading.show()
           let exportOptionsModel = await idbKeyval.get('exportOptionsModel')
-          let backendServer = await idbKeyval.get('backendServer')
+          // let backendServer = await idbKeyval.get('backendServer')
           let saveStitchingFiles = await idbKeyval.get('saveStitchingFiles')
           let z = Math.floor(map.getZoom());
 
-          let isServerRunning = true
-          //Check if server is running
-          that.qt.loading.show()
-          try {
-            const response = await fetch(backendServer, {
-              method: "GET"
-            })
-          } catch (e) {
-            console.log(e)
-            isServerRunning = false
-            that.qt.loading.hide()
+          let bboxTiles = {
+            left: tile_info.bbox[0],
+            bottom: tile_info.bbox[1],
+            right: tile_info.bbox[2],
+            top: tile_info.bbox[3]
           }
 
-          if (isServerRunning === true) {
-            let bboxTiles = {
-              left: tile_info.bbox[0],
-              bottom: tile_info.bbox[1],
-              right: tile_info.bbox[2],
-              top: tile_info.bbox[3]
-            }
-
-            let tiles = tib.tilesInBbox(bboxTiles, z)
-            let filesArray = []
-            let splatArray = []
-            let satArray = []
-
+          let tiles = tib.tilesInBbox(bboxTiles, z)
+          let filesArray = []
+          // let splatArray = []
+          let satArray = []
+          try {
             for (let tile of tiles) {
               let fileInfo = {}
               tile_info = mapUtils.getTileInfo(0, 0, true, tile.x, tile.y, tile.z, tile_info.bbox);
@@ -519,93 +506,68 @@ export default {
                 await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
               }
 
-              let rgbStr = rgb_buff.toString()
               fileInfo.x = tile_info.x
               fileInfo.y = tile_info.y
-              fileInfo.buffer = rgbStr
+              fileInfo.buffer = rgb_buff
               filesArray.push(fileInfo)
 
               if (exportOptionsModel.includes('satellite')) {
                 that.satellite_endpoint = await idbKeyval.get('maptiler_satellite_endpoint')
-                that.satellite_image_url = this.satellite_endpoint + `/${tile_info.z}/${tile_info.x}/${tile_info.y}.jpg?key=` + that.maptiler_access_token;
+                that.satellite_image_url = that.satellite_endpoint + `/${tile_info.z}/${tile_info.x}/${tile_info.y}.jpg?key=` + that.maptiler_access_token;
                 let sat_img = await mapUtils.getMapboxTerrainRgb(that.satellite_image_url)
                 let sat_buff = await sat_img.toBuffer()
 
                 fileInfo = {}
-                let satStr = sat_buff.toString()
+
                 fileInfo.x = tile_info.x
                 fileInfo.y = tile_info.y
-                fileInfo.buffer = satStr
+                fileInfo.buffer = sat_buff
                 satArray.push(fileInfo)
               }
             }
 
             idbKeyval.set('tile_info', tile_info)
 
-            let payload = JSON.stringify(filesArray)
-
-            try {
-              const response = await fetch(backendServer, {
-                method: "POST",
-                body: payload,
-                headers: {
-                  "Content-Type": "application/json",
-                }
-              })
-
-              let rgb_buff = await response.arrayBuffer()
-              await idbKeyval.set('rgb_image_buffer', rgb_buff)
-              await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, rgb_buff)
+            const size = 512
+            let imageBuffer = await combineTilesJimp(filesArray, size, size)
+            await idbKeyval.set('rgb_image_buffer', imageBuffer)
+            await fileUtils.writeFileToDisk(dirHandle, tile_info.rgbFileName, imageBuffer)
 
 
-              if (exportOptionsModel.includes('satellite')) {
-
-                let payload = JSON.stringify(satArray)
-
-                const response = await fetch(backendServer, {
-                  method: "POST",
-                  body: payload,
-                  headers: {
-                    "Content-Type": "application/json",
-                  }
-                })
-
-                let sat_buff = await response.arrayBuffer()
-                await idbKeyval.set('sat_image_buffer', sat_buff)
-                await fileUtils.writeFileToDisk(dirHandle, 'sat_' + tile_info.rgbFileName, sat_buff)
-              }
-
-
-              //Create preview imamge
-              let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
-
-              let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
-
-              let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
-              //Note file does not have to be written to disk in order to update preview image
-              if (bFileExists === false) {
-                let buff = await previewImageInfo.image.toBuffer()
-                await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
-              }
-
-              emitter.emit('updatePreviewImage', {
-                dir_handle: dirHandle,
-                tile_info: tile_info,
-                preview_image_info: previewImageInfo,
-                map: map
-              })
-            } catch (e) {
-              console.log(e)
-              that.alertMsg = e
-              that.alert = true
-              that.qt.loading.hide()
+            if (exportOptionsModel.includes('satellite')) {
+              let imageBuffer = await combineTilesJimp(satArray, size, size)
+              await idbKeyval.set('sat_image_buffer', imageBuffer)
+              await fileUtils.writeFileToDisk(dirHandle, 'sat_' + tile_info.rgbFileName, imageBuffer)
             }
+
+            //Create preview imamge
+            let rgb_buff = await idbKeyval.get('rgb_image_buffer')
+            let rgb_image = await mapUtils.loadImageFromArray(rgb_buff)
+
+            let previewImageInfo = mapUtils.createHeightMapImage(rgb_image, 32, "GREY")
+
+            let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.thirtyTwoFileName)
+            //Note file does not have to be written to disk in order to update preview image
+            if (bFileExists === false) {
+              let buff = await previewImageInfo.image.toBuffer()
+              await fileUtils.writeFileToDisk(dirHandle, tile_info.thirtyTwoFileName, buff)
+            }
+
+            emitter.emit('updatePreviewImage', {
+              dir_handle: dirHandle,
+              tile_info: tile_info,
+              preview_image_info: previewImageInfo,
+              map: map
+            })
             that.qt.loading.hide()
-          } else {
-            that.alertMsg = 'Cannot connect to backend server for stitching tiles.'
+          } catch (e) {
+            console.log(e)
+            that.alertMsg = e
             that.alert = true
             that.qt.loading.hide()
           }
+          that.qt.loading.hide()
+
         }
       });
     }
