@@ -182,6 +182,8 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
+import tib from "tiles-in-bbox";
+import {combineTilesJimp} from "src/utilities/combine-tiles-jimp";
 
 
 let Gdal
@@ -293,12 +295,17 @@ export default {
           cannotSelect: false
         },
         {label: 'None', value: 'none'},
-        {label: 'Geojson Only', value: 'geojson_only'}
+        {label: 'Geojson Only', value: 'geojson_only'},
+        {label: 'Image of map only', value: 'map-image'}
       ]
     }
   },
 
   async mounted() {
+
+    this.exportType = {label: 'Unreal Heightmap', value: 'Unreal Heightmap'}
+    idbKeyval.set('exportType', toRaw(this.exportType))
+
     Gdal = await initGdalJs({path: 'https://cdn.jsdelivr.net/npm/gdal3.js@2.4.0/dist/package', useWorker: false})
     emitter.on('updatePreviewImage', (data) => {
       this.data = data
@@ -310,14 +317,14 @@ export default {
       this.mapserver = await idbKeyval.get('mapserver')
       //Maptiler does not support Weightmaps
       if (this.mapserver === 'Maptiler') {
-        this.exportOptions =[
+        this.exportOptions = [
           {label: 'Zrange-sea level=0', value: 'zrange'},
           {label: 'Flip X', value: 'flipx'},
           {label: 'Flip y', value: 'flipy'},
           {label: 'Download Satellite', value: 'satellite'},
           {label: 'Download Geojson Features', value: 'features'},
           {label: 'Combine Unique Features', value: 'combine_features'},
-         ]
+        ]
       } else {
         this.exportOptions = [
           {label: 'Zrange-sea level=0', value: 'zrange'},
@@ -408,6 +415,8 @@ export default {
       idbKeyval.set('exportOptionsModel', rawData)
     },
     exportType_Change(e) {
+
+      idbKeyval.set('exportType', toRaw(this.exportType))
       if (this.exportType.label === 'Unreal Heightmap' || this.exportType.label === "None" || this.exportType.label === "Unreal Terrain Magic Plugin -- HeightmapLandscape Clip") {
         this.isDownload = true
         this.isSendToUnreal = true
@@ -427,6 +436,14 @@ export default {
         this.isSendToUnreal = false
         this.isAlphaBrush = false
         this.isLandscape = false
+        this.isExportOptions = false
+        this.isBlurRadius = false
+
+      } else if (this.exportType.label === "Image of map only") {
+        this.isDownload = true
+        this.isSendToUnreal = false
+        this.isAlphaBrush = false
+        this.isLandscape = true
         this.isExportOptions = false
         this.isBlurRadius = false
       } else if (this.exportType.label === "Unreal Terrain Magic Plugin -- EarthLandscape Clip") {
@@ -473,7 +490,6 @@ export default {
         }
         let elevation = maxElevation - minElevation
         cm = (elevation * 100)
-
       }
 
       zscale = cm * 0.001953125
@@ -495,7 +511,10 @@ export default {
       let blob = await this.preview_image_info.image.toBlob()
       const objectURL = URL.createObjectURL(blob)
       this.url = objectURL
-      this.updateStats(this.tile_info)
+      if (this.data.updateStats === true) {
+        this.updateStats(this.tile_info)
+      }
+
     },
     async saveImage(imageBytes, save_fileName, file_type) {
       let dirHandle = await idbKeyval.get('dirHandle')
@@ -504,7 +523,13 @@ export default {
     },
 
     async processGdal(buff, filename, translateOptions, file_type, process_type) {
-      let blob = new Blob([new Uint8Array(buff)], {type: 'image/' + file_type})
+      let blob
+      if (this.exportType.label === 'Image of map only') {
+        console.log('test')
+        blob = new Blob([buff], {type: 'image/' + file_type})
+      } else {
+        blob = new Blob([new Uint8Array(buff)], {type: 'image/' + file_type})
+      }
       const file = new File([blob], filename);
       const result = await Gdal.open(file);
       const dataset = result.datasets[0];
@@ -650,6 +675,7 @@ export default {
     },
     async createSixteenHeightMap() {
 
+      this.qt.loading.show()
       this.mapserver = await idbKeyval.get('mapserver')
       if (this.mapserver === 'Mapbox') {
         this.access_token = await idbKeyval.get('mapbox_access_token')
@@ -667,95 +693,85 @@ export default {
         this.weightmap_url = this.raster_style_endpoint + '/' + this.raster_style_url + '/' + `${this.tile_info.z}/${this.tile_info.x}/${this.tile_info.y}.png?key=` + this.access_token;
       }
 
+
       if (this.tile_info) {
-        let translateOptions
-        let buff
+        this.tile_info.resizeMethod = 'lanczos'
+        if (this.exportType.label === 'Image of map only') {
 
-        this.tile_info.resolution = this.unrealLandscape.value
+          let buff = await idbKeyval.get('map_image_buffer')
+          let translateOptions = [
+            '-of', 'PNG',
+            '-outsize', this.unrealLandscape.value.toString(), this.unrealLandscape.value.toString()
+          ];
 
-        this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
-        this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
-        this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
-        this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
+          await this.processGdal(buff, 'map_image_' + this.tile_info.mapboxTileName + '_' + this.unrealLandscape.value.toString() + '.png', translateOptions, "png", "createHeightmap");
+          this.qt.loading.hide()
 
-        this.qt.loading.show()
-        this.dirHandle = await idbKeyval.get('dirHandle')
-        //Verify user has permission to rea/write from selected directory
-        if (await fileUtils.verifyPermission(this.dirHandle, true) === false) {
-          console.error(`User did not grant permission to '${this.dirHandle.name}'`);
-          return;
-        }
-        let bExists = fileUtils.fileExists(this.dirHandle, this.tile_info.thirtytwoFile)
-        if (bExists) {
+        } else {
+          let translateOptions
+          let buff
 
-          let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
-          let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
-          let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
-          let sixteen_img = sixteen_image_info.image
+          this.tile_info.resolution = this.unrealLandscape.value
 
+          this.tile_info.geoJsonFileName = 'geojson-' + this.tile_info.mapboxTileName + '.json'
+          this.tile_info.tileInfoFileName = 'tile-info-' + this.tile_info.mapboxTileName + '.json'
+          this.tile_info.sixteenFileName = 'sixteen' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.png'
+          this.tile_info.satelliteFileName = 'satellite' + '-' + this.tile_info.mapboxTileName + '-LandscapeSize-' + this.tile_info.resolution + '.jpg'
 
-          // sixteen_img = await sixteen_img.rotate(-90)
-
-          if (this.exportOptionsModel.includes('flipy')) {
-            sixteen_img = await sixteen_img.flipY()
+          this.qt.loading.show()
+          this.dirHandle = await idbKeyval.get('dirHandle')
+          //Verify user has permission to rea/write from selected directory
+          if (await fileUtils.verifyPermission(this.dirHandle, true) === false) {
+            console.error(`User did not grant permission to '${this.dirHandle.name}'`);
+            return;
           }
-          if (this.exportOptionsModel.includes('flipx')) {
-            sixteen_img = await sixteen_img.flipX()
-          }
+          let bExists = fileUtils.fileExists(this.dirHandle, this.tile_info.thirtytwoFile)
+          if (bExists) {
 
-          if (this.blurRadius >= 1) {
-            sixteen_img = sixteen_img.blurFilter({radius: this.blurRadius})
-            //  sixteen_img = sixteen_img.medianFilter({radius: this.blurRadius})
-            //   sixteen_img = sixteen_img.gaussianFilter({radius: this.blurRadius})
-          }
-          buff = await sixteen_img.toBuffer()
-
-          this.img_min = parseInt(sixteen_image_info.minElevation).toString()
-          this.img_max = parseInt(sixteen_image_info.maxElevation).toString()
-
-          this.tile_info.resampleSize = this.unrealLandscape.value.toString()
-          this.tile_info.resizeMethod = 'lanczos'
-          this.tile_info.exportTypeLabel = this.exportType.label
+            let rgbImgBuff = await idbKeyval.get('rgb_image_buffer')
+            let rgb_image = await mapUtils.loadImageFromArray(rgbImgBuff)
+            let sixteen_image_info = mapUtils.createHeightMapImage(rgb_image, 16, "GREY")
+            let sixteen_img = sixteen_image_info.image
 
 
-          // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
-          this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth
+            // sixteen_img = await sixteen_img.rotate(-90)
 
-          if (this.exportOptionsModel.includes('features')) {
-            let combine = false
-            if (this.exportOptionsModel.includes('combine_features')) {
-              combine = true
+            if (this.exportOptionsModel.includes('flipy')) {
+              sixteen_img = await sixteen_img.flipY()
             }
-            await this.unrealTileFeatures(combine)
-          }
+            if (this.exportOptionsModel.includes('flipx')) {
+              sixteen_img = await sixteen_img.flipX()
+            }
 
-          switch (this.tile_info.exportTypeLabel) {
+            if (this.blurRadius >= 1) {
+              sixteen_img = sixteen_img.blurFilter({radius: this.blurRadius})
+              //  sixteen_img = sixteen_img.medianFilter({radius: this.blurRadius})
+              //   sixteen_img = sixteen_img.gaussianFilter({radius: this.blurRadius})
+            }
+            buff = await sixteen_img.toBuffer()
 
-            case 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip':
-              //Download heightmap
-              translateOptions = [
-                '-ot', 'UInt16',
-                '-of', 'PNG',
-                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
-                '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
-              ];
+            this.img_min = parseInt(sixteen_image_info.minElevation).toString()
+            this.img_max = parseInt(sixteen_image_info.maxElevation).toString()
 
-              await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
+            this.tile_info.resampleSize = this.unrealLandscape.value.toString()
 
-              if (this.exportOptionsModel.includes('satellite')) {
-                //satellite image
-                translateOptions = [
-                  '-of', 'JPEG',
-                  '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
-                ]
-                let buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
-                await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+            this.tile_info.exportTypeLabel = this.exportType.label
+
+
+            // gdal_translate -of Gtiff -a_ullr LEFT_LON UPPER_LAT RIGHT_LON LOWER_LAT -a_srs EPSG_PROJ INPUT_PNG_FILE OUTPUT_GTIFF_FILE.
+            this.tile_info.alphaBrushFileName = 'alphabrush' + '-' + this.tile_info.mapboxTileName + '-height-' + this.alphaBrushHeight + '-width-' + this.alphaBrushWidth
+
+            if (this.exportOptionsModel.includes('features')) {
+              let combine = false
+              if (this.exportOptionsModel.includes('combine_features')) {
+                combine = true
               }
-              this.qt.loading.hide()
-              break;
+              await this.unrealTileFeatures(combine)
+            }
 
-            case 'Unreal Heightmap':
-              if (this.tile_info.resampleSize !== 512) {
+            switch (this.tile_info.exportTypeLabel) {
+
+              case 'Unreal Terrain Magic Plugin -- HeightmapLandscape Clip':
                 //Download heightmap
                 translateOptions = [
                   '-ot', 'UInt16',
@@ -772,107 +788,120 @@ export default {
                     '-of', 'JPEG',
                     '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
                   ]
-                  let buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
+                  let buff
+                  let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.satFileName)
+                  if (bFileExists === true) {
+                    buff = await idbKeyval.get('sat_image_buffer')
+                  } else {
+                    buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
+                  }
+
                   await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
                 }
+                this.qt.loading.hide()
+                break;
 
-                if (this.exportOptionsModel.includes('raster_style')) {
+              case
+              'Unreal Heightmap':
+                if (this.tile_info.resampleSize !== 512) {
+                  //Download heightmap
+                  translateOptions = [
+                    '-ot', 'UInt16',
+                    '-of', 'PNG',
+                    '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                    '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod.toString()
+                  ];
 
-                  let buff = await mapUtils.downloadTerrainRgb(this.weightmap_url)
-                  let splat_image = await mapUtils.loadImageFromArray(buff)
-                  await this.saveImage(buff, 'splat_' + this.tile_info.sixteenFileName, "png")
+                  await this.processGdal(buff, this.tile_info.sixteenFileName, translateOptions, "png", "createHeightmap");
 
-                  //Change color for splat map
-                  let pixelsArray = splat_image.getPixelsArray()
-                  let black = [0, 0, 0]
-                  let white = [255, 255, 255]
-                  let rgbColor = []
-                  let weight_data = await idbKeyval.get('weightmap_data')
-                  for (let data of weight_data) {
-                    rgbColor = JSON.stringify(data.color.split(',').map(Number));
-                    for (let i = 0; i < pixelsArray.length; i++) {
-                      if (JSON.stringify(pixelsArray[i]) === rgbColor) {
-                        splat_image.setPixel(i, white)
-                      } else {
-                        splat_image.setPixel(i, black)
-                      }
+                  if (this.exportOptionsModel.includes('satellite')) {
+                    //satellite image
+                    translateOptions = [
+                      '-of', 'JPEG',
+                      '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
+                    ]
+
+                    let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.satFileName)
+                    if (bFileExists === true) {
+                      buff = await idbKeyval.get('sat_image_buffer')
+                    } else {
+                      buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
                     }
+                    await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
+                  }
 
-                    let img = splat_image
-                      .resize({
-                        width: this.tile_info.resampleSize,
-                        height: this.tile_info.resampleSize
-                      })
-                      .gaussianFilter({radius: this.blurRadiusWeightmap})
+                } else {
+                  //Do not process only extract height values
+                  await this.saveImage(buff, this.tile_info.sixteenFileName, "png")
 
-                    let splat_buff = await img.toBuffer()
-                    await this.saveImage(splat_buff, 'splat_' + data.name + '_' + this.tile_info.sixteenFileName, "png")
+                  if (this.exportOptionsModel.includes('satellite')) {
+                    let buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
+                    await this.saveImage(buff, this.tile_info.satelliteFileName, "jpg")
                   }
                 }
-              } else {
-                //Do not process only extract height values
-                await this.saveImage(buff, this.tile_info.sixteenFileName, "png")
 
-                if (this.exportOptionsModel.includes('satellite')) {
-                  let buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
-                  await this.saveImage(buff, this.tile_info.satelliteFileName, "jpg")
+                this.qt.loading.hide()
+                break;
+
+              case
+              'Geojson Only':
+                await this.unrealTileFeatures(true)
+                this.qt.loading.hide()
+                break;
+
+              case
+              'Unreal Stamp Brush Plugin':
+                if (this.alphaBrushName.length > 0) {
+                  this.tile_info.alphaBrushFileName = this.alphaBrushName
                 }
-              }
-              this.qt.loading.hide()
-              break;
+                //Download heightmap
+                translateOptions = [
+                  '-ot', 'UInt16',
+                  '-of', 'PNG',
+                  '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                  '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
+                ];
 
+                await this.processGdal(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
 
-            case 'Geojson Only':
-              await this.unrealTileFeatures(true)
-              this.qt.loading.hide()
-              break;
+                this.qt.loading.hide()
+                break;
 
-            case 'Unreal Stamp Brush Plugin':
-              if (this.alphaBrushName.length > 0) {
-                this.tile_info.alphaBrushFileName = this.alphaBrushName
-              }
-              //Download heightmap
-              translateOptions = [
-                '-ot', 'UInt16',
-                '-of', 'PNG',
-                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
-                '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
-              ];
+              case
+              'Unreal Landmass Effect Brush Plugin':
+                if (this.alphaBrushName.length > 0) {
+                  this.tile_info.alphaBrushFileName = this.alphaBrushName
+                }
+                //Download heightmap
+                translateOptions = [
+                  '-ot', 'UInt16',
+                  '-of', 'PNG',
+                  '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
+                  '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
+                ];
 
-              await this.processGdal(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
+                await this.processGdal(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
 
-              this.qt.loading.hide()
-              break;
+                this.qt.loading.hide()
+                break;
 
-            case 'Unreal Landmass Effect Brush Plugin':
-              if (this.alphaBrushName.length > 0) {
-                this.tile_info.alphaBrushFileName = this.alphaBrushName
-              }
-              //Download heightmap
-              translateOptions = [
-                '-ot', 'UInt16',
-                '-of', 'PNG',
-                '-scale', this.img_min, this.img_max, this.tile_info.startZRange.toString(), this.tile_info.maxPngValue.toString(),
-                '-outsize', this.alphaBrushHeight.toString(), this.alphaBrushWidth.toString(), '-r', this.tile_info.resizeMethod
-              ];
+              case
+              'None':
+                await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
+                this.qt.loading.hide()
+                break;
+            }
 
-              await this.processGdal(buff, this.tile_info.alphaBrushFileName + '.png', translateOptions, "png", "createHeightmap");
-
-              this.qt.loading.hide()
-              break;
-
-            case 'None':
-              await fileUtils.writeFileToDisk(this.dirHandle, this.tile_info.sixteenFileName, sixteen_img.toBuffer())
-              this.qt.loading.hide()
-              break;
+          } else {
+            this.alertMsg = 'Please double click on your chosen selection first.'
+            this.alert = true
           }
-        } else {
-          this.alertMsg = 'Please double click on your chosen selection first.'
-          this.alert = true
         }
+        this.qt.loading.hide()
       } else {
         this.alertMsg = 'Please double click on your chosen selection first.'
         this.alert = true
+        this.qt.loading.hide()
       }
     }
   }

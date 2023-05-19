@@ -4,8 +4,6 @@ import * as turf from '@turf/turf'
 import {Image} from "image-js";
 import idbKeyval from "../utilities/idb-keyval-iife";
 
-
-
 function getTileInfo(lng, lat, multiple, x, y, z, bbox) {
   let tileInfo = {}
   let xyzpoint
@@ -70,6 +68,8 @@ function getTileInfo(lng, lat, multiple, x, y, z, bbox) {
 
   tileInfo.maxPngValue = 65535
   tileInfo.rgbFileName = 'terrain-rgb' + '-' + tileInfo.mapboxTileName + '.png'
+  tileInfo.mapFileName = 'map' + '-' + tileInfo.mapboxTileName + '.png'
+  tileInfo.satFileName = 'sat' + '-' + tileInfo.mapboxTileName + '.png'
   tileInfo.thirtyTwoFileName = 'thirtytwo' + '-' + tileInfo.mapboxTileName + '.png'
   tileInfo.tileInfoFileName = 'tile-info' + '-' + tileInfo.mapboxTileName + '.json'
   tileInfo.geoJsonFileName = 'geojson' + '-' + tileInfo.mapboxTileName + '.json'
