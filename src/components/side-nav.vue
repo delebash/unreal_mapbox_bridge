@@ -2,7 +2,7 @@
   <div id="previewTitle" class="text-h6 bg-primary text-white">Preview Image</div>
   <q-img
     :src=url
-    height=150px
+    height=250px
   />
   <div class="row justify-start q-pa-none q-mb-md">
     <div style="width: 100%">
