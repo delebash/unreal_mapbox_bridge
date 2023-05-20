@@ -776,6 +776,7 @@ export default {
           }
 
           let tile_info = await idbKeyval.get('tile_info')
+          let updateStats = true
           that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
 
           if (that.drawmode === "simple_select") {
@@ -804,7 +805,8 @@ export default {
               dir_handle: dirHandle,
               tile_info: tile_info,
               preview_image_info: previewImageInfo,
-              map: map
+              map: map,
+              updateStats: updateStats
             })
             that.qt.loading.hide()
           } else if (that.drawmode === "draw_assisted_rectangle") {
@@ -907,7 +909,8 @@ export default {
                 dir_handle: dirHandle,
                 tile_info: tile_info,
                 preview_image_info: previewImageInfo,
-                map: map
+                map: map,
+                updateStats: updateStats
               })
               that.qt.loading.hide()
             } catch (e) {

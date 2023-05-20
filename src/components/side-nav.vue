@@ -788,7 +788,7 @@ export default {
                     '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
                   ]
                   let buff
-                  let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.satFileName)
+                  let bFileExists = await fileUtils.fileExists(this.dirHandle, this.tile_info.satFileName)
                   if (bFileExists === true) {
                     buff = await idbKeyval.get('sat_image_buffer')
                   } else {
@@ -820,7 +820,7 @@ export default {
                       '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
                     ]
 
-                    let bFileExists = await fileUtils.fileExists(dirHandle, tile_info.satFileName)
+                    let bFileExists = await fileUtils.fileExists(this.dirHandle, this.tile_info.satFileName)
                     if (bFileExists === true) {
                       buff = await idbKeyval.get('sat_image_buffer')
                     } else {
