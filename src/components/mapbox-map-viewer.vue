@@ -620,19 +620,37 @@ export default {
             draw_assisted_rectangle: DrawAssistedRectangle
           },
           displayControlsDefault: false,
-          controls: {},
+           controls: {},
           userProperties: true,
           styles: STYLES_DRAW
         });
         map.addControl(draw);
 
+        // const modes = {
+        //       ...MapboxDraw.modes,
+        //       draw_assisted_rectangle: DrawAssistedRectangle
+        //     }
+       //const modes = MapboxDraw.modes;
+      // modes.draw_assisted_rectangle = DrawAssistedRectangle.default;
+
+        // const draw = new MapboxDraw({
+        //   modes: modes,
+        //   displayControlsDefault: false,
+        //   controls: {
+        //     polygon: true,
+        //     trash: true
+        //   },
+        //   userProperties: true,
+        //   styles: STYLES_DRAW
+        // });
+        // map.addControl(draw);
         //Add simple select for single tile
         const tile_select = new MapboxGLButtonControl({
           className: "mapbox-gl-draw_polygon",
           title: "Select single tile",
           eventHandler: that.changeDrawMode
         });
-
+        //
         map.addControl(tile_select);
 
         const rectangle = new MapboxGLButtonControl({
@@ -640,7 +658,7 @@ export default {
           title: "Draw Rectangle to select multiple tiles",
           eventHandler: that.changeDrawMode
         });
-
+        //
         map.addControl(rectangle);
 
         //Set default draw mode to Single Tile

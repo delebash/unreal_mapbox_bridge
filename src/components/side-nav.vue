@@ -182,8 +182,7 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
-import tib from "tiles-in-bbox";
-import {combineTilesJimp} from "src/utilities/combine-tiles-jimp";
+
 
 
 let Gdal

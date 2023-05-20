@@ -69,7 +69,8 @@ import emitter from "src/utilities/emitter";
 import tib from "tiles-in-bbox";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
-import DrawAssistedRectangle from "@geostarters/mapbox-gl-draw-rectangle-assisted-mode";
+import DrawAssistedRectangle from "../mapbox-gl-draw-assisted-rectangle-mode/src/DrawAssistedRectangle";
+// import DrawAssistedRectangle from "@geostarters/mapbox-gl-draw-rectangle-assisted-mode";
 import MapTilerGLButtonControl from "../maptiler-gl-button-control/index.js";
 import {combineTilesJimp} from '../utilities/combine-tiles-jimp'
 
@@ -459,6 +460,7 @@ export default {
         let updateStats = true
         that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
         let exportType = await idbKeyval.get('exportType')
+
         if (that.drawmode === "simple_select") {
           that.qt.loading.show()
 
@@ -501,6 +503,7 @@ export default {
           })
           that.qt.loading.hide()
         } else if (that.drawmode === "draw_assisted_rectangle") {
+
           that.qt.loading.show()
           tile_info.z = Math.floor(map.getZoom())
           idbKeyval.set('tile_info', tile_info)
@@ -524,7 +527,9 @@ export default {
           let satArray = []
 
           try {
-            if (exportType !== 'Image of map only') {
+
+            if (exportType.label !== 'Image of map only') {
+
               for (let tile of tiles) {
                 let fileInfo = {}
                 tile_info = mapUtils.getTileInfo(0, 0, true, tile.x, tile.y, tile.z, tile_info.bbox);
@@ -595,13 +600,47 @@ export default {
               })
               that.qt.loading.hide()
             }else{
-              // emitter.emit('updatePreviewImage', {
-              //   dir_handle: dirHandle,
-              //   tile_info: tile_info,
-              //   preview_image_info: previewImageInfo,
-              //   map: map,
-              //   updateStats: updateStats
-              // })
+              let map_buff
+
+              for (let tile of tiles) {
+                let fileInfo = {}
+                tile_info = mapUtils.getTileInfo(0, 0, true, tile.x, tile.y, tile.z, tile_info.bbox);
+                that.tileInfoString = 'Slippy Tile Info String: ' + tile_info.x + ',' + tile_info.y + ',' + tile_info.z + ' Bounding Box sides in KM: ' + (tile_info.distance)
+
+                let url = that.maptiler_style_url.replace('style.json', '')
+                let map_image_url = url + `${tile_info.z}/${tile_info.x}/${tile_info.y}.png?key=` + that.maptiler_access_token;
+                let map_image = await mapUtils.getMapboxTerrainRgb(map_image_url)
+                map_buff = await map_image.toBuffer()
+
+                if (saveStitchingFiles === true) {
+                  await fileUtils.writeFileToDisk(dirHandle, tile_info.mapFileName, map_buff)
+                }
+
+                fileInfo.x = tile_info.x
+                fileInfo.y = tile_info.y
+                fileInfo.buffer = map_buff
+                filesArray.push(fileInfo)
+              }
+
+              let updateStats = false
+              idbKeyval.set('tile_info', tile_info)
+
+              const size = 512
+              let imageBuffer = await combineTilesJimp(filesArray, size, size)
+              await idbKeyval.set('map_image_buffer', imageBuffer)
+              await fileUtils.writeFileToDisk(dirHandle, tile_info.mapFileName, imageBuffer)
+              let map_image = await mapUtils.loadImageFromArray(imageBuffer)
+
+
+             // await fileUtils.writeFileToDisk(dirHandle, tile_info.mapFileName, map_buff)
+              previewImageInfo.image = map_image
+              emitter.emit('updatePreviewImage', {
+                dir_handle: dirHandle,
+                tile_info: tile_info,
+                preview_image_info: previewImageInfo,
+                map: map,
+                updateStats: updateStats
+              })
               that.qt.loading.hide()
             }
           } catch (e) {

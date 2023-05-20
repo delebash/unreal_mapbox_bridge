@@ -22,7 +22,6 @@
     "@delebash/mapbox-gl-button-control": "^1.0.4",
     "@geostarters/mapbox-gl-draw-rectangle-assisted-mode": "^3.0.4",
     "@mapbox/mapbox-gl-draw": "^1.4.1",
-    "@mapbox/mapbox-gl-draw-static-mode": "^1.0.1",
     "@mapbox/mapbox-gl-geocoder": "^5.0.1",
     "@mapbox/mapbox-sdk": "^0.15.1",
     "@mapbox/tilebelt": "^1.0.2",
