@@ -531,9 +531,9 @@ export default {
     },
 
     async loadMapboxMap() {
-
-      mapboxgl.accessToken = await idbKeyval.get('access_token')
-      this.access_token = mapboxgl.accessToken
+      this.access_token = await idbKeyval.get('mapbox_access_token')
+      console.log(this.access_token)
+      mapboxgl.accessToken = this.access_token
       this.mapbox_api_url = await idbKeyval.get('mapbox_api_url')
       this.dirHandle = await idbKeyval.get('dirHandle')
 
@@ -620,7 +620,7 @@ export default {
             draw_assisted_rectangle: DrawAssistedRectangle
           },
           displayControlsDefault: false,
-           controls: {},
+          controls: {},
           userProperties: true,
           styles: STYLES_DRAW
         });
@@ -630,8 +630,8 @@ export default {
         //       ...MapboxDraw.modes,
         //       draw_assisted_rectangle: DrawAssistedRectangle
         //     }
-       //const modes = MapboxDraw.modes;
-      // modes.draw_assisted_rectangle = DrawAssistedRectangle.default;
+        //const modes = MapboxDraw.modes;
+        // modes.draw_assisted_rectangle = DrawAssistedRectangle.default;
 
         // const draw = new MapboxDraw({
         //   modes: modes,
