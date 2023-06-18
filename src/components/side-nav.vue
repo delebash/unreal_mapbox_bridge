@@ -10,7 +10,7 @@
         <template v-slot:control>
           <div class="text-weight-bold q-pt-sm self-center full-width no-outline" tabindex="0">{{
               this.tile_info.minmax
-            }}
+                                                                                               }}
           </div>
         </template>
       </q-field>
@@ -182,7 +182,6 @@ import emitter from "../utilities/emitter";
 import idbKeyval from "../utilities/idb-keyval-iife";
 import mapUtils from '../utilities/map-utils'
 import {useQuasar} from 'quasar'
-
 
 
 let Gdal
@@ -800,8 +799,7 @@ export default {
                 this.qt.loading.hide()
                 break;
 
-              case
-              'Unreal Heightmap':
+              case 'Unreal Heightmap':
                 if (this.tile_info.resampleSize !== 512) {
                   //Download heightmap
                   translateOptions = [
@@ -820,15 +818,43 @@ export default {
                       '-outsize', this.tile_info.resampleSize, this.tile_info.resampleSize, '-r', this.tile_info.resizeMethod
                     ]
 
-                    let bFileExists = await fileUtils.fileExists(this.dirHandle, this.tile_info.satFileName)
-                    if (bFileExists === true) {
-                      buff = await idbKeyval.get('sat_image_buffer')
-                    } else {
-                      buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
-                    }
+                    let buff = await mapUtils.downloadTerrainRgb(this.satellite_image_url)
                     await this.processGdal(buff, this.tile_info.satelliteFileName, translateOptions, "jpg", "createHeightmap");
                   }
 
+                  if (this.exportOptionsModel.includes('raster_style')) {
+
+                    let buff = await mapUtils.downloadTerrainRgb(this.weightmap_url)
+                    let splat_image = await mapUtils.loadImageFromArray(buff)
+                    await this.saveImage(buff, 'splat_' + this.tile_info.sixteenFileName, "png")
+
+                    //Change color for splat map
+                    let pixelsArray = splat_image.getPixelsArray()
+                    let black = [0, 0, 0]
+                    let white = [255, 255, 255]
+                    let rgbColor = []
+                    let weight_data = await idbKeyval.get('weightmap_data')
+                    for (let data of weight_data) {
+                      rgbColor = JSON.stringify(data.color.split(',').map(Number));
+                      for (let i = 0; i < pixelsArray.length; i++) {
+                        if (JSON.stringify(pixelsArray[i]) === rgbColor) {
+                          splat_image.setPixel(i, white)
+                        } else {
+                          splat_image.setPixel(i, black)
+                        }
+                      }
+
+                      let img = splat_image
+                        .resize({
+                          width: this.tile_info.resampleSize,
+                          height: this.tile_info.resampleSize
+                        })
+                        .gaussianFilter({radius: this.blurRadiusWeightmap})
+
+                      let splat_buff = await img.toBuffer()
+                      await this.saveImage(splat_buff, 'splat_' + data.name + '_' + this.tile_info.sixteenFileName, "png")
+                    }
+                  }
                 } else {
                   //Do not process only extract height values
                   await this.saveImage(buff, this.tile_info.sixteenFileName, "png")
