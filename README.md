@@ -1,3 +1,7 @@
+#This app is no longer maintained please see the new app here https://github.com/delebash/unreal_map_bridge
+
+#New live site https://map.justgeektechs.com/
+
 # Unreal Mapbox Bridge 
 
 #### Use real world heightmap data from Mapbox and automatically convert it to an Unreal heightmap image
